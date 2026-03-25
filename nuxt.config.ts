@@ -4,7 +4,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: [
     '@nuxtjs/tailwindcss',
-    '@nuxtjs/color-mode'
+    '@nuxtjs/color-mode',
+    '@pinia/nuxt',
+    'pinia-plugin-persistedstate/nuxt'
   ],
   colorMode: {
     classSuffix: '',

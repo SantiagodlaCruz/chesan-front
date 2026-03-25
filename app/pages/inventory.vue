@@ -155,9 +155,12 @@
         leave-from-class="opacity-100 scale-100"
         leave-to-class="opacity-0 scale-95"
       >
-        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-blue-950/40 backdrop-blur-md">
+        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-slate-900/40 dark:bg-blue-950/40 backdrop-blur-sm"></div>
+          
           <!-- Modal Container -->
-          <div class="bg-white dark:bg-[#0f172a] w-full max-w-2xl rounded-2xl shadow-2xl border border-border-light dark:border-[#1e293b] overflow-hidden flex flex-col max-h-[90vh] dark:shadow-blue-900/10">
+          <div class="relative bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl w-full max-w-2xl rounded-2xl shadow-2xl border border-border-light dark:border-[#1e293b] overflow-hidden flex flex-col max-h-[90vh] dark:shadow-blue-900/10">
             
             <!-- Modal Header -->
             <div class="px-8 py-6 border-b border-border-light dark:border-[#1e293b] flex justify-between items-start shrink-0">
@@ -224,13 +227,23 @@
                   </div>
                 </div>
                 <!-- Modal Actions -->
-                <div class="flex items-center justify-end gap-4 pt-4 mt-6 border-t border-border-light dark:border-[#1e293b]">
-                  <button @click="showAddModal = false" class="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/5 transition-all border border-slate-200 dark:border-[#1e293b]" type="button">
+                <div class="flex items-center justify-end gap-3 pt-4 mt-6 border-t border-border-light dark:border-[#1e293b]">
+                  <BaseButton 
+                    type="button" 
+                    variant="secondary" 
+                    :full="false" 
+                    @click="showAddModal = false"
+                  >
                     Cancelar
-                  </button>
-                  <button class="px-8 py-2.5 rounded-xl text-sm font-bold text-white bg-primary shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] transition-all" type="submit">
+                  </BaseButton>
+                  
+                  <BaseButton 
+                    type="submit" 
+                    variant="primary" 
+                    :full="false"
+                  >
                     Guardar Artículo
-                  </button>
+                  </BaseButton>
                 </div>
               </form>
             </div>
@@ -244,6 +257,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { PlusIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, EditIcon, MoreVerticalIcon, EyeIcon, TrashIcon, XIcon, ImageIcon } from 'lucide-vue-next'
+import BaseButton from '~/components/BaseButton.vue'
 
 const activeTab = ref('productos')
 const showAddModal = ref(false)
