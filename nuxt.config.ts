@@ -11,6 +11,14 @@ export default defineNuxtConfig({
     preference: 'system',
     fallback: 'dark',
   },
+  vite: {
+    server: {
+      allowedHosts: [
+        'ba8b-201-172-174-52.ngrok-free.app',
+        '.ngrok-free.app'
+      ]
+    }
+  },
   tailwindcss: {
     config: {
       theme: {
@@ -18,10 +26,10 @@ export default defineNuxtConfig({
           colors: {
             primary:           '#3b82f6',
             // Dark mode surfaces
-            'background-dark': '#0d1117',
-            'card-dark':       '#161b22',
-            'border-dark':     '#30363d',
-            charcoal:          '#21262d',
+            'background-dark': '#0f172a',
+            'card-dark':       '#1e293b',
+            'border-dark':     '#334155',
+            charcoal:          '#1e293b',
             // Light mode surfaces
             'background-light': '#f6f8fa',
             'card-light':       '#ffffff',

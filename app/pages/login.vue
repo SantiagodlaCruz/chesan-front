@@ -159,7 +159,6 @@
           <div class="pt-2">
             <BaseButton type="submit" :loading="isSubmitting" loading-text="Verificando...">
               Iniciar Sesión
-              <LogInIcon v-if="!isSubmitting" class="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
             </BaseButton>
           </div>
 

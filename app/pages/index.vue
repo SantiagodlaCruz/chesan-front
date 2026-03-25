@@ -7,16 +7,16 @@
         class="glass-panel p-6 rounded-xl flex flex-col gap-2 transition-all hover:scale-[1.02] duration-300"
       >
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ stat.label }}</span>
+          <span class="text-xs font-semibold text-slate-500 tracking-wide">{{ stat.label }}</span>
           <component :is="stat.icon" class="text-primary w-5 h-5" />
         </div>
         <div class="flex items-baseline gap-2 mt-2">
-          <span class="text-4xl font-black text-slate-900 dark:text-white">
+          <span class="text-4xl font-bold text-slate-900 dark:text-white">
             {{ stat.value }}
           </span>
-          <span class="text-xs font-bold text-accent-green">{{ stat.trend }}</span>
+          <span class="text-sm font-semibold text-accent-green">{{ stat.trend }}</span>
         </div>
-        <p class="text-[11px] text-slate-500 mt-1 font-semibold">{{ stat.description }}</p>
+        <p class="text-xs text-slate-500 mt-1 font-medium">{{ stat.description }}</p>
       </div>
     </div>
 
@@ -25,13 +25,12 @@
       <div class="col-span-12 lg:col-span-8 glass-panel p-6 rounded-xl">
         <div class="flex items-center justify-between mb-8">
           <div>
-            <h3 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">Producción Semanal</h3>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Producción Semanal</h3>
             <p class="text-sm font-medium text-slate-500">Unidades manufacturadas por día</p>
           </div>
           <div class="flex gap-2">
-            <!-- <button class="px-3 py-1.5 text-xs font-bold rounded-lg bg-panel-light dark:bg-white/5 border border-border-light dark:border-border-dark text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">Día</button> -->
-            <button class="px-3 py-1.5 text-xs font-bold rounded-lg bg-primary text-white border border-primary shadow-lg shadow-primary/20">Semana</button>
-            <button class="px-3 py-1.5 text-xs font-bold rounded-lg bg-panel-light dark:bg-white/5 border border-border-light dark:border-border-dark text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">Mes</button>
+            <button class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-primary text-white border border-primary shadow-lg shadow-primary/20">Semana</button>
+            <button class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-panel-light dark:bg-white/5 border border-border-light dark:border-border-dark text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">Mes</button>
           </div>
         </div>
         <div class="h-64 w-full relative">
@@ -52,8 +51,8 @@
             <circle cx="400" cy="60" fill="#3b82f6" r="5" stroke="white" stroke-width="2"></circle>
             <circle cx="700" cy="90" fill="#3b82f6" r="5" stroke="white" stroke-width="2"></circle>
           </svg>
-          <div class="flex justify-between mt-4 px-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span>
+          <div class="flex justify-between mt-4 px-2 text-xs font-semibold text-slate-400 tracking-wide">
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
           </div>
         </div>
       </div>
@@ -61,11 +60,11 @@
       <!-- Inventory Alerts -->
       <div class="col-span-12 lg:col-span-4 glass-panel p-6 rounded-xl flex flex-col h-full">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
             <AlertTriangleIcon class="text-accent-red w-5 h-5" />
-            Alertas de Inventario
+            Alertas de inventario
           </h3>
-          <NuxtLink to="/inventory" class="text-[10px] font-black text-primary uppercase hover:underline">Ver todo</NuxtLink>
+          <NuxtLink to="/inventory" class="text-xs font-semibold text-primary hover:underline">Ver todo</NuxtLink>
         </div>
         <div class="space-y-3">
           <div v-for="alert in inventoryAlerts" :key="alert.name" 
@@ -76,23 +75,23 @@
               <p class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ alert.name }}</p>
               <p class="text-[11px] font-semibold text-slate-500">Stock actual: {{ alert.stock }}</p>
             </div>
-            <span :class="['px-2.5 py-1 text-[9px] font-black rounded-lg border uppercase truncate ml-2', alert.badgeClass]">
+            <span :class="['px-2.5 py-1 text-xs font-bold rounded-lg border truncate ml-2', alert.badgeClass]">
               {{ alert.level }}
             </span>
           </div>
         </div>
-        <button class="mt-6 w-full py-4 bg-primary text-white text-xs font-black rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 uppercase tracking-wider">
+        <!-- <button class="mt-6 w-full py-3.5 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 tracking-wide">
           <ShoppingCartIcon class="w-4 h-4" />
-          Generar Orden de Compra
-        </button>
+          Generar orden de compra
+        </button> -->
       </div>
     </div>
 
     <!-- Recent Orders Table -->
     <div class="glass-panel rounded-xl overflow-hidden">
       <div class="p-6 border-b border-border-light dark:border-border-dark flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h3 class="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Órdenes de Producción Recientes</h3>
-        <button class="text-[10px] font-black text-slate-500 hover:text-primary flex items-center gap-1 transition-colors uppercase">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Órdenes de producción recientes</h3>
+        <button class="text-xs font-semibold text-slate-500 hover:text-primary flex items-center gap-1 transition-colors">
           Ver historial completo
           <ArrowRightIcon class="w-4 h-4" />
         </button>
@@ -101,12 +100,12 @@
         <table class="w-full text-left">
           <thead class="bg-panel-light dark:bg-white/[0.02] border-b border-border-light dark:border-border-dark">
             <tr>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">ID Orden</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Cliente</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Producto</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Cantidad</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Estado</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Acciones</th>
+              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">ID Orden</th>
+              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">Cliente</th>
+              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">Producto</th>
+              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">Cantidad</th>
+              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">Estado</th>
+              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide text-right">Acciones</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border-light dark:divide-border-dark">
@@ -116,7 +115,7 @@
               <td class="px-6 py-5 text-sm text-slate-500 font-medium">{{ order.product }}</td>
               <td class="px-6 py-5 text-sm text-slate-500 font-medium">{{ order.qty }}</td>
               <td class="px-6 py-5">
-                <span :class="`flex items-center gap-1.5 text-[10px] font-black uppercase ${order.color}`">
+                <span :class="`flex items-center gap-1.5 text-xs font-bold ${order.color}`">
                   <span :class="`w-1.5 h-1.5 rounded-full ${order.bgColor} ${order.status === 'En Corte' ? 'animate-pulse' : ''}`"></span>
                   {{ order.status }}
                 </span>
@@ -219,9 +218,9 @@ const recentOrders = [
 
 /* Dark mode */
 .dark .glass-panel {
-  background: rgba(22, 27, 34, 0.8);
-  border: 1px solid #30363d;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
+  background: rgba(30, 41, 59, 0.75); /* Slate 800 with 75% opacity */
+  border: 1px solid #334155; /* Slate 700 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
 }
 
 /* Chart gradient: más azul en light mode */
