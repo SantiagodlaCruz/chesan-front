@@ -5,10 +5,12 @@
     <button 
       type="button"
       :class="[
-        'w-full flex items-center justify-between bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-transparent hover:border-primary dark:hover:border-primary shadow-sm transition-all focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50',
-        compact ? 'px-2 py-1 rounded-lg min-w-[70px]' : 'px-4 py-2.5 rounded-xl'
+        'w-full flex items-center justify-between bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-[#1e293b]/20 shadow-sm transition-all focus:outline-none',
+        compact ? 'px-2 py-1 rounded-lg min-w-[70px]' : 'px-4 py-2.5 rounded-xl',
+        disabled ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/40' : 'hover:border-primary dark:hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/50'
       ]"
-      @click="openDropdown"
+      :disabled="disabled"
+      @click.stop="!disabled && openDropdown()"
     >
       <span :class="[
         'truncate',
@@ -70,6 +72,7 @@
           No results
         </div>
         <button
+          type="button"
           v-for="(option, index) in filteredOptions"
           :key="option.value"
           @click.stop="selectOption(option)"
@@ -133,6 +136,10 @@ const props = defineProps({
   menuWidth: {
     type: String,
     default: ''
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 

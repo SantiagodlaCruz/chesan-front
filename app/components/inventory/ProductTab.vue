@@ -23,6 +23,7 @@
     <DataTable 
       :columns="[
         { key: 'barcode', label: 'Código de Producto' },
+        { key: 'image_url', label: 'Foto', align: 'center' },
         { key: 'name', label: 'Producto' },
         { key: 'category', label: 'Categoría' },
         { key: 'institution', label: 'Escuela' },
@@ -30,12 +31,14 @@
         { key: 'sale_price', label: 'Precio', align: 'right' },
         { key: 'quantity', label: 'Stock', align: 'center' }
       ]"
+      show-actions
       :items="items" 
       :loading="pending" 
       :meta="meta"
       :links="links"
       :error-msg="errorMsg"
       :per-page="perPage"
+      @view="onView"
       @edit="onEdit"
       @delete="onDelete"
       @page-change="onChangePage"
@@ -50,7 +53,7 @@
             placeholder="Seleccionar..." 
             compact
             menu-width="bottom-full mb-2 w-56 rounded-lg right-0"
-            @update:model-Value="fetchData" 
+            @update:modelValue="fetchData" 
           />
         </div>
       </template>
@@ -58,6 +61,13 @@
         <span class="font-mono text-xs text-primary/80 dark:text-primary-400 bg-primary/5 dark:bg-primary/10 px-2.5 py-1 rounded-md border border-primary/10 tracking-wider">
           {{ value || '---' }}
         </span>
+      </template>
+
+      <template #cell-image_url="{ value }">
+        <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-center">
+          <img v-if="value" :src="value" class="w-full h-full object-cover" />
+          <ShirtIcon v-else class="w-5 h-5 text-slate-400" />
+        </div>
       </template>
 
       <template #cell-name="{ value }">
@@ -103,12 +113,24 @@
       </template>
     </DataTable>
 
+    <!-- Confirmation Modal -->
+    <ConfirmModal 
+      v-model:show="showDeleteConfirm"
+      title="Eliminar Producto"
+      :message="`¿Estás seguro de que deseas eliminar permanentemente esta variante?\n\nProducto: ${itemToDelete?.name}\nColor: ${itemToDelete?.color}\nTalla: ${itemToDelete?.size}\n\nEsta acción no se puede deshacer.`"
+      confirm-text="Eliminar Definitivamente"
+      confirm-variant="danger"
+      :loading="deleting"
+      @confirm="onConfirmDelete"
+    />
+
     <AddProductModal 
       v-model:show="showAddModal" 
       :categorias="catalogs.categories" 
       :instituciones="catalogs.institutions" 
       :colores="catalogs.colors"
       :item-to-edit="selectedItem"
+      :readonly="isReadOnly"
       @saved="onSaveProduct"
     />
   </div>
@@ -116,10 +138,12 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
-import { EditIcon, TrashIcon, SearchIcon, FilterIcon, ArrowUpDownIcon } from 'lucide-vue-next'
+import { EditIcon, TrashIcon, SearchIcon, FilterIcon, ArrowUpDownIcon, ShirtIcon } from 'lucide-vue-next'
 import Select from '~/components/Select.vue'
 import DataTable from '~/components/DataTable.vue'
 import AddProductModal from './AddProductModal.vue'
+import ConfirmModal from '~/components/ConfirmModal.vue'
+import { useToast } from '~/stores/toast'
 import type { StockProduct, ApiMeta, ApiLinks, ApiPaginatedResponse } from '~/types'
 
 const props = defineProps({
@@ -133,6 +157,13 @@ const emit = defineEmits(['update:showModalTrigger'])
 
 const showAddModal = ref(false)
 const selectedItem = ref<StockProduct | null>(null)
+const isReadOnly = ref(false)
+
+// Delete handling
+const showDeleteConfirm = ref(false)
+const deleting = ref(false)
+const itemToDelete = ref<StockProduct | null>(null)
+const toast = useToast()
 
 watch(() => props.search, (val) => {
   filtroBusqueda.value = val
@@ -142,6 +173,7 @@ watch(() => props.search, (val) => {
 watch(() => props.showModalTrigger, (val) => {
   if (val) {
     selectedItem.value = null
+    isReadOnly.value = false
     showAddModal.value = true
     emit('update:showModalTrigger', false)
   }
@@ -232,20 +264,40 @@ const onChangePerPage = (val: number) => {
   fetchData()
 }
 
+const onView = (item: StockProduct) => {
+  selectedItem.value = item
+  isReadOnly.value = true
+  showAddModal.value = true
+}
+
 const onEdit = (item: StockProduct) => {
   selectedItem.value = item
+  isReadOnly.value = false
   showAddModal.value = true
 }
 
 const onDelete = (item: StockProduct) => {
-  console.log('Delete', item)
+  itemToDelete.value = item
+  showDeleteConfirm.value = true
 }
 
-const onSaveProduct = async (data: Partial<StockProduct> | Partial<StockProduct>[]) => {
-  const success = await inventoryStore.saveProduct(data)
-  if (success) {
-    showAddModal.value = false
+const onConfirmDelete = async () => {
+  if (!itemToDelete.value) return
+  
+  try {
+    deleting.value = true
+    await inventoryStore.deleteProduct(itemToDelete.value.id)
+    toast.success('Producto eliminado correctamente')
+    showDeleteConfirm.value = false
     fetchData()
+  } catch (err: any) {
+    toast.error(err.message || 'Error al eliminar el producto')
+  } finally {
+    deleting.value = false
   }
+}
+
+const onSaveProduct = () => {
+  fetchData()
 }
 </script>

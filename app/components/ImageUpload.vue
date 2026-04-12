@@ -6,26 +6,34 @@
     
     <div 
       class="relative group"
-      @dragover.prevent="isDragging = true"
+      :class="[
+        readonly ? 'cursor-default' : 'cursor-pointer',
+      ]"
+      @dragover.prevent="!readonly && (isDragging = true)"
       @dragleave.prevent="isDragging = false"
-      @drop.prevent="handleDrop"
+      @drop.prevent="!readonly && handleDrop($event)"
     >
       <!-- Dropzone / Preview Area -->
       <div 
         class="relative w-full aspect-square rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center overflow-hidden bg-slate-50 dark:bg-white/5"
         :class="[
           isDragging ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700',
-          previewUrl ? 'border-solid border-transparent' : ''
+          previewUrl && !isLoading ? 'border-solid border-transparent' : ''
         ]"
       >
+        <!-- Loading State -->
+        <div v-if="isLoading" class="absolute inset-0 z-20 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+          <div class="w-10 h-10 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
+          <p class="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse">Procesando...</p>
+        </div>
         <!-- Image Preview -->
         <template v-if="previewUrl">
-          <img :src="previewUrl" class="w-full h-full object-cover animate-in fade-in zoom-in-95 duration-500" />
-          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
-            <button @click="triggerInput" class="p-2.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all transform hover:scale-110">
+          <img :src="previewUrl" class="w-full h-full object-cover animate-in fade-in zoom-in-95 duration-500" @error="onImageError" />
+          <div v-if="!readonly" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
+            <button type="button" @click="triggerInput" class="p-2.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all transform hover:scale-110">
               <UploadIcon class="w-5 h-5" />
             </button>
-            <button @click="removeImage" class="p-2.5 bg-red-500/20 hover:bg-red-500/60 rounded-full text-white transition-all transform hover:scale-110">
+            <button type="button" @click="removeImage" class="p-2.5 bg-red-500/20 hover:bg-red-500/60 rounded-full text-white transition-all transform hover:scale-110">
               <Trash2Icon class="w-5 h-5" />
             </button>
           </div>
@@ -46,7 +54,7 @@
               </p>
             </div>
           </div>
-          <button @click="triggerInput" class="absolute inset-0 w-full h-full outline-none focus:ring-2 focus:ring-primary/50 rounded-2xl cursor-pointer"></button>
+          <button type="button" v-if="!readonly" @click="triggerInput" class="absolute inset-0 w-full h-full outline-none focus:ring-2 focus:ring-primary/50 rounded-2xl cursor-pointer"></button>
         </template>
       </div>
 
@@ -76,6 +84,7 @@ const props = defineProps<{
   modelValue: string | File | Record<string, any> | null | undefined
   label?: string
   initialPreview?: string
+  readonly?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue'])
@@ -83,6 +92,7 @@ const emit = defineEmits(['update:modelValue'])
 const fileInput = ref<HTMLInputElement | null>(null)
 const previewUrl = ref(props.initialPreview || '')
 const isDragging = ref(false)
+const isLoading = ref(false)
 
 // Watch for initial preview changes (e.g. when editing)
 watch(() => props.initialPreview, (val) => {
@@ -108,6 +118,8 @@ const handleDrop = (e: DragEvent) => {
 }
 
 const processFile = (file: File) => {
+  if (props.readonly) return
+  isLoading.value = true
   // Update model
   emit('update:modelValue', file)
   
@@ -118,13 +130,24 @@ const processFile = (file: File) => {
     if (typeof result === 'string') {
       previewUrl.value = result
     }
+    setTimeout(() => {
+      isLoading.value = false
+    }, 400) // Small delay for smooth transition
+  }
+  reader.onerror = () => {
+    isLoading.value = false
   }
   reader.readAsDataURL(file)
 }
 
 const removeImage = () => {
+  if (props.readonly) return
   previewUrl.value = ''
   emit('update:modelValue', null)
   if (fileInput.value) fileInput.value.value = ''
+}
+
+const onImageError = () => {
+  // If the image fails to load, we can show a placeholder or do nothing
 }
 </script>

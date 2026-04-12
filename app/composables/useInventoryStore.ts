@@ -41,39 +41,103 @@ export const useInventoryStore = defineStore('inventory', () => {
     }
   }
 
-  async function saveProduct(data: Partial<StockProduct> | Partial<StockProduct>[]) {
+  async function saveProduct(data: any) {
     const config = useRuntimeConfig()
     const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
     const auth = useAuth()
 
     try {
-      if (Array.isArray(data)) {
-        await Promise.all(data.map(product => 
+      const isArray = Array.isArray(data)
+      const hasImage = (!isArray && data.image instanceof File) || (isArray && data.some((item: any) => item.image instanceof File))
+
+      if (hasImage && !isArray) {
+        // Handle single with image via FormData
+        const formData = new FormData()
+        Object.entries(data).forEach(([key, value]) => {
+          if (value === null || value === undefined) return
+          if (key === 'variants' && Array.isArray(value)) {
+            value.forEach((v, i) => {
+              Object.entries(v).forEach(([vk, vv]) => {
+                formData.append(`variants[${i}][${vk}]`, vv as any)
+              });
+            });
+          } else {
+            formData.append(key, value as any)
+          }
+        })
+
+        await $fetch(`${apiUrl}/api/stock-products${data.id ? '/' + data.id : ''}`, {
+          method: 'POST', // Use POST for both since we might need _method for PUT with FormData
+          headers: { 
+            'Authorization': `Bearer ${auth.token}`,
+            'Accept': 'application/json'
+          },
+          params: data.id ? { _method: 'PUT' } : {},
+          body: formData
+        })
+      } else if (isArray) {
+        // Current bulk logic (JSON)
+        await Promise.all(data.map((product: any) => 
           $fetch(`${apiUrl}/api/stock-products`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${auth.token}` },
+            headers: { 
+              'Authorization': `Bearer ${auth.token}`,
+              'Accept': 'application/json'
+            },
             body: product
           })
         ))
       } else if (data.id) {
         await $fetch(`${apiUrl}/api/stock-products/${data.id}`, {
           method: 'PUT',
-          headers: { Authorization: `Bearer ${auth.token}` },
+          headers: { 
+            'Authorization': `Bearer ${auth.token}`,
+            'Accept': 'application/json'
+          },
           body: data
         })
       } else {
         await $fetch(`${apiUrl}/api/stock-products`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${auth.token}` },
+          headers: { 
+            'Authorization': `Bearer ${auth.token}`,
+            'Accept': 'application/json'
+          },
           body: data
         })
       }
       return true
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Error saving product', err)
-      return false
+      if (err.response?._data) {
+        throw err.response._data
+      }
+      throw err
     }
   }
 
-  return { items, meta, links, loading, error, fetchProducts, saveProduct }
+  async function deleteProduct(id: number | string) {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
+    const auth = useAuth()
+
+    try {
+      await $fetch(`${apiUrl}/api/stock-products/${id}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${auth.token}`,
+          'Accept': 'application/json'
+        }
+      })
+      return true
+    } catch (err: any) {
+      console.error('Error deleting product', err)
+      if (err.response?._data) {
+        throw err.response._data
+      }
+      throw err
+    }
+  }
+
+  return { items, meta, links, loading, error, fetchProducts, saveProduct, deleteProduct }
 })
