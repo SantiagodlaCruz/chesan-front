@@ -97,6 +97,7 @@
             @update:model-value="$emit('per-page-change', $event)"
           />
         </div>
+        <slot name="footer-left" />
       </div>
 
       <div class="flex items-center gap-1.5">

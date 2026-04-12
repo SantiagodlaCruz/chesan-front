@@ -40,9 +40,11 @@
         v-if="isOpen" 
         :class="[
           'absolute z-[70] bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] shadow-2xl dark:shadow-blue-900/40 flex flex-col focus:outline-none overflow-hidden',
-          compact 
-            ? (direction === 'down' ? 'mt-2 w-56 rounded-lg left-0 top-full' : 'bottom-full mb-2 w-24 rounded-lg right-0') 
-            : 'mt-2 w-full rounded-xl left-0'
+          menuWidth ? menuWidth : (
+            compact 
+              ? (direction === 'down' ? 'mt-2 w-56 rounded-lg left-0 top-full' : 'bottom-full mb-2 w-24 rounded-lg right-0') 
+              : 'mt-2 w-full rounded-xl left-0'
+          )
         ]"
       >
         <!-- Search Input -->
@@ -127,6 +129,10 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  menuWidth: {
+    type: String,
+    default: ''
   }
 })
 

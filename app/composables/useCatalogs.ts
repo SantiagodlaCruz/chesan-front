@@ -7,6 +7,7 @@ export const useCatalogsStore = defineStore('catalogs', () => {
   const categories = ref<SelectOption[]>([])
   const institutions = ref<SelectOption[]>([])
   const colors = ref<SelectOption[]>([])
+  const sizes = ref<SelectOption[]>([])
   
   const loading = ref(false)
   const lastFetched = ref(0)
@@ -24,15 +25,17 @@ export const useCatalogsStore = defineStore('catalogs', () => {
     const auth = useAuth()
     
     try {
-      const [catRes, instRes, colorRes] = await Promise.all([
+      const [catRes, instRes, colorRes, sizeRes] = await Promise.all([
         $fetch<ApiResponse<Category[]>>(`${apiUrl}/api/categories`, { headers: { Authorization: `Bearer ${auth.token}` } }),
         $fetch<ApiResponse<Client[]>>(`${apiUrl}/api/clients/institutions`, { headers: { Authorization: `Bearer ${auth.token}` } }),
-        $fetch<ApiResponse<Color[]>>(`${apiUrl}/api/colors`, { headers: { Authorization: `Bearer ${auth.token}` } })
+        $fetch<ApiResponse<Color[]>>(`${apiUrl}/api/colors`, { headers: { Authorization: `Bearer ${auth.token}` } }),
+        $fetch<ApiResponse<SelectOption[]>>(`${apiUrl}/api/sizes`, { headers: { Authorization: `Bearer ${auth.token}` } })
       ])
       
       categories.value = (catRes.data || []).map((c: Category) => ({ label: c.name, value: c.id }))
       institutions.value = (instRes.data || []).map((i: Client) => ({ label: i.name, value: i.id }))
       colors.value = (colorRes.data || []).map((c: Color) => ({ label: c.name, value: c.name })) 
+      sizes.value = sizeRes.data || []
       
       lastFetched.value = now
     } catch (err) {
@@ -42,7 +45,7 @@ export const useCatalogsStore = defineStore('catalogs', () => {
     }
   }
 
-  return { categories, institutions, colors, loading, fetchAll }
+  return { categories, institutions, colors, sizes, loading, fetchAll }
 })
 
 export const useCatalogs = () => useCatalogsStore()

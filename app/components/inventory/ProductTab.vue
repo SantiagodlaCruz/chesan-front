@@ -1,22 +1,21 @@
 <template>
   <div class="space-y-4">
     <!-- Filters -->
-    <div class="flex items-end flex-wrap gap-2 pb-1 pt-1 relative z-10 w-full">
+    <div class="flex items-end flex-wrap gap-3 pb-1 pt-1 relative z-10 w-full mb-2">
       <div class="w-64 shrink-0">
         <Select v-model="filtroInstitucion" :options="institucionesOp" label="Escuela" placeholder="Todas" searchable :loading="catalogs.loading" @update:modelValue="debouncedFetch" />
       </div>
-      <div class="w-48 shrink-0">
+      <div class="w-44 shrink-0">
         <Select v-model="filtroCategoria" :options="categoriasOp" label="Categoría" placeholder="Todas" searchable :loading="catalogs.loading" @update:modelValue="debouncedFetch" />
       </div>
-      <div class="w-40 shrink-0">
+      <div class="w-36 shrink-0">
         <Select v-model="filtroColor" :options="coloresOp" label="Color" placeholder="Todas" searchable :loading="catalogs.loading" @update:modelValue="debouncedFetch" />
       </div>
       <div class="w-32 shrink-0">
-        <Select v-model="filtroStock" :options="opcionesStock" label="Stock" placeholder="Todos" @update:modelValue="debouncedFetch" />
+        <Select v-model="filtroTalla" :options="tallasOp" label="Talla" placeholder="Todas" searchable :loading="catalogs.loading" @update:modelValue="debouncedFetch" />
       </div>
-
-      <div class="w-56 shrink-0">
-        <Select v-model="filtroOrden" :options="opcionesOrden" label="Ordenar" placeholder="Seleccionar..." @update:modelValue="fetchData" />
+      <div class="w-32 shrink-0">
+        <Select v-model="filtroStock" :options="opcionesStock" label="Stock" placeholder="Todos" @update:modelValue="debouncedFetch" />
       </div>
     </div>
 
@@ -42,6 +41,19 @@
       @page-change="onChangePage"
       @per-page-change="onChangePerPage"
     >
+      <template #footer-left>
+        <div class="flex items-center gap-2 border-l border-slate-200 dark:border-slate-800 pl-4">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-tight">Ordenar:</span>
+          <Select 
+            v-model="filtroOrden" 
+            :options="opcionesOrden" 
+            placeholder="Seleccionar..." 
+            compact
+            menu-width="bottom-full mb-2 w-56 rounded-lg right-0"
+            @update:model-Value="fetchData" 
+          />
+        </div>
+      </template>
       <template #cell-barcode="{ value }">
         <span class="font-mono text-xs text-primary/80 dark:text-primary-400 bg-primary/5 dark:bg-primary/10 px-2.5 py-1 rounded-md border border-primary/10 tracking-wider">
           {{ value || '---' }}
@@ -140,6 +152,7 @@ const filtroBusqueda = ref('')
 const filtroCategoria = ref('')
 const filtroInstitucion = ref('')
 const filtroColor = ref('')
+const filtroTalla = ref('')
 const filtroStock = ref('')
 const filtroOrden = ref('id_desc')
 const inventoryStore = useInventoryStore()
@@ -158,6 +171,7 @@ const errorMsg = computed(() => inventoryStore.error || '')
 const categoriasOp = computed(() => [{ label: 'Todas', value: '' }, ...(catalogs.categories || [])])
 const institucionesOp = computed(() => [{ label: 'Todas', value: '' }, ...(catalogs.institutions || [])])
 const coloresOp = computed(() => [{ label: 'Todas', value: '' }, ...(catalogs.colors || [])])
+const tallasOp = computed(() => [{ label: 'Todas', value: '' }, ...(catalogs.sizes || [])])
 const opcionesStock = [
   { label: 'Todos', value: '' },
   { label: 'Agotado (0)', value: 'out_of_stock' },
@@ -183,6 +197,7 @@ const fetchData = async () => {
     category_id: filtroCategoria.value || '',
     institution_id: filtroInstitucion.value || '',
     color: filtroColor.value,
+    size: filtroTalla.value,
     stock_status: filtroStock.value,
     sort_by: sortBy || 'id',
     sort_direction: sortDirection || 'desc',
