@@ -64,7 +64,7 @@
             <AlertTriangleIcon class="text-accent-red w-5 h-5" />
             Alertas de inventario
           </h3>
-          <NuxtLink to="/inventory" class="text-xs font-semibold text-primary hover:underline">Ver todo</NuxtLink>
+          <NuxtLink to="/inventory/products" class="text-xs font-semibold text-primary hover:underline">Ver todo</NuxtLink>
         </div>
         <div class="space-y-3">
           <div v-for="alert in inventoryAlerts" :key="alert.name" 

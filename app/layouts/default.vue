@@ -164,8 +164,10 @@ import {
   BellIcon,
   UserIcon,
   BoxIcon,
+  PackageIcon,
   ShirtIcon,
-  ShieldIcon
+  ShieldIcon,
+  SettingsIcon
 } from 'lucide-vue-next'
 import ChangePasswordModal from '~/components/ChangePasswordModal.vue'
 
@@ -176,9 +178,11 @@ const isCollapsed = useState('sidebar-collapsed', () => false)
 
 const navItems = [
   { label: 'Inicio', path: '/', icon: LayoutDashboardIcon },
-  { label: 'Inventario', path: '/inventory', icon: BoxIcon },
+  { label: 'Productos', path: '/inventory/products', icon: BoxIcon },
+  { label: 'Materia Prima', path: '/inventory/raw-materials', icon: PackageIcon },
   { label: 'Producción', path: '/production', icon: FactoryIcon },
-  { label: 'Punto de venta', path: '/pos', icon: ShoppingCartIcon },
+  { label: 'Punto de venta', path: '/point-of-sale', icon: ShoppingCartIcon },
+  { label: 'Catálogos', path: '/catalogs', icon: SettingsIcon },
 ]
 
 const showProfileMenu = ref(false)

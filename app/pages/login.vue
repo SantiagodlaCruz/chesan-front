@@ -245,7 +245,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Form as VForm, Field as VField } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
 import * as yup from 'yup'
@@ -280,10 +280,15 @@ const recoveryError = ref('')
 const recoverySuccess = ref('')
 const lastRecoveryEmail = ref('')
 
-const typedSchema = toTypedSchema(loginSchema)
-const typedRecoverySchema = toTypedSchema(recoverySchema)
+const typedSchema = hideToTypedSchema(loginSchema)
+const typedRecoverySchema = hideToTypedSchema(recoverySchema)
 
-const onRecoverySubmit = async (values) => {
+// Workaround for toTypedSchema if needed or use it directly
+function hideToTypedSchema(schema: any) {
+  return toTypedSchema(schema)
+}
+
+const onRecoverySubmit = async (values: any) => {
   isSubmittingRecovery.value = true
   recoveryError.value = ''
   recoverySuccess.value = ''
@@ -296,19 +301,19 @@ const onRecoverySubmit = async (values) => {
     })
     recoverySuccess.value = 'Se han enviado las instrucciones a tu correo electrónico registrado.'
     lastRecoveryEmail.value = values.email
-  } catch (e) {
+  } catch (e: any) {
     recoveryError.value = e.data?.message || 'Ocurrió un error al procesar tu solicitud.'
   } finally {
     isSubmittingRecovery.value = false
   }
 }
 
-const onSubmit = async (values) => {
+const onSubmit = async (values: any) => {
   isSubmitting.value = true
   loginError.value = ''
   try {
     await login({ email: values.email, password: values.password })
-  } catch (e) {
+  } catch (e: any) {
     loginError.value = e.message || 'Credenciales incorrectas. Por favor intente de nuevo.'
   } finally {
     isSubmitting.value = false

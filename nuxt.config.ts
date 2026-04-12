@@ -2,12 +2,23 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  runtimeConfig: {
+    public: {
+      apiBaseUrl: 'http://127.0.0.1:8000'
+    }
+  },
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/color-mode',
     '@pinia/nuxt',
     'pinia-plugin-persistedstate/nuxt'
   ],
+  piniaPluginPersistedstate: {
+    cookieOptions: {
+      sameSite: 'lax',
+    },
+    storage: 'cookies'
+  },
   colorMode: {
     classSuffix: '',
     preference: 'system',
@@ -45,6 +56,15 @@ export default defineNuxtConfig({
           },
           fontFamily: {
             display: ['Inter', 'sans-serif']
+          },
+          keyframes: {
+            'pulse-soft': {
+              '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+              '50%': { opacity: '0.7', transform: 'scale(0.96)' },
+            }
+          },
+          animation: {
+            'pulse-soft': 'pulse-soft 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
           }
         }
       }
