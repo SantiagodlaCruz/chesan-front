@@ -41,26 +41,82 @@ export const useRawMaterialsStore = defineStore('rawMaterials', () => {
     }
   }
 
-  async function saveMaterial(data: Partial<RawMaterial>) {
+  async function saveMaterial(data: any) {
     const config = useRuntimeConfig()
     const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
     const auth = useAuth()
 
     try {
-      const method = data.id ? 'PUT' : 'POST'
-      const url = data.id ? `${apiUrl}/api/raw-materials/${data.id}` : `${apiUrl}/api/raw-materials`
-      
-      await $fetch(url, {
-        method,
-        headers: { Authorization: `Bearer ${auth.token}` },
-        body: data
-      })
+      const hasImage = data.image instanceof File
+
+      if (hasImage) {
+        // Handle with FormData for image uploads
+        const formData = new FormData()
+        Object.entries(data).forEach(([key, value]) => {
+          if (value === null || value === undefined) return
+          formData.append(key, value as any)
+        })
+
+        await $fetch(`${apiUrl}/api/raw-materials${data.id ? '/' + data.id : ''}`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${auth.token}`,
+            'Accept': 'application/json'
+          },
+          params: data.id ? { _method: 'PUT' } : {},
+          body: formData
+        })
+      } else if (data.id) {
+        await $fetch(`${apiUrl}/api/raw-materials/${data.id}`, {
+          method: 'PUT',
+          headers: { 
+            'Authorization': `Bearer ${auth.token}`,
+            'Accept': 'application/json'
+          },
+          body: data
+        })
+      } else {
+        await $fetch(`${apiUrl}/api/raw-materials`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${auth.token}`,
+            'Accept': 'application/json'
+          },
+          body: data
+        })
+      }
       return true
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Error saving material', err)
-      return false
+      if (err.response?._data) {
+        throw err.response._data
+      }
+      throw err
     }
   }
 
-  return { items, meta, links, loading, error, fetchMaterials, saveMaterial }
+  async function deleteMaterial(id: number | string) {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
+    const auth = useAuth()
+
+    try {
+      await $fetch(`${apiUrl}/api/raw-materials/${id}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${auth.token}`,
+          'Accept': 'application/json'
+        }
+      })
+      return true
+    } catch (err: any) {
+      console.error('Error deleting material', err)
+      if (err.response?._data) {
+        throw err.response._data
+      }
+      throw err
+    }
+  }
+
+  return { items, meta, links, loading, error, fetchMaterials, saveMaterial, deleteMaterial }
 })

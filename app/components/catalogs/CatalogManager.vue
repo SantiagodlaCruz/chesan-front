@@ -5,9 +5,17 @@
       :columns="fields"
       :items="items"
       :loading="loading"
-      @edit="openModal"
-      @delete="(item) => deleteItem(item.id)"
-    />
+      show-actions
+    >
+      <template #actions="{ item }">
+        <button @click="openModal(item)" class="p-1.5 hover:bg-yellow-500/10 rounded-xl transition-all group/btn" title="Editar">
+          <EditIcon class="w-4 h-4 text-[#eab308] group-hover/btn:scale-110 transition-transform" />
+        </button>
+        <button @click="deleteItem(item.id)" class="p-1.5 hover:bg-red-500/10 rounded-xl transition-all group/btn" title="Eliminar">
+          <TrashIcon class="w-4 h-4 text-accent-red group-hover/btn:scale-110 transition-transform" />
+        </button>
+      </template>
+    </DataTable>
 
     <BaseModal
       v-model:show="showModal"
@@ -16,7 +24,7 @@
     >
       <form @submit.prevent="save" class="space-y-4">
         <div v-for="field in fields" :key="field.key" class="flex flex-col gap-1.5">
-          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">{{ field.label }}</label>
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">{{ field.label }}</label>
           <input 
             v-model="form[field.key]"
             :type="field.type"
@@ -36,12 +44,25 @@
         </div>
       </form>
     </BaseModal>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal 
+      v-model:show="showDeleteConfirm"
+      title="Eliminar Registro"
+      :message="'¿Estás seguro de que deseas eliminar permanentemente este registro del catálogo?\n\nEsta acción no se puede deshacer.'"
+      confirm-text="Eliminar"
+      confirm-variant="danger"
+      :loading="deleting"
+      @confirm="onConfirmDelete"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { EditIcon, TrashIcon } from 'lucide-vue-next'
 import DataTable from '~/components/DataTable.vue'
+import ConfirmModal from '~/components/ConfirmModal.vue'
 
 const props = defineProps({
   endpoint: String,
@@ -105,21 +126,35 @@ const save = async () => {
   }
 }
 
-const deleteItem = async (id) => {
-  if (!confirm('¿Estás seguro de eliminar este registro?')) return
+const showDeleteConfirm = ref(false)
+const itemToDelete = ref(null)
+const deleting = ref(false)
+
+const deleteItem = (id) => {
+  itemToDelete.value = id
+  showDeleteConfirm.value = true
+}
+
+const onConfirmDelete = async () => {
+  if (!itemToDelete.value) return
   
+  deleting.value = true
   const config = useRuntimeConfig()
   const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
   const auth = useAuth()
   
   try {
-    await $fetch(`${apiUrl}${props.endpoint}/${id}`, {
+    await $fetch(`${apiUrl}${props.endpoint}/${itemToDelete.value}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${auth.token}` }
     })
     fetchData()
   } catch (err) {
     console.error('Error deleting catalog item', err)
+  } finally {
+    deleting.value = false
+    showDeleteConfirm.value = false
+    itemToDelete.value = null
   }
 }
 

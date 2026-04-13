@@ -31,11 +31,11 @@
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Categoría</label>
+            <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Categoría</label>
             <Select v-model="form.category_id" :options="categorias" placeholder="Seleccionar" searchable :loading="useCatalogs().loading" :disabled="readonly" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Escuela</label>
+            <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Escuela</label>
             <Select v-model="form.institution_id" :options="instituciones" placeholder="Seleccionar" searchable :loading="useCatalogs().loading" :disabled="readonly" />
           </div>
         </div>
@@ -54,12 +54,12 @@
         <div class="bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-slate-800">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-slate-100 dark:bg-white/5 text-slate-500 font-bold uppercase tracking-widest shadow-sm border-b border-slate-200 dark:border-slate-800 text-[10px] whitespace-nowrap">
+              <tr class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold shadow-sm border-b border-slate-200 dark:border-slate-800 text-xs whitespace-nowrap">
                 <th class="px-4 py-3 min-w-[180px]">Color</th>
                 <th class="px-4 py-3 w-20">Talla</th>
-                <th class="px-4 py-3 w-24">P. PRODUCCIÓN</th>
-                <th class="px-4 py-3 w-24">P. VENTA</th>
-                <th class="px-4 py-3 w-28 text-center">Stock Initial</th>
+                <th class="px-4 py-3 w-24">P. Producción</th>
+                <th class="px-4 py-3 w-24">P. Venta</th>
+                <th class="px-4 py-3 w-28 text-center">Stock Inicial</th>
                 <th v-if="!itemToEdit && !readonly" class="px-4 py-3 w-10 text-center"></th>
               </tr>
             </thead>
@@ -69,7 +69,7 @@
                   <Select v-model="v.color" :options="colores" placeholder="Color" searchable compact direction="down" creatable :loading="useCatalogs().loading" :disabled="readonly" />
                 </td>
                 <td class="px-2 py-2">
-                  <input v-model="v.size" class="w-full bg-transparent border-b-2 border-transparent focus:border-primary transition-all outline-none px-2 py-1.5 font-medium text-slate-900 dark:text-slate-100 uppercase placeholder:normal-case disabled:opacity-70" placeholder="Talla" type="text" required :disabled="readonly" />
+                  <input v-model="v.size" @input="v.size = $event.target.value.toUpperCase()" class="w-full bg-transparent border-b-2 border-transparent focus:border-primary transition-all outline-none px-2 py-1.5 font-medium text-slate-900 dark:text-slate-100 uppercase placeholder:normal-case disabled:opacity-70" placeholder="Talla" type="text" required :disabled="readonly" />
                 </td>
                 <td class="px-2 py-2">
                   <div class="relative">

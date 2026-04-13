@@ -68,13 +68,23 @@
           ]"
         />
       </div>
+      <div v-if="activeTab === 'unit_measures'">
+        <CatalogManager 
+          ref="unitMeasuresMgr"
+          item-label="Unidad de Medida"
+          endpoint="/api/unit-measures"
+          :fields="[
+            { key: 'name', label: 'Nombre de Unidad', type: 'text', required: true, placeholder: 'Ej. Metros, Piezas' }
+          ]"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { TagIcon, SchoolIcon, PaletteIcon, PlusIcon } from 'lucide-vue-next'
+import { TagIcon, SchoolIcon, PaletteIcon, ScaleIcon, PlusIcon } from 'lucide-vue-next'
 import CatalogManager from '~/components/catalogs/CatalogManager.vue'
 
 const activeTab = ref('categories')
@@ -83,11 +93,13 @@ const activeTab = ref('categories')
 const categoriesMgr = ref(null)
 const institutionsMgr = ref(null)
 const colorsMgr = ref(null)
+const unitMeasuresMgr = ref(null)
 
 const tabs = [
   { id: 'categories', label: 'Categorías', icon: TagIcon },
   { id: 'institutions', label: 'Escuelas', icon: SchoolIcon },
-  { id: 'colors', label: 'Colores', icon: PaletteIcon }
+  { id: 'colors', label: 'Colores', icon: PaletteIcon },
+  { id: 'unit_measures', label: 'Unidades', icon: ScaleIcon }
 ]
 
 const currentTabLabel = computed(() => {
@@ -98,6 +110,7 @@ const triggerAdd = () => {
   if (activeTab.value === 'categories') categoriesMgr.value?.openModal()
   if (activeTab.value === 'institutions') institutionsMgr.value?.openModal()
   if (activeTab.value === 'colors') colorsMgr.value?.openModal()
+  if (activeTab.value === 'unit_measures') unitMeasuresMgr.value?.openModal()
 }
 
 definePageMeta({
