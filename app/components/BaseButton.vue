@@ -35,11 +35,12 @@ const variantClasses = computed(() => {
   
   const variants = {
     primary: "bg-primary hover:opacity-90 text-white shadow-primary/20",
+    secondary: "bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 shadow-none",
     dark: "bg-card-dark border border-border-dark text-white hover:bg-background-dark",
     light: "bg-white border border-slate-200 text-slate-900 hover:bg-slate-50",
     ghost: "bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 shadow-none"
   }
   
-  return [base, width, variants[props.variant], props.disabled || props.loading ? 'opacity-60 grayscale-[0.5]' : 'active:scale-95'].join(' ')
+  return [base, width, variants[props.variant] || variants.primary, props.disabled || props.loading ? 'opacity-60 grayscale-[0.5]' : 'active:scale-95'].join(' ')
 })
 </script>
