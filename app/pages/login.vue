@@ -313,8 +313,9 @@ const onSubmit = async (values: any) => {
   loginError.value = ''
   try {
     await login({ email: values.email, password: values.password })
+    await navigateTo('/')
   } catch (e: any) {
-    loginError.value = e.message || 'Credenciales incorrectas. Por favor intente de nuevo.'
+    loginError.value = e?.data?.message || e?.message || 'Credenciales incorrectas. Por favor intente de nuevo.'
   } finally {
     isSubmitting.value = false
   }

@@ -1,5 +1,6 @@
 import type { Category } from './category';
 import type { Client } from './client';
+import type { Color, Size } from './color';
 
 export interface StockProduct {
   id: number;
@@ -8,8 +9,10 @@ export interface StockProduct {
   category?: Category;
   institution_id: number;
   institution?: Client;
-  color: string;
-  size: string;
+  color_id: number | null;
+  color?: Color;
+  size_id: number | null;
+  size?: Size;
   barcode: string | null;
   production_price: number;
   sale_price: number;

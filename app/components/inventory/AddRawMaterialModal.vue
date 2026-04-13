@@ -10,9 +10,9 @@
       <!-- Image + Name Row -->
       <div class="flex gap-6 items-start">
         <div class="w-40 shrink-0">
-          <ImageUpload 
-            v-model="form.image" 
-            label="Imagen Referencial" 
+          <ImageUpload
+            v-model="form.image"
+            label="Imagen Referencial"
             :initial-preview="form.image_url"
             :readonly="readonly"
           />
@@ -20,25 +20,25 @@
 
         <div class="flex-1 space-y-4">
           <div class="flex flex-col gap-1.5">
-            <BaseInput 
-              v-model="form.barcode" 
-              label="Código (Opcional)" 
-              placeholder="Ej. MAT-001 (se autogenera si se deja vacío)" 
+            <BaseInput
+              v-model="form.barcode"
+              label="Código (Opcional)"
+              placeholder="Ej. MAT-001 (se autogenera si se deja vacío)"
               :disabled="readonly"
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <BaseInput 
-              v-model="form.name" 
-              label="Nombre del Material" 
-              placeholder="Ej. Tela Gabardina Azul" 
-              required 
+            <BaseInput
+              v-model="form.name"
+              label="Nombre del Material"
+              placeholder="Ej. Tela Gabardina Azul"
+              required
               :disabled="readonly"
             />
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Unidad de Medida</label>
-            <Select v-model="form.unit_measure" :options="unidades" placeholder="Seleccionar..." searchable creatable :disabled="readonly" />
+            <Select v-model="form.unit_measure_id" :options="unidades" placeholder="Seleccionar..." searchable :disabled="readonly" />
           </div>
         </div>
       </div>
@@ -52,36 +52,36 @@
           <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Precio Unitario</label>
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
-            <input 
-              v-model="form.unit_price" 
-              class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed" 
-              placeholder="45.50" 
-              type="number" 
-              step="0.01" 
-              required 
+            <input
+              v-model="form.unit_price"
+              class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
+              placeholder="45.50"
+              type="number"
+              step="0.01"
+              required
               :disabled="readonly"
             />
           </div>
         </div>
         <div class="flex flex-col gap-1.5">
           <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">{{ itemToEdit ? 'Stock Actual' : 'Cantidad Inicial' }}</label>
-          <input 
-            v-model="form.quantity" 
-            class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed" 
-            placeholder="150" 
-            type="number" 
-            required 
+          <input
+            v-model="form.quantity"
+            class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
+            placeholder="150"
+            type="number"
+            required
             :disabled="readonly"
           />
         </div>
         <div class="flex flex-col gap-1.5">
           <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Umbral Mínimo</label>
-          <input 
-            v-model="form.min_threshold" 
-            class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed" 
-            placeholder="20" 
-            type="number" 
-            required 
+          <input
+            v-model="form.min_threshold"
+            class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
+            placeholder="20"
+            type="number"
+            required
             :disabled="readonly"
           />
         </div>
@@ -92,11 +92,11 @@
         <BaseButton type="button" variant="secondary" :full="false" @click="close" :disabled="saving">
           {{ readonly ? 'Cerrar' : 'Cancelar' }}
         </BaseButton>
-        <BaseButton 
+        <BaseButton
           v-if="!readonly"
-          type="submit" 
-          variant="primary" 
-          :full="false" 
+          type="submit"
+          variant="primary"
+          :full="false"
           class="min-w-[140px]"
           :loading="saving"
           loading-text="Guardando..."
@@ -127,7 +127,6 @@ const props = defineProps<{
 const emit = defineEmits(['update:show', 'saved'])
 const toast = useToast()
 const rawMaterialsStore = useRawMaterialsStore()
-const unitMeasuresStore = useUnitMeasuresStore()
 const saving = ref(false)
 
 const form = reactive({
@@ -136,7 +135,7 @@ const form = reactive({
   name: '',
   image: null as File | string | null,
   image_url: '' as string,
-  unit_measure: '',
+  unit_measure_id: null as number | string | null,
   quantity: 0,
   unit_price: null as number | null,
   min_threshold: 0
@@ -148,7 +147,7 @@ const resetForm = () => {
   form.name = ''
   form.image = null
   form.image_url = ''
-  form.unit_measure = ''
+  form.unit_measure_id = null
   form.quantity = 0
   form.unit_price = null
   form.min_threshold = 0
@@ -162,7 +161,7 @@ watch(() => props.show, (newVal) => {
       form.name = props.itemToEdit.name
       form.image = null
       form.image_url = props.itemToEdit.image_url || ''
-      form.unit_measure = props.itemToEdit.unit_measure
+      form.unit_measure_id = props.itemToEdit.unit_measure_id
       form.quantity = props.itemToEdit.quantity
       form.unit_price = props.itemToEdit.unit_price
       form.min_threshold = props.itemToEdit.min_threshold
@@ -183,17 +182,10 @@ const submit = async () => {
   try {
     saving.value = true
 
-    if (form.unit_measure) {
-      const isCustomUnit = !props.unidades.find(u => u.value === form.unit_measure)
-      if (isCustomUnit) {
-        await unitMeasuresStore.saveUnitMeasure(form.unit_measure)
-      }
-    }
-    
     const payload: any = {
       barcode: form.barcode,
       name: form.name,
-      unit_measure: form.unit_measure,
+      unit_measure_id: form.unit_measure_id,
       unit_price: form.unit_price,
       quantity: form.quantity,
       min_threshold: form.min_threshold,
@@ -208,7 +200,7 @@ const submit = async () => {
     }
 
     const result = await rawMaterialsStore.saveMaterial(payload)
-    
+
     if (result) {
       toast.success(props.itemToEdit ? 'Material actualizado con éxito' : 'Material registrado correctamente')
       emit('saved')

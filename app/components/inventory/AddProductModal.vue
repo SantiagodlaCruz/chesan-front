@@ -11,9 +11,9 @@
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 pb-8 border-b border-dashed border-slate-200 dark:border-slate-800">
         <!-- Product Photo -->
         <div class="lg:col-span-1">
-          <ImageUpload 
-            v-model="form.image" 
-            label="Imagen Referencial" 
+          <ImageUpload
+            v-model="form.image"
+            label="Imagen Referencial"
             :initial-preview="form.image_url"
             :readonly="readonly"
           />
@@ -22,11 +22,11 @@
         <!-- Basic Details -->
         <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-5">
           <div class="md:col-span-2">
-            <BaseInput 
-              v-model="form.name" 
-              label="Nombre Base del Producto" 
-              placeholder="" 
-              required 
+            <BaseInput
+              v-model="form.name"
+              label="Nombre Base del Producto"
+              placeholder=""
+              required
               :disabled="readonly"
             />
           </div>
@@ -56,7 +56,7 @@
             <thead>
               <tr class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold shadow-sm border-b border-slate-200 dark:border-slate-800 text-xs whitespace-nowrap">
                 <th class="px-4 py-3 min-w-[180px]">Color</th>
-                <th class="px-4 py-3 w-20">Talla</th>
+                <th class="px-4 py-3 min-w-[140px]">Talla</th>
                 <th class="px-4 py-3 w-24">P. Producción</th>
                 <th class="px-4 py-3 w-24">P. Venta</th>
                 <th class="px-4 py-3 w-28 text-center">Stock Inicial</th>
@@ -66,10 +66,10 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
               <tr v-for="(v, idx) in form.variants" :key="idx" class="group transition-colors">
                 <td class="px-2 py-2">
-                  <Select v-model="v.color" :options="colores" placeholder="Color" searchable compact direction="down" creatable :loading="useCatalogs().loading" :disabled="readonly" />
+                  <Select v-model="v.color_id" :options="colores" placeholder="Color" searchable compact direction="down" :loading="useCatalogs().loading" :disabled="readonly" />
                 </td>
                 <td class="px-2 py-2">
-                  <input v-model="v.size" @input="v.size = $event.target.value.toUpperCase()" class="w-full bg-transparent border-b-2 border-transparent focus:border-primary transition-all outline-none px-2 py-1.5 font-medium text-slate-900 dark:text-slate-100 uppercase placeholder:normal-case disabled:opacity-70" placeholder="Talla" type="text" required :disabled="readonly" />
+                  <Select v-model="v.size_id" :options="tallas" placeholder="Talla" searchable compact direction="down" :loading="useCatalogs().loading" :disabled="readonly" />
                 </td>
                 <td class="px-2 py-2">
                   <div class="relative">
@@ -104,11 +104,11 @@
         <BaseButton type="button" variant="secondary" :full="false" @click="close" :disabled="saving">
           {{ readonly ? 'Cerrar' : 'Cancelar' }}
         </BaseButton>
-        <BaseButton 
+        <BaseButton
           v-if="!readonly"
-          type="submit" 
-          variant="primary" 
-          :full="false" 
+          type="submit"
+          variant="primary"
+          :full="false"
           class="min-w-[140px]"
           :loading="saving"
           loading-text="Guardando..."
@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
-import { XIcon, PlusIcon, TrashIcon, ImageIcon } from 'lucide-vue-next'
+import { PlusIcon, TrashIcon } from 'lucide-vue-next'
 import BaseButton from '~/components/BaseButton.vue'
 import Select from '~/components/Select.vue'
 import ImageUpload from '~/components/ImageUpload.vue'
@@ -133,6 +133,7 @@ const props = defineProps<{
   categorias: SelectOption[]
   instituciones: SelectOption[]
   colores: SelectOption[]
+  tallas: SelectOption[]
   itemToEdit: StockProduct | null
   readonly?: boolean
 }>()
@@ -140,8 +141,8 @@ const props = defineProps<{
 const emit = defineEmits(['update:show', 'saved'])
 
 interface ProductVariant {
-  color: string
-  size: string
+  color_id: number | string
+  size_id: number | string
   production_price: number | null
   sale_price: number | null
   quantity: number
@@ -166,11 +167,10 @@ const form = reactive<{
 })
 
 const addVariant = () => {
-  // Try to inherit prices from previous variant if exists
   const last = form.variants[form.variants.length - 1]
   form.variants.push({
-    color: last?.color || '',
-    size: '',
+    color_id: last?.color_id || '',
+    size_id: '',
     production_price: last?.production_price || null,
     sale_price: last?.sale_price || null,
     quantity: last?.quantity || 1
@@ -189,7 +189,7 @@ const resetForm = () => {
   form.image = null
   form.image_url = ''
   form.variants = [
-    { color: '', size: '', production_price: null, sale_price: null, quantity: 1 }
+    { color_id: '', size_id: '', production_price: null, sale_price: null, quantity: 1 }
   ]
 }
 
@@ -204,12 +204,12 @@ watch(() => props.show, (newVal) => {
         image: null,
         image_url: props.itemToEdit.image_url || '',
         variants: [
-          { 
-            color: props.itemToEdit.color || '', 
-            size: props.itemToEdit.size || '', 
-            production_price: props.itemToEdit.production_price || null, 
-            sale_price: props.itemToEdit.sale_price || null, 
-            quantity: props.itemToEdit.quantity || 0 
+          {
+            color_id: props.itemToEdit.color_id || '',
+            size_id: props.itemToEdit.size_id || '',
+            production_price: props.itemToEdit.production_price || null,
+            sale_price: props.itemToEdit.sale_price || null,
+            quantity: props.itemToEdit.quantity || 0
           }
         ]
       })
@@ -231,27 +231,25 @@ const close = () => {
 const submit = async () => {
   try {
     saving.value = true
-    
-    // Preparar el payload
+
     const { image_url, ...payload } = form
-    
+
     // Si estamos editando, traemos los datos de la primera variante al objeto principal
     if (form.id && form.variants.length > 0) {
       Object.assign(payload, form.variants[0])
     }
 
     const result = await inventoryStore.saveProduct(payload)
-    
+
     if (result) {
       toast.success(props.itemToEdit ? 'Producto actualizado con éxito' : 'Producto y variantes creados correctamente')
-      emit('saved') 
-      saving.value = false // Clear saving state before closing
+      emit('saved')
+      saving.value = false
       close()
     }
   } catch (err: any) {
     console.error('Error in modal submit:', err)
-    
-    // Manejo elegante de errores de validación (422)
+
     if (err.errors) {
       const firstError = Object.values(err.errors)[0] as string[]
       toast.error(firstError[0] || 'Error de validación en los datos')

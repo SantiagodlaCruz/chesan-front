@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Table -->
-    <DataTable 
+    <DataTable
       :columns="fields"
       :items="items"
       :loading="loading"
@@ -25,7 +25,7 @@
       <form @submit.prevent="save" class="space-y-4">
         <div v-for="field in fields" :key="field.key" class="flex flex-col gap-1.5">
           <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">{{ field.label }}</label>
-          <input 
+          <input
             v-model="form[field.key]"
             :type="field.type"
             :placeholder="field.placeholder"
@@ -46,7 +46,7 @@
     </BaseModal>
 
     <!-- Delete Confirmation Modal -->
-    <ConfirmModal 
+    <ConfirmModal
       v-model:show="showDeleteConfirm"
       title="Eliminar Registro"
       :message="'¿Estás seguro de que deseas eliminar permanentemente este registro del catálogo?\n\nEsta acción no se puede deshacer.'"
@@ -63,6 +63,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { EditIcon, TrashIcon } from 'lucide-vue-next'
 import DataTable from '~/components/DataTable.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
+import { useToast } from '~/stores/toast'
+import { useAuth } from '~/composables/useAuth'
+import { useCatalogs } from '~/composables/useCatalogs'
 
 const props = defineProps({
   endpoint: String,
@@ -70,6 +73,7 @@ const props = defineProps({
   fields: Array
 })
 
+const toast = useToast()
 const items = ref([])
 const loading = ref(false)
 const showModal = ref(false)
@@ -81,7 +85,7 @@ const fetchData = async () => {
   const config = useRuntimeConfig()
   const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
   const auth = useAuth()
-  
+
   try {
     const res = await $fetch(`${apiUrl}${props.endpoint}`, {
       headers: { Authorization: `Bearer ${auth.token}` }
@@ -106,22 +110,28 @@ const save = async () => {
   const config = useRuntimeConfig()
   const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
   const auth = useAuth()
-  
+  const catalogs = useCatalogs()
+
   try {
     const method = selectedItem.value ? 'PUT' : 'POST'
-    const url = selectedItem.value 
+    const url = selectedItem.value
       ? `${apiUrl}${props.endpoint}/${selectedItem.value.id}`
       : `${apiUrl}${props.endpoint}`
-      
+
     await $fetch(url, {
       method,
       headers: { Authorization: `Bearer ${auth.token}` },
       body: form
     })
-    
+
+    // Limpiar caché global para que otros selects se actualicen
+    catalogs.invalidateCache()
+
     showModal.value = false
     fetchData()
   } catch (err) {
+    const msg = err?.data?.message || err?.message || 'Error al guardar el registro'
+    toast.error(msg)
     console.error('Error saving catalog item', err)
   }
 }
@@ -137,19 +147,27 @@ const deleteItem = (id) => {
 
 const onConfirmDelete = async () => {
   if (!itemToDelete.value) return
-  
+
   deleting.value = true
   const config = useRuntimeConfig()
   const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
   const auth = useAuth()
-  
+  const catalogs = useCatalogs()
+
   try {
     await $fetch(`${apiUrl}${props.endpoint}/${itemToDelete.value}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${auth.token}` }
     })
+    
+    // Invalidad caché global
+    catalogs.invalidateCache()
+
+    toast.success('Registro eliminado correctamente')
     fetchData()
   } catch (err) {
+    const msg = err?.data?.message || err?.message || 'No se pudo eliminar el registro'
+    toast.error(msg)
     console.error('Error deleting catalog item', err)
   } finally {
     deleting.value = false

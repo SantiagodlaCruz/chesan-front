@@ -74,7 +74,7 @@
             class="text-center text-xs font-black px-2.5 py-1 rounded-lg border transition-all duration-300"
             :class="getStockClass(value, (item as RawMaterial).min_threshold)"
           >
-            {{ value || 0 }} / {{ (item as RawMaterial).unit_measure || '---' }}
+            {{ value || 0 }} / {{ (item as RawMaterial).unit_measure?.name || '---' }}
           </span>
         </div>
       </template>
@@ -84,7 +84,7 @@
     <ConfirmModal 
       v-model:show="showDeleteConfirm"
       title="Eliminar Material"
-      :message="`¿Estás seguro de que deseas eliminar permanentemente este material?\n\nMaterial: ${itemToDelete?.name}\nUnidad: ${itemToDelete?.unit_measure}\n\nEsta acción no se puede deshacer.`"
+      :message="`¿Estás seguro de que deseas eliminar permanentemente este material?\n\nMaterial: ${itemToDelete?.name}\nUnidad: ${itemToDelete?.unit_measure?.name || '---'}\n\nEsta acción no se puede deshacer.`"
       confirm-text="Eliminar Definitivamente"
       confirm-variant="danger"
       :loading="deleting"
@@ -164,12 +164,12 @@ const unitMeasuresStore = useUnitMeasuresStore()
 const unidadesFiltro = computed<SelectOption[]>(() => {
   return [
     { label: 'Todas', value: '' },
-    ...unitMeasuresStore.items.map(u => ({ label: u.name, value: u.name }))
+    ...unitMeasuresStore.items.map(u => ({ label: u.name, value: u.id }))
   ]
 })
 
 const unidadesModal = computed<SelectOption[]>(() => {
-  return unitMeasuresStore.items.map(u => ({ label: u.name, value: u.name }))
+  return unitMeasuresStore.items.map(u => ({ label: u.name, value: u.id }))
 })
 
 const opcionesStock = [
@@ -194,7 +194,7 @@ const fetchData = async () => {
   
   await rawMaterialsStore.fetchMaterials({
     search: filtroBusqueda.value,
-    unit_measure: filtroUnidad.value,
+    unit_measure_id: filtroUnidad.value,
     stock_status: filtroStock.value,
     sort_by: sortBy || 'id',
     sort_direction: sortDirection || 'desc',

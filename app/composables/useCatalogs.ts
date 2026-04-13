@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useAuth } from './useAuth'
-import type { SelectOption, Category, Client, ApiResponse, Color } from '~/types'
+import type { SelectOption, Category, Client, ApiResponse, Color, Size } from '~/types'
 
 export const useCatalogsStore = defineStore('catalogs', () => {
   const categories = ref<SelectOption[]>([])
@@ -29,13 +29,13 @@ export const useCatalogsStore = defineStore('catalogs', () => {
         $fetch<ApiResponse<Category[]>>(`${apiUrl}/api/categories`, { headers: { Authorization: `Bearer ${auth.token}` } }),
         $fetch<ApiResponse<Client[]>>(`${apiUrl}/api/clients/institutions`, { headers: { Authorization: `Bearer ${auth.token}` } }),
         $fetch<ApiResponse<Color[]>>(`${apiUrl}/api/colors`, { headers: { Authorization: `Bearer ${auth.token}` } }),
-        $fetch<ApiResponse<SelectOption[]>>(`${apiUrl}/api/sizes`, { headers: { Authorization: `Bearer ${auth.token}` } })
+        $fetch<ApiResponse<Size[]>>(`${apiUrl}/api/sizes`, { headers: { Authorization: `Bearer ${auth.token}` } })
       ])
-      
+
       categories.value = (catRes.data || []).map((c: Category) => ({ label: c.name, value: c.id }))
       institutions.value = (instRes.data || []).map((i: Client) => ({ label: i.name, value: i.id }))
-      colors.value = (colorRes.data || []).map((c: Color) => ({ label: c.name, value: c.name })) 
-      sizes.value = sizeRes.data || []
+      colors.value = (colorRes.data || []).map((c: Color) => ({ label: c.name, value: c.id }))
+      sizes.value = (sizeRes.data || []).map((s: Size) => ({ label: s.name, value: s.id }))
       
       lastFetched.value = now
     } catch (err) {
@@ -45,7 +45,11 @@ export const useCatalogsStore = defineStore('catalogs', () => {
     }
   }
 
-  return { categories, institutions, colors, sizes, loading, fetchAll }
+  function invalidateCache() {
+    lastFetched.value = 0
+  }
+
+  return { categories, institutions, colors, sizes, loading, fetchAll, invalidateCache }
 })
 
 export const useCatalogs = () => useCatalogsStore()

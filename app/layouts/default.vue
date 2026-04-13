@@ -187,8 +187,9 @@ const navItems = [
 
 const showProfileMenu = ref(false)
 const showPasswordModal = ref(false)
-const handleLogout = () => {
-  auth.logout()
+const handleLogout = async () => {
+  await auth.logout()
+  await navigateTo('/login')
 }
 </script>
 

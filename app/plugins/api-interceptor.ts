@@ -6,11 +6,19 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   // @ts-ignore
   globalThis.$fetch = originalFetch.create({
-    onResponseError({ response }) {
+    onRequest({ options }) {
+      if (auth.token) {
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${auth.token}`
+        } as any
+      }
+    },
+    async onResponseError({ response }) {
       if (response.status === 401) {
-        // Token inválido o expirado
         console.warn('Sesión expirada (401). Redirigiendo al login...')
         auth.logout()
+        await navigateTo('/login')
       }
     }
   })

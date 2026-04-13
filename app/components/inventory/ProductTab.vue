@@ -84,8 +84,8 @@
 
       <template #cell-variants="{ item }">
         <div class="flex items-center justify-center gap-1 text-[11px]">
-          <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium border border-blue-100 dark:border-blue-500/20">{{ item.color || '---' }}</span>
-          <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold uppercase border border-slate-200 dark:border-white/10">{{ item.size || '---' }}</span>
+          <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium border border-blue-100 dark:border-blue-500/20">{{ item.color?.name || '---' }}</span>
+          <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold uppercase border border-slate-200 dark:border-white/10">{{ item.size?.name || '---' }}</span>
         </div>
       </template>
 
@@ -117,18 +117,19 @@
     <ConfirmModal 
       v-model:show="showDeleteConfirm"
       title="Eliminar Producto"
-      :message="`¿Estás seguro de que deseas eliminar permanentemente esta variante?\n\nProducto: ${itemToDelete?.name}\nColor: ${itemToDelete?.color}\nTalla: ${itemToDelete?.size}\n\nEsta acción no se puede deshacer.`"
+      :message="`¿Estás seguro de que deseas eliminar permanentemente esta variante?\n\nProducto: ${itemToDelete?.name}\nColor: ${itemToDelete?.color?.name || '---'}\nTalla: ${itemToDelete?.size?.name || '---'}\n\nEsta acción no se puede deshacer.`"
       confirm-text="Eliminar Definitivamente"
       confirm-variant="danger"
       :loading="deleting"
       @confirm="onConfirmDelete"
     />
 
-    <AddProductModal 
-      v-model:show="showAddModal" 
-      :categorias="catalogs.categories" 
-      :instituciones="catalogs.institutions" 
+    <AddProductModal
+      v-model:show="showAddModal"
+      :categorias="catalogs.categories"
+      :instituciones="catalogs.institutions"
       :colores="catalogs.colors"
+      :tallas="catalogs.sizes"
       :item-to-edit="selectedItem"
       :readonly="isReadOnly"
       @saved="onSaveProduct"
@@ -228,8 +229,8 @@ const fetchData = async () => {
     search: filtroBusqueda.value,
     category_id: filtroCategoria.value || '',
     institution_id: filtroInstitucion.value || '',
-    color: filtroColor.value,
-    size: filtroTalla.value,
+    color_id: filtroColor.value,
+    size_id: filtroTalla.value,
     stock_status: filtroStock.value,
     sort_by: sortBy || 'id',
     sort_direction: sortDirection || 'desc',
