@@ -1,129 +1,175 @@
 <template>
-  <div class="space-y-8 animate-in fade-in duration-700">
+  <div class="space-y-6 animate-in fade-in duration-500">
     <!-- Metric Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div 
         v-for="stat in stats" :key="stat.label" 
-        class="glass-panel p-6 rounded-xl flex flex-col gap-2 transition-all hover:scale-[1.02] duration-300"
+        class="flex flex-col gap-3 rounded-2xl p-6 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 transition-all hover:bg-slate-400/10"
       >
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-500 tracking-wide">{{ stat.label }}</span>
-          <component :is="stat.icon" class="text-primary w-5 h-5" />
+          <div :class="`p-2.5 rounded-xl ${stat.iconBg}`">
+            <component :is="stat.icon" :class="`w-5 h-5 ${stat.iconColor}`" />
+          </div>
+          <div v-if="stat.trend !== '-'" class="text-[9px] font-black uppercase rounded-md px-2 py-1 tracking-wider bg-emerald-500/10 text-emerald-500">
+            {{ stat.trend }}
+          </div>
         </div>
-        <div class="flex items-baseline gap-2 mt-2">
-          <span class="text-4xl font-bold text-slate-900 dark:text-white">
+        
+        <div class="space-y-1">
+          <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">{{ stat.label }}</h3>
+          <div class="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">
             {{ stat.value }}
-          </span>
-          <span class="text-sm font-semibold text-accent-green">{{ stat.trend }}</span>
+          </div>
+          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest opacity-60">{{ stat.description }}</p>
         </div>
-        <p class="text-xs text-slate-500 mt-1 font-medium">{{ stat.description }}</p>
       </div>
     </div>
 
     <div class="grid grid-cols-12 gap-6">
       <!-- Chart Section -->
-      <div class="col-span-12 lg:col-span-8 glass-panel p-6 rounded-xl">
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Producción Semanal</h3>
-            <p class="text-sm font-medium text-slate-500">Unidades manufacturadas por día</p>
+      <div class="col-span-12 lg:col-span-8 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 p-6 rounded-2xl relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-4">
+          <div class="flex items-center gap-4">
+            <h3 
+              class="text-[11px] font-black uppercase tracking-widest cursor-pointer transition-colors"
+              :class="chartType === 'ingresos' ? 'text-primary' : 'text-slate-400 hover:text-slate-500'"
+              @click="chartType = 'ingresos'"
+            >
+              Flujo de Ingresos
+            </h3>
+            <span class="text-slate-200 dark:text-slate-800">|</span>
+            <h3 
+              class="text-[11px] font-black uppercase tracking-widest cursor-pointer transition-colors"
+              :class="chartType === 'pedidos' ? 'text-primary' : 'text-slate-400 hover:text-slate-500'"
+              @click="chartType = 'pedidos'"
+            >
+              Pedidos en curso
+            </h3>
           </div>
-          <div class="flex gap-2">
-            <button class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-primary text-white border border-primary shadow-lg shadow-primary/20">Semana</button>
-            <button class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-panel-light dark:bg-white/5 border border-border-light dark:border-border-dark text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">Mes</button>
+          
+          <div class="flex items-center gap-1 p-1 bg-slate-200/50 dark:bg-white/5 rounded-xl">
+            <button 
+              @click="chartPeriod = 'semana'"
+              :class="chartPeriod === 'semana' ? 'bg-white dark:bg-slate-800 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+              class="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
+            >
+              Semana
+            </button>
+            <button 
+              @click="chartPeriod = 'mes'"
+              :class="chartPeriod === 'mes' ? 'bg-white dark:bg-slate-800 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+              class="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
+            >
+              Mes
+            </button>
           </div>
         </div>
+
         <div class="h-64 w-full relative">
           <svg class="w-full h-full overflow-visible" viewBox="0 0 800 200">
             <defs>
-              <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"></stop>
+              <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15"></stop>
                 <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"></stop>
               </linearGradient>
             </defs>
-            <!-- Grid Lines -->
-            <line v-for="y in [0, 50, 100, 150, 200]" :key="y" stroke="rgba(148,163,184,0.12)" stroke-width="1" x1="0" x2="800" :y1="y" :y2="y"></line>
-            <!-- Line Path -->
-            <path d="M0,150 C100,160 150,80 200,100 C250,120 300,40 400,60 C500,80 600,120 700,90 L800,100" fill="none" stroke="#3b82f6" stroke-width="3"></path>
-            <path d="M0,150 C100,160 150,80 200,100 C250,120 300,40 400,60 C500,80 600,120 700,90 L800,100 L800,200 L0,200 Z" fill="url(#gradient)"></path>
-            <!-- Data Points -->
-            <circle cx="200" cy="100" fill="#3b82f6" r="5" stroke="white" stroke-width="2"></circle>
-            <circle cx="400" cy="60" fill="#3b82f6" r="5" stroke="white" stroke-width="2"></circle>
-            <circle cx="700" cy="90" fill="#3b82f6" r="5" stroke="white" stroke-width="2"></circle>
+            <line v-for="y in [0, 50, 100, 150, 200]" :key="y" stroke="currentColor" stroke-width="1" x1="0" x2="800" :y1="y" :y2="y" class="text-slate-400/10 dark:text-white/5"></line>
+            
+            <path :d="svgAreaPath" fill="url(#chartGradient)" class="transition-all duration-700"></path>
+            <path :d="svgPath" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-700"></path>
+            
+            <circle v-for="(point, index) in chartPoints" :key="index" :cx="point.x" :cy="point.y" fill="#3b82f6" r="3.5" stroke="white" stroke-width="2"></circle>
           </svg>
-          <div class="flex justify-between mt-4 px-2 text-xs font-semibold text-slate-400 tracking-wide">
-            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+          <div class="flex justify-between mt-6 px-1">
+            <span v-for="label in chartData.labels" :key="label" class="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              {{ label }}
+            </span>
           </div>
         </div>
       </div>
 
       <!-- Inventory Alerts -->
-      <div class="col-span-12 lg:col-span-4 glass-panel p-6 rounded-xl flex flex-col h-full">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
-            <AlertTriangleIcon class="text-accent-red w-5 h-5" />
-            Alertas de inventario
-          </h3>
-          <NuxtLink to="/inventory/products" class="text-xs font-semibold text-primary hover:underline">Ver todo</NuxtLink>
+      <div class="col-span-12 lg:col-span-4 rounded-2xl p-6 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 flex flex-col h-full">
+        <div class="flex items-center justify-between mb-8">
+          <div class="flex flex-col gap-1">
+             <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">Alertas de Stock</h3>
+             <div class="flex items-center gap-3 mt-2">
+                <button 
+                  @click="activeInventoryTab = 'products'"
+                  :class="activeInventoryTab === 'products' ? 'text-primary' : 'text-slate-400 opacity-50'"
+                  class="text-[9px] font-black uppercase tracking-widest transition-all"
+                >
+                  Productos
+                </button>
+                <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                <button 
+                  @click="activeInventoryTab = 'materials'"
+                  :class="activeInventoryTab === 'materials' ? 'text-primary' : 'text-slate-400 opacity-50'"
+                  class="text-[9px] font-black uppercase tracking-widest transition-all"
+                >
+                  Materia Prima
+                </button>
+             </div>
+          </div>
+          <NuxtLink :to="activeInventoryTab === 'products' ? '/inventory/products' : '/inventory/raw-materials'" class="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-md">Ver Todo</NuxtLink>
         </div>
-        <div class="space-y-3">
-          <div v-for="alert in inventoryAlerts" :key="alert.name" 
-            class="p-3 rounded-xl flex items-center justify-between group transition-all"
+        
+        <div class="space-y-3 flex-1 overflow-y-auto max-h-[300px] custom-scrollbar pr-1">
+          <div v-for="alert in currentAlerts" :key="alert.name" 
+            class="p-3 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/5 rounded-xl flex items-center justify-between group transition-all hover:border-primary/30"
             :class="alert.wrapperClass"
           >
             <div class="min-w-0">
-              <p class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ alert.name }}</p>
-              <p class="text-[11px] font-semibold text-slate-500">Stock actual: {{ alert.stock }}</p>
+              <p class="text-[12px] font-bold text-slate-800 dark:text-slate-100 truncate mb-1">{{ alert.name }}</p>
+              <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ alert.stock }}</p>
             </div>
-            <span :class="['px-2.5 py-1 text-xs font-bold rounded-lg border truncate ml-2', alert.badgeClass]">
+            <div :class="['text-[9px] font-black uppercase rounded-md px-2 py-0.5 tracking-wider', alert.badgeClass]">
               {{ alert.level }}
-            </span>
+            </div>
+          </div>
+          <div v-if="!currentAlerts.length" class="h-40 flex flex-col items-center justify-center text-center opacity-30">
+            <CheckCircleIcon class="w-8 h-8 text-emerald-500 mb-2" />
+            <p class="text-[10px] font-black uppercase tracking-widest">Stock saludable</p>
           </div>
         </div>
-        <!-- <button class="mt-6 w-full py-3.5 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 tracking-wide">
-          <ShoppingCartIcon class="w-4 h-4" />
-          Generar orden de compra
-        </button> -->
       </div>
     </div>
 
-    <!-- Recent Orders Table -->
-    <div class="glass-panel rounded-xl overflow-hidden">
-      <div class="p-6 border-b border-border-light dark:border-border-dark flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Órdenes de producción recientes</h3>
-        <button class="text-xs font-semibold text-slate-500 hover:text-primary flex items-center gap-1 transition-colors">
-          Ver historial completo
-          <ArrowRightIcon class="w-4 h-4" />
-        </button>
+    <!-- Recent Sales Table -->
+    <div class="rounded-2xl p-2 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 overflow-hidden">
+      <div class="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2 px-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+          <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">Ventas Recientes</h3>
+        </div>
+        <NuxtLink to="/point-of-sale" class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20">
+          Nuevo Ticket
+        </NuxtLink>
       </div>
+      
       <div class="overflow-x-auto">
         <table class="w-full text-left">
-          <thead class="bg-panel-light dark:bg-white/[0.02] border-b border-border-light dark:border-border-dark">
+          <thead class="bg-transparent border-b border-slate-200/50 dark:border-white/5">
             <tr>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">ID Orden</th>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">Cliente</th>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">Producto</th>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">Cantidad</th>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide">Estado</th>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 tracking-wide text-right">Acciones</th>
+              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nº Ticket</th>
+              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identidad</th>
+              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Volumen</th>
+              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Neto</th>
+              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
+              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border-light dark:divide-border-dark">
-            <tr v-for="order in recentOrders" :key="order.id" class="hover:bg-panel-light dark:hover:bg-white/[0.01] transition-colors group">
-              <td class="px-6 py-5 text-sm font-bold text-slate-800 dark:text-slate-100">{{ order.id }}</td>
-              <td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400 font-semibold">{{ order.customer }}</td>
-              <td class="px-6 py-5 text-sm text-slate-500 font-medium">{{ order.product }}</td>
-              <td class="px-6 py-5 text-sm text-slate-500 font-medium">{{ order.qty }}</td>
-              <td class="px-6 py-5">
-                <span :class="`flex items-center gap-1.5 text-xs font-bold ${order.color}`">
-                  <span :class="`w-1.5 h-1.5 rounded-full ${order.bgColor} ${order.status === 'En Corte' ? 'animate-pulse' : ''}`"></span>
-                  {{ order.status }}
-                </span>
-              </td>
-              <td class="px-6 py-5 text-right">
-                <button class="text-slate-400 hover:text-primary transition-colors">
-                  <MoreHorizontalIcon class="w-5 h-5 mx-auto" />
-                </button>
+          <tbody class="divide-y divide-slate-200/50 dark:divide-white/5">
+            <tr v-for="ticket in recentOrders" :key="ticket.id" class="hover:bg-slate-400/5 transition-colors group">
+              <td class="px-6 py-4 font-mono text-[11px] font-bold text-primary tracking-tighter">{{ ticket.id }}</td>
+              <td class="px-6 py-4 text-xs font-bold text-slate-700 dark:text-slate-200">{{ ticket.customer }}</td>
+              <td class="px-6 py-4 text-[10px] text-slate-500 font-bold uppercase">{{ ticket.items_count }}</td>
+              <td class="px-6 py-4 font-black text-slate-900 dark:text-white text-xs">{{ ticket.total }}</td>
+              <td class="px-6 py-4 text-[9px] text-slate-400 font-black uppercase tracking-widest">{{ ticket.date }}</td>
+              <td class="px-6 py-4">
+                <div :class="`inline-flex text-[9px] font-black uppercase rounded-md px-2 py-0.5 tracking-wider ${ticket.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-200 text-slate-500'}`">
+                  {{ ticket.status }}
+                </div>
               </td>
             </tr>
           </tbody>
@@ -141,101 +187,178 @@ import {
   AlertTriangleIcon, 
   ShoppingCartIcon,
   ArrowRightIcon,
-  MoreHorizontalIcon
+  MoreHorizontalIcon,
+  TrendingUpIcon
 } from 'lucide-vue-next'
 
-const stats = [
+const config = useRuntimeConfig()
+const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
+const token = useCookie('auth_token')
+
+const iconMap = {
+  RocketIcon,
+  CheckCircleIcon,
+  CreditCardIcon
+}
+
+const stats = ref([
   { 
     label: 'Órdenes Activas', 
-    value: '42', 
-    trend: '+12%', 
-    description: 'En proceso de costura y empaque',
-    icon: RocketIcon 
+    value: '0', 
+    trend: '-', 
+    description: 'En proceso de costura (Próximo)', 
+    icon: RocketIcon,
+    iconBg: 'bg-primary/10',
+    iconColor: 'text-primary',
+    bgDecoration: 'bg-primary'
   },
   { 
     label: 'Uniformes Vendidos', 
-    value: '1,280', 
-    trend: '+5%', 
-    description: 'Total de piezas entregadas este mes',
-    icon: CheckCircleIcon 
+    value: '0', 
+    trend: 'N/A', 
+    description: 'Total acumulado del mes', 
+    icon: CheckCircleIcon,
+    iconBg: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-500',
+    bgDecoration: 'bg-emerald-500'
   },
   { 
     label: 'Ingresos Mensuales', 
-    value: '$45,200', 
-    trend: '+18.2%', 
-    description: 'Ingresos brutos proyectados',
-    icon: CreditCardIcon 
+    value: '$0.00', 
+    trend: 'N/A', 
+    description: 'Ventas facturadas en caja', 
+    icon: CreditCardIcon,
+    iconBg: 'bg-indigo-500/10',
+    iconColor: 'text-indigo-500',
+    bgDecoration: 'bg-indigo-500'
   }
-]
+])
 
-const inventoryAlerts = [
-  { 
-    name: 'Playera Polo CBTIS Talla M', 
-    stock: '12 unidades', 
-    level: 'Bajo', 
-    wrapperClass: 'bg-panel-light dark:bg-white/[0.02] border border-border-light dark:border-border-dark hover:border-amber-300',
-    badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/20' 
-  },
-  { 
-    name: 'Rollo de Tela Azul Marino', 
-    stock: '2 rollos', 
-    level: 'Crítico', 
-    wrapperClass: 'bg-red-500/10 border border-red-500/20 hover:bg-red-500/20',
-    badgeClass: 'bg-accent-red text-white border-accent-red' 
-  },
-  { 
-    name: 'Hilo Poliéster Negro Gral.', 
-    stock: '5 conos', 
-    level: 'Bajo',
-    wrapperClass: 'bg-panel-light dark:bg-white/[0.02] border border-border-light dark:border-border-dark hover:border-amber-300',
-    badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/20' 
-  },
-  { 
-    name: 'Botón Institucional 15mm', 
-    stock: '45 unidades', 
-    level: 'Bajo',
-    wrapperClass: 'bg-panel-light dark:bg-white/[0.02] border border-border-light dark:border-border-dark hover:border-amber-300',
-    badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/20' 
-  },
-]
+const inventoryAlerts = ref({ products: [], materials: [] })
+const activeInventoryTab = ref('products')
+const currentAlerts = computed(() => inventoryAlerts.value[activeInventoryTab.value] || [])
 
-const recentOrders = [
-  { id: '#OP-8942', customer: 'Colegio San Ángel', product: 'Pantalón Gris Escolar', qty: '250 pzas', status: 'En Corte', color: 'text-primary', bgColor: 'bg-primary' },
-  { id: '#OP-8941', customer: 'Hospital General Oax.', product: 'Batas Médicas Blancas', qty: '120 pzas', status: 'Completado', color: 'text-accent-green', bgColor: 'bg-accent-green' },
-  { id: '#OP-8940', customer: 'Restaurante El Patio', product: 'Delantales Bordados', qty: '45 pzas', status: 'En Espera', color: 'text-orange-400', bgColor: 'bg-slate-400' },
-]
+const recentOrders = ref([])
+const chartType = ref('ingresos')
+const chartPeriod = ref('semana')
+const chartData = ref({ series: [0, 0, 0, 0, 0, 0, 0], labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] })
+
+const chartPoints = computed(() => {
+    const series = chartData.value.series
+    const max = Math.max(...series, 10) // prevent div by zero
+    const w = 800
+    const h = 180 // leave 20px bottom padding inside SVG
+    const step = w / Math.max(series.length - 1, 1)
+    
+    return series.map((val, i) => {
+        return {
+            x: i * step,
+            y: h - (val / max * h) + 10 // top padding
+        }
+    })
+})
+
+const svgPath = computed(() => {
+    if (!chartPoints.value.length) return ''
+    const pts = chartPoints.value
+    let d = `M${pts[0].x},${pts[0].y}`
+    for(let i=1; i < pts.length; i++){
+        d += ` L${pts[i].x},${pts[i].y}`
+    }
+    return d
+})
+
+const svgAreaPath = computed(() => {
+    if (!chartPoints.value.length) return ''
+    const pts = chartPoints.value
+    let d = svgPath.value
+    d += ` L${pts[pts.length-1].x},200 L0,200 Z`
+    return d
+})
+
+const fetchDashboardData = async () => {
+    try {
+        const response = await $fetch(`${backendURL}/api/dashboard`, {
+            params: {
+                type: chartType.value,
+                period: chartPeriod.value
+            },
+            headers: { Authorization: `Bearer ${token.value}` }
+        })
+        
+        if (response.data) {
+            // Merge labels and bg colors for stats
+            const newStats = response.data.stats.map((s, idx) => {
+                const base = stats.value[idx] || {}
+                return {
+                    ...s,
+                    icon: iconMap[s.icon] || RocketIcon,
+                    iconBg: base.iconBg,
+                    iconColor: base.iconColor,
+                    bgDecoration: base.bgDecoration
+                }
+            })
+            stats.value = newStats
+            inventoryAlerts.value = response.data.inventoryAlerts
+            recentOrders.value = response.data.recentTickets
+            if (response.data.chartData) {
+                chartData.value = response.data.chartData
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+    }
+}
+
+watch([chartType, chartPeriod], () => {
+    fetchDashboardData()
+})
+
+onMounted(() => {
+    fetchDashboardData()
+})
 </script>
 
 <style>
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+  50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 3s infinite;
+}
+
 /* Light mode */
 .glass-panel {
   background: #ffffff;
-  border: 1px solid #d0d7de;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 /* Dark mode */
 .dark .glass-panel {
-  background: rgba(30, 41, 59, 0.75); /* Slate 800 with 75% opacity */
-  border: 1px solid #334155; /* Slate 700 */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 }
 
-/* Chart gradient: más azul en light mode */
-#gradient stop:first-child {
-  stop-opacity: 0.55;
+#chartGradient stop:first-child {
+  stop-opacity: 0.6;
 }
-#gradient stop:last-child {
-  stop-opacity: 0.08;
+#chartGradient stop:last-child {
+  stop-opacity: 0.02;
 }
 
-/* Dark mode: más sutil */
-.dark #gradient stop:first-child {
-  stop-opacity: 0.22;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
 }
-.dark #gradient stop:last-child {
-  stop-opacity: 0;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
 }
 </style>

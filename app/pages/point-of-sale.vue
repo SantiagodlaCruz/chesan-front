@@ -175,20 +175,46 @@
     <!-- Sidebar: Summary -->
     <aside class="w-[330px] shrink-0 bg-card-light dark:bg-card-dark border-l border-border-light dark:border-border-dark flex flex-col p-6 overflow-y-auto custom-scrollbar">
 
-      <!-- Customer -->
-      <div class="mb-8">
-        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Cliente</h3>
-        <div class="bg-panel-light dark:bg-background-dark rounded-xl p-4 border border-border-light dark:border-border-dark flex items-center gap-3 shadow-sm dark:shadow-none">
+      <!-- Customer and Type Selection -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Datos de Venta</h3>
+        </div>
+        
+        <!-- Toggle Operation Type -->
+        <div class="flex items-center gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-xl mb-4 text-[10px] uppercase font-black tracking-widest">
+          <button @click="isLayaway = false" :class="!isLayaway ? 'bg-white dark:bg-card-dark text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'" class="flex-1 py-2 rounded-lg transition-all">
+            Venta Directa
+          </button>
+          <button @click="isLayaway = true" :class="isLayaway ? 'bg-primary text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'" class="flex-1 py-2 rounded-lg transition-all">
+            Apartado
+          </button>
+        </div>
+
+        <!-- Normal Sale Customer -->
+        <div v-if="!isLayaway" class="bg-panel-light dark:bg-background-dark rounded-xl p-4 border border-border-light dark:border-border-dark flex items-center gap-3 shadow-sm dark:shadow-none">
           <div class="bg-white dark:bg-card-dark border border-border-light dark:border-border-dark p-2 rounded-full shrink-0">
             <UserIcon class="w-5 h-5 text-slate-400" />
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ currentCustomer }}</p>
-            <p class="text-[10px] text-primary uppercase tracking-widest font-black">Venta Directa</p>
           </div>
-          <button class="text-slate-400 hover:text-primary transition-colors shrink-0">
-            <EditIcon class="w-4 h-4" />
-          </button>
+        </div>
+
+        <!-- Layaway Inputs -->
+        <div v-if="isLayaway" class="space-y-3 bg-primary/5 dark:bg-primary/10 border border-primary/20 p-4 rounded-xl">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Nombre del Cliente *</label>
+            <input v-model="customerName" type="text" placeholder="Ej. Juan Pérez" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Anticipo ($) *</label>
+            <input v-model.number="layawayDeposit" type="number" min="0" :max="Math.abs(total)" placeholder="0.00" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fecha de Liquidación *</label>
+            <input v-model="layawayDueDate" type="date" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
+          </div>
         </div>
       </div>
 
@@ -280,12 +306,12 @@
 
         <button
           @click="onCheckout"
-          :disabled="cartItems.length === 0 || loading"
+          :disabled="cartItems.length === 0 || loading || (isLayaway && (!customerName || layawayDeposit < 0 || !layawayDueDate))"
           class="w-full py-5 bg-primary hover:bg-primary/90 text-white font-black text-base uppercase tracking-widest rounded-xl shadow-[0_0_40px_rgba(59,130,246,0.25)] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
         >
           <div v-if="loading" class="animate-spin rounded-full h-5 w-5 border-4 border-white border-t-transparent"></div>
           <ReceiptIcon v-else class="w-6 h-6" />
-          {{ loading ? 'Procesando...' : (total < 0 ? 'Regresar Saldo' : 'Cobrar') }}
+          {{ loading ? 'Procesando...' : (isLayaway ? 'Registrar Apartado' : (total < 0 ? 'Regresar Saldo' : 'Cobrar')) }}
         </button>
 
         <button
@@ -310,16 +336,27 @@
      @addReturn="item => cartItems.unshift(item)" 
   />
 
+  <PayLayawayModal
+     v-model:show="showPayLayawayModal"
+     :ticket="scannedLayawayTicket"
+     :loading="loadingLayaway"
+     @confirm="handleLayawayPayment"
+  />
+
   <!-- Printable Area for pos 58mm Ticket (Hidden from screen view) -->
   <Teleport to="body">
     <div id="pos-print-area" class="hidden print:block" v-if="lastTicket">
       <div class="pos-ticket">
         <div class="ticket-header">
           <h2 class="company-name">CHESAN UNIFORMES</h2>
-          <p class="company-info">Venta de Mostrador</p>
+          <p class="company-info" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0">COMPROBANTE DE APARTADO</p>
+          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">LIQUIDACIÓN DE APARTADO</p>
+          <p class="company-info" v-else>Venta de Mostrador</p>
           <p class="company-info">Fecha: {{ new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) }}</p>
           <p class="company-info ticket-number">Ticket #{{ lastTicket.ticket_number || 'S/N' }}</p>
           <p class="company-info">Atendió: {{ user?.name || lastTicket.user?.name || 'Administrador' }}</p>
+          <p v-if="lastTicket.ticket_type === 'layaway'" class="company-info">Cliente: {{ lastTicket.customer_name }}</p>
+          <p v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0" class="company-info">Fecha límite: {{ lastTicket.due_date }}</p>
         </div>
         
         <div class="ticket-divider"></div>
@@ -359,8 +396,26 @@
             <span>-{{ formatCurrency(lastTicket.discount_amount) }}</span>
           </div>
           <div class="total-row font-bold">
-            <span>Total:</span>
+            <span>Total {{ lastTicket.ticket_type === 'layaway' ? 'Apartado' : '' }}:</span>
             <span>{{ formatCurrency(lastTicket.total) }}</span>
+          </div>
+          <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">
+            <span>Anticipo Original:</span>
+            <span>{{ formatCurrency(lastTicket.original_deposit || 0) }}</span>
+          </div>
+          <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">
+            <span>Pago Liquidación:</span>
+            <span>{{ formatCurrency(lastTicket.payment_made_today || 0) }}</span>
+          </div>
+          
+          <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0">
+            <span>Anticipo Pagado:</span>
+            <span>{{ formatCurrency(lastTicket.received_amount) }}</span>
+          </div>
+          
+          <div class="total-row font-bold" v-if="lastTicket.ticket_type === 'layaway'" style="font-size: 12px; margin-top: 2px;">
+            <span>RESTA POR PAGAR:</span>
+            <span>{{ formatCurrency(lastTicket.balance) }}</span>
           </div>
         </div>
 
@@ -401,6 +456,7 @@ import {
 } from 'lucide-vue-next'
 import QrcodeVue from 'qrcode.vue'
 import ExchangeTicketModal from '~/components/pos/ExchangeTicketModal.vue'
+import PayLayawayModal from '~/components/pos/PayLayawayModal.vue'
 
 const { user } = useAuth()
 const barcodeInput = ref(null)
@@ -410,6 +466,17 @@ const paymentMethod = ref('cash')
 const currentCustomer = ref('Venta Directa / Mostrador')
 const lastTicket = ref(null)
 const showExchangeModal = ref(false)
+
+// Estado Liquidar Apartado Escaneado
+const showPayLayawayModal = ref(false)
+const scannedLayawayTicket = ref(null)
+const loadingLayaway = ref(false)
+
+// Estado del Apartado
+const isLayaway = ref(false)
+const customerName = ref('')
+const layawayDeposit = ref(0)
+const layawayDueDate = ref('')
 
 // — Sistema de Alertas POS —
 const posAlert = ref({ message: '', type: 'error' })
@@ -469,6 +536,30 @@ const onBarcodeSubmit = async () => {
     const config = useRuntimeConfig()
     const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
     const token = useCookie('auth_token').value
+
+    // LÓGICA DE ESCANEO DE TICKETS (LIQUIDACIÓN DE APARTADO)
+    if (query.toUpperCase().startsWith('TKT-')) {
+       const ticketResponse = await $fetch(`${backendURL}/api/tickets/by-number/${query.toUpperCase()}`, {
+         headers: { Authorization: `Bearer ${token}` }
+       }).catch(() => null)
+
+       if (!ticketResponse || !ticketResponse.data) {
+           showPosAlert(`Ticket Invalido: No se localizó un apartado con el folio "${query}".`, 'error')
+           return
+       }
+
+       const scannedTicket = ticketResponse.data
+       if (scannedTicket.ticket_type !== 'layaway' || scannedTicket.balance <= 0) {
+           showPosAlert(`El ticket ${query} no es un apartado pendiente o ya fue liquidado totalmente.`, 'error')
+           return
+       }
+
+       // Abrir el modal en lugar de preguntar directamente
+       scannedLayawayTicket.value = scannedTicket
+       showPayLayawayModal.value = true
+       
+       return
+    }
 
     const response = await $fetch(`${backendURL}/api/stock-products`, {
       params: { search: query },
@@ -591,6 +682,9 @@ const onCheckout = async () => {
 
     const payload = {
         client_id: null,
+        customer_name: isLayaway.value ? customerName.value : null,
+        ticket_type: isLayaway.value ? 'layaway' : 'sale',
+        due_date: isLayaway.value ? layawayDueDate.value : null,
         items: cartItems.value.map(item => ({
             stock_product_id: item.id,
             quantity: item.qty,
@@ -601,7 +695,7 @@ const onCheckout = async () => {
             parent_detail_id: item.parent_detail_id || null
         })),
         payment_method: paymentMethod.value,
-        amount_paid: total.value,
+        amount_paid: isLayaway.value ? layawayDeposit.value : total.value,
         discount_amount: totalDiscountAmount.value
     }
     console.log('PAYLOAD:', payload);
@@ -626,8 +720,12 @@ const onCheckout = async () => {
         window.print()
         cartItems.value = []
         lastTicket.value = null
+        isLayaway.value = false
+        customerName.value = ''
+        layawayDeposit.value = 0
+        layawayDueDate.value = ''
         loading.value = false
-        showPosAlert('¡Venta completada y ticket generado exitosamente!', 'success')
+        showPosAlert('¡Operación completada y ticket generado exitosamente!', 'success')
         barcodeInput.value?.focus()
     }, 300)
 
@@ -641,6 +739,60 @@ const onCheckout = async () => {
 const onExchange = () => {
   // TODO: Open exchange modal or redirect to exchange flow
   showPosAlert('La interfaz gráfica para devoluciones / cambios aún se está construyendo.', 'error')
+}
+
+const handleLayawayPayment = async (ticket) => {
+    loadingLayaway.value = true
+    const config = useRuntimeConfig()
+    const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
+    const token = useCookie('auth_token').value
+
+    try {
+        const response = await $fetch(`${backendURL}/api/tickets/${ticket.id}/complete-layaway`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        showPayLayawayModal.value = false
+        
+        // Mapear los items devueltos por la API (anidados) al formato plano que espera la plantilla del ticket
+        const mappedItems = response.data.items.map(detail => ({
+            id: detail.id,
+            product: detail.product,
+            name: detail.product?.name,
+            size: detail.product?.size?.name || '',
+            color: detail.product?.color?.name || '',
+            sale_price: detail.unit_price,
+            discount_type: detail.product?.discount_type || 'percentage',
+            discount_percentage: detail.product?.discount_percentage || 0,
+            discount_amount: detail.product?.discount_amount || 0,
+            quantity: detail.quantity,
+            qty: detail.quantity,
+            total: detail.total
+        }))
+
+        // Configurar el ticket pagado para imprimir el comprobante de liquidación
+        // Inyectamos el historial de sumas que teníamos guardado en el ticket escaneado original antes de liquidar
+        lastTicket.value = {
+            ...response.data,
+            items: mappedItems,
+            original_deposit: ticket.received_amount,
+            payment_made_today: ticket.balance
+        }
+        
+        setTimeout(() => {
+            window.print()
+            lastTicket.value = null
+            showPosAlert('Apartado liquidado y comprobante de entrega impreso con éxito.', 'success')
+            barcodeInput.value?.focus()
+        }, 300)
+        
+    } catch (err) {
+        console.error(err)
+        showPosAlert(err.data?.message || 'Error al completar e intentar liquidar el apartado.', 'error')
+        loadingLayaway.value = false
+        barcodeInput.value?.focus()
+    }
 }
 </script>
 

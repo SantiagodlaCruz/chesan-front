@@ -215,10 +215,10 @@ const coloresFiltro = computed<SelectOption[]>(() => {
 
 const opcionesStock = [
   { label: 'Todos', value: '' },
-  { label: 'Agotado (0)', value: 'out_of_stock' },
-  { label: 'Crítico (1-5)', value: 'critical' },
-  { label: 'Bajo (6-15)', value: 'low' },
-  { label: 'Sano (>15)', value: 'healthy' }
+  { label: 'Agotado', value: 'out_of_stock' },
+  { label: 'Stock Crítico', value: 'critical' },
+  { label: 'Stock Bajo', value: 'low' },
+  { label: 'Stock Sano', value: 'healthy' }
 ]
 
 const opcionesOrden = [
