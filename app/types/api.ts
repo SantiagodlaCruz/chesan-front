@@ -37,4 +37,5 @@ export interface ApiPaginatedResponse<T> {
 export interface SelectOption {
   label: string;
   value: string | number;
+  hex?: string;
 }

@@ -67,6 +67,9 @@
               <td v-if="showActions" class="px-4 py-2.5 whitespace-nowrap">
                 <div class="flex items-center gap-1 justify-end">
                   <slot name="actions" :item="item">
+                    <button @click="$emit('print', item)" class="p-1.5 hover:bg-slate-500/10 dark:hover:bg-slate-400/10 rounded-xl transition-all group/btn" title="Imprimir Código de Barras">
+                      <PrinterIcon class="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover/btn:scale-110 transition-transform" />
+                    </button>
                     <button @click="$emit('view', item)" class="p-1.5 hover:bg-primary/10 rounded-xl transition-all group/btn" title="Ver Detalle">
                       <EyeIcon class="w-4 h-4 text-primary group-hover/btn:scale-110 transition-transform" />
                     </button>
@@ -145,7 +148,7 @@
 
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { computed } from 'vue'
-import { EditIcon, TrashIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon, AlertCircleIcon } from 'lucide-vue-next'
+import { EditIcon, TrashIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon, AlertCircleIcon, PrinterIcon } from 'lucide-vue-next'
 import Select from '~/components/Select.vue'
 import type { ApiMeta, ApiLinks } from '~/types'
 
@@ -166,7 +169,7 @@ const props = defineProps<{
   showActions?: boolean
 }>()
 
-defineEmits(['view', 'edit', 'delete', 'page-change', 'per-page-change'])
+defineEmits(['view', 'edit', 'delete', 'print', 'page-change', 'per-page-change'])
 
 // Advanced Pagination Logic
 const visiblePages = computed(() => {

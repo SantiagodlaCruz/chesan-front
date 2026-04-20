@@ -10,7 +10,7 @@
            <input 
             v-model="searchQuery" 
             class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-border-dark focus:border-primary transition-all outline-none pl-9 pr-4 py-2 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-sm" 
-            placeholder="Buscar material..." 
+            placeholder="Buscar material o escanear código de barras..." 
             type="text" 
            />
         </div>

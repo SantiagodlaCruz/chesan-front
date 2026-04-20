@@ -5,6 +5,9 @@
       <div class="w-40 shrink-0">
         <Select v-model="filtroUnidad" :options="unidadesFiltro" label="Unidad" placeholder="Todas" @update:modelValue="debouncedFetch" />
       </div>
+      <div class="w-64 shrink-0">
+        <Select v-model="filtroColor" :options="coloresFiltro" label="Color" placeholder="Todos" searchable :loading="catalogsStore.loading" @update:modelValue="debouncedFetch" />
+      </div>
       <div class="w-32 shrink-0">
         <Select v-model="filtroStock" :options="opcionesStock" label="Stock" placeholder="Todos" @update:modelValue="debouncedFetch" />
       </div>
@@ -16,7 +19,7 @@
         { key: 'barcode', label: 'Código' },
         { key: 'image_url', label: 'Foto', align: 'center' },
         { key: 'name', label: 'Material' },
-        { key: 'unit_measure', label: 'Unidad' },
+        { key: 'color', label: 'Color', align: 'center' },
         { key: 'unit_price', label: 'Precio Unitario', align: 'right' },
         { key: 'quantity', label: 'Stock Actual', align: 'center' }
       ]"
@@ -29,6 +32,7 @@
       :per-page="perPage"
       @view="onView"
       @edit="onEdit"
+      @print="onPrint"
       @delete="onDelete"
       @page-change="onChangePage"
       @per-page-change="onChangePerPage"
@@ -63,6 +67,19 @@
       <template #cell-name="{ value }">
         <span class="font-semibold text-slate-800 dark:text-slate-100">{{ value || 'Sin nombre' }}</span>
       </template>
+      
+      <template #cell-color="{ item }">
+        <div class="flex items-center justify-center">
+          <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-medium border border-slate-200 dark:border-white/10">
+            <div 
+              v-if="(item as RawMaterial).color?.hex_code"
+              class="w-3 h-3 rounded-full border border-slate-300 dark:border-white/20 shadow-sm shrink-0"
+              :style="{ backgroundColor: (item as RawMaterial).color?.hex_code || '' }"
+            ></div>
+            <span class="text-[11px]">{{ (item as RawMaterial).color?.name || '---' }}</span>
+          </div>
+        </div>
+      </template>
 
       <template #cell-unit_price="{ value }">
         <span class="font-bold text-slate-900 dark:text-white">${{ parseFloat(value || 0).toFixed(2) }}</span>
@@ -94,9 +111,15 @@
     <AddRawMaterialModal 
       v-model:show="showAddModal" 
       :unidades="unidadesModal" 
+      :colores="coloresModal"
       :item-to-edit="selectedItem"
       :readonly="isReadOnly"
       @saved="onSaveMaterial" 
+    />
+
+    <PrintBarcodeModal
+      v-model:show="showPrintModal"
+      :item="itemToPrint"
     />
   </div>
 </template>
@@ -107,6 +130,7 @@ import { LayersIcon } from 'lucide-vue-next'
 import Select from '~/components/Select.vue'
 import DataTable from '~/components/DataTable.vue'
 import AddRawMaterialModal from './AddRawMaterialModal.vue'
+import PrintBarcodeModal from './PrintBarcodeModal.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import { useToast } from '~/stores/toast'
 import type { RawMaterial, ApiMeta, ApiLinks, ApiPaginatedResponse, SelectOption } from '~/types'
@@ -130,6 +154,10 @@ const deleting = ref(false)
 const itemToDelete = ref<RawMaterial | null>(null)
 const toast = useToast()
 
+// Print handling
+const showPrintModal = ref(false)
+const itemToPrint = ref<RawMaterial | null>(null)
+
 watch(() => props.search, (val) => {
   filtroBusqueda.value = val
   debouncedFetch()
@@ -146,6 +174,7 @@ watch(() => props.showModalTrigger, (val) => {
 
 const filtroBusqueda = ref('')
 const filtroUnidad = ref('')
+const filtroColor = ref('')
 const filtroStock = ref('')
 const filtroOrden = ref('id_desc')
 const rawMaterialsStore = useRawMaterialsStore()
@@ -160,6 +189,7 @@ const pending = computed(() => rawMaterialsStore.loading)
 const errorMsg = computed(() => rawMaterialsStore.error || '')
 
 const unitMeasuresStore = useUnitMeasuresStore()
+const catalogsStore = useCatalogs()
 
 const unidadesFiltro = computed<SelectOption[]>(() => {
   return [
@@ -170,6 +200,17 @@ const unidadesFiltro = computed<SelectOption[]>(() => {
 
 const unidadesModal = computed<SelectOption[]>(() => {
   return unitMeasuresStore.items.map(u => ({ label: u.name, value: u.id }))
+})
+
+const coloresModal = computed<SelectOption[]>(() => {
+  return catalogsStore.colors
+})
+
+const coloresFiltro = computed<SelectOption[]>(() => {
+  return [
+    { label: 'Todos', value: '' },
+    ...catalogsStore.colors
+  ]
 })
 
 const opcionesStock = [
@@ -195,6 +236,7 @@ const fetchData = async () => {
   await rawMaterialsStore.fetchMaterials({
     search: filtroBusqueda.value,
     unit_measure_id: filtroUnidad.value,
+    color_id: filtroColor.value,
     stock_status: filtroStock.value,
     sort_by: sortBy || 'id',
     sort_direction: sortDirection || 'desc',
@@ -215,6 +257,7 @@ const debouncedFetch = () => {
 onMounted(() => {
   fetchData()
   unitMeasuresStore.fetchUnitMeasures()
+  catalogsStore.fetchAll()
 })
 
 const onChangePage = (page: number) => {
@@ -238,6 +281,15 @@ const onEdit = (item: RawMaterial) => {
   selectedItem.value = item
   isReadOnly.value = false
   showAddModal.value = true
+}
+
+const onPrint = (item: RawMaterial) => {
+  if (!item.barcode) {
+    toast.error('Este material no tiene código de barras asignado.')
+    return
+  }
+  itemToPrint.value = item
+  showPrintModal.value = true
 }
 
 const onDelete = (item: RawMaterial) => {

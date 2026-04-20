@@ -40,6 +40,7 @@
       :per-page="perPage"
       @view="onView"
       @edit="onEdit"
+      @print="onPrint"
       @delete="onDelete"
       @page-change="onChangePage"
       @per-page-change="onChangePerPage"
@@ -83,9 +84,16 @@
       </template>
 
       <template #cell-variants="{ item }">
-        <div class="flex items-center justify-center gap-1 text-[11px]">
-          <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium border border-blue-100 dark:border-blue-500/20">{{ item.color?.name || '---' }}</span>
-          <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold uppercase border border-slate-200 dark:border-white/10">{{ item.size?.name || '---' }}</span>
+        <div class="flex items-center justify-center gap-2 text-[11px]">
+          <div class="flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium border border-blue-100 dark:border-blue-500/20">
+            <div 
+              v-if="(item as StockProduct).color?.hex_code"
+              class="w-2.5 h-2.5 rounded-full border border-blue-200 dark:border-blue-500/30 shadow-sm"
+              :style="{ backgroundColor: (item as StockProduct).color?.hex_code || '' }"
+            ></div>
+            <span>{{ (item as StockProduct).color?.name || '---' }}</span>
+          </div>
+          <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold uppercase border border-slate-200 dark:border-white/10">{{ (item as StockProduct).size?.name || '---' }}</span>
         </div>
       </template>
 
@@ -134,6 +142,11 @@
       :readonly="isReadOnly"
       @saved="onSaveProduct"
     />
+
+    <PrintBarcodeModal
+      v-model:show="showPrintModal"
+      :item="itemToPrint"
+    />
   </div>
 </template>
 
@@ -143,6 +156,7 @@ import { EditIcon, TrashIcon, SearchIcon, FilterIcon, ArrowUpDownIcon, ShirtIcon
 import Select from '~/components/Select.vue'
 import DataTable from '~/components/DataTable.vue'
 import AddProductModal from './AddProductModal.vue'
+import PrintBarcodeModal from './PrintBarcodeModal.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import { useToast } from '~/stores/toast'
 import type { StockProduct, ApiMeta, ApiLinks, ApiPaginatedResponse } from '~/types'
@@ -165,6 +179,10 @@ const showDeleteConfirm = ref(false)
 const deleting = ref(false)
 const itemToDelete = ref<StockProduct | null>(null)
 const toast = useToast()
+
+// Print handling
+const showPrintModal = ref(false)
+const itemToPrint = ref<StockProduct | null>(null)
 
 watch(() => props.search, (val) => {
   filtroBusqueda.value = val
@@ -241,7 +259,7 @@ const fetchData = async () => {
 
 let fetchTimeout: ReturnType<typeof setTimeout> | null = null
 const debouncedFetch = () => {
-  clearTimeout(fetchTimeout)
+  if (fetchTimeout) clearTimeout(fetchTimeout)
   fetchTimeout = setTimeout(() => {
     currentPage.value = 1
     fetchData()
@@ -275,6 +293,15 @@ const onEdit = (item: StockProduct) => {
   selectedItem.value = item
   isReadOnly.value = false
   showAddModal.value = true
+}
+
+const onPrint = (item: StockProduct) => {
+  if (!item.barcode) {
+    toast.error('Esta variante no tiene código de barras asignado.')
+    return
+  }
+  itemToPrint.value = item
+  showPrintModal.value = true
 }
 
 const onDelete = (item: StockProduct) => {
