@@ -16,13 +16,21 @@
         </div>
       </div>
 
-      <button @click="triggerAdd = true" class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20 shrink-0">
-        <PlusIcon class="w-5 h-5" />
-        Añadir Producto
-      </button>
-    </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <button @click="triggerDiscount = true" class="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 border border-red-200 dark:border-red-500/30 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          Configurar Descuento
+        </button>
 
-    <ProductTab v-model:showModalTrigger="triggerAdd" :search="searchQuery" />
+        <button @click="triggerAdd = true" class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20 shrink-0">
+          <PlusIcon class="w-5 h-5" />
+          Añadir Producto
+        </button>
+      </div>
+    </div> <!-- Contenedor flex wrap restaurado -->
+
+    <ProductTab v-model:showModalTrigger="triggerAdd" :search="searchQuery" ref="productTabRef" />
+    <ApplyDiscountModal v-model:show="triggerDiscount" @saved="onDiscountSaved" />
   </div>
 </template>
 
@@ -30,9 +38,19 @@
 import { ref } from 'vue'
 import { PlusIcon, SearchIcon } from 'lucide-vue-next'
 import ProductTab from '~/components/inventory/ProductTab.vue'
+import ApplyDiscountModal from '~/components/inventory/ApplyDiscountModal.vue'
 
 const triggerAdd = ref(false)
+const triggerDiscount = ref(false)
 const searchQuery = ref('')
+const productTabRef = ref(null)
+
+const onDiscountSaved = () => {
+    // Refrescar tabla en background
+    if (productTabRef.value && typeof productTabRef.value.fetchData === 'function') {
+         productTabRef.value.fetchData()
+    }
+}
 
 definePageMeta({
   layout: 'default'

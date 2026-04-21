@@ -1,5 +1,30 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  app: {
+    head: {
+      title: 'Chesan Uniformes - ERP & POS',
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'description', content: 'Sistema inteligente de gestión para Chesan Uniformes. Control de procesos de producción, inventarios de materia prima, productos terminados y punto de venta avanzado.' },
+        { name: 'format-detection', content: 'telephone=no' },
+        // SEO Adicional
+        { name: 'author', content: 'Chesan Uniformes' },
+        { name: 'keywords', content: 'uniformes, producción, inventario, pos, gestión, chesan' },
+        // Open Graph / Facebook
+        { property: 'og:type', content: 'website' },
+        { property: 'og:title', content: 'Chesan Uniformes - Sistema de Gestión' },
+        { property: 'og:description', content: 'Automatización y control total para tu negocio de uniformes.' },
+        { property: 'og:image', content: '/favicon.ico' },
+      ],
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap' }
+      ]
+    }
+  },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   runtimeConfig: {

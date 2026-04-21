@@ -211,4 +211,15 @@ const handleLogout = async () => {
 .font-display {
   font-family: 'Inter', sans-serif;
 }
+
+/* Hide spin-buttons for input type="number" */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
 </style>

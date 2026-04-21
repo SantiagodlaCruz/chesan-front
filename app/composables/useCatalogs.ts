@@ -34,7 +34,7 @@ export const useCatalogsStore = defineStore('catalogs', () => {
 
       categories.value = (catRes.data || []).map((c: Category) => ({ label: c.name, value: c.id }))
       institutions.value = (instRes.data || []).map((i: Client) => ({ label: i.name, value: i.id }))
-      colors.value = (colorRes.data || []).map((c: Color) => ({ label: c.name, value: c.id }))
+      colors.value = (colorRes.data || []).map((c: Color) => ({ label: c.name, value: c.id, hex: c.hex_code || undefined }))
       sizes.value = (sizeRes.data || []).map((s: Size) => ({ label: s.name, value: s.id }))
       
       lastFetched.value = now

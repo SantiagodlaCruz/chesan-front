@@ -12,19 +12,30 @@
 
       <input
         v-model="value"
-        :type="type"
+        :type="inputType"
         :placeholder="placeholder"
         :required="required"
         :disabled="disabled"
         class="w-full bg-white dark:bg-[#1e293b] border-2 rounded-2xl py-3 text-sm font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-all duration-300 shadow-sm"
         :class="[
-          $slots.icon ? 'pl-11 pr-4' : 'px-4',
+          $slots.icon ? 'pl-11 pr-12' : 'pl-4 pr-12',
           errorMessage 
             ? 'border-red-500/50 ring-4 ring-red-500/10' 
             : 'border-slate-200/60 dark:border-transparent hover:border-slate-300 dark:hover:border-white/10 focus:border-primary/50 dark:focus:border-primary/50 focus:ring-4 focus:ring-primary/10'
         ]"
       />
       
+      <!-- Password Visibility Toggle -->
+      <button
+        v-if="type === 'password'"
+        type="button"
+        @click="togglePassword"
+        class="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors flex items-center justify-center p-1 z-10"
+      >
+        <EyeOffIcon v-if="showPassword" class="w-4 h-4" />
+        <EyeIcon v-else class="w-4 h-4" />
+      </button>
+
       <!-- Validation Feedback Icons -->
       <div v-if="errorMessage || meta.valid" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
         <div v-if="meta.valid && value" class="text-green-500 animate-in zoom-in-50">
@@ -55,7 +66,7 @@
 <script setup>
 import { useField } from 'vee-validate'
 import { computed, ref, reactive } from 'vue'
-import { CheckCircleIcon, AlertCircleIcon } from 'lucide-vue-next'
+import { CheckCircleIcon, AlertCircleIcon, EyeIcon, EyeOffIcon } from 'lucide-vue-next'
 
 const props = defineProps({
   name: { type: String, default: undefined },
@@ -68,6 +79,18 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const showPassword = ref(false)
+const togglePassword = () => {
+  showPassword.value = !showPassword.value
+}
+
+const inputType = computed(() => {
+  if (props.type === 'password') {
+    return showPassword.value ? 'text' : 'password'
+  }
+  return props.type
+})
 
 // If no name is provided, use standard v-model behavior
 // If name is provided, integrate with vee-validate

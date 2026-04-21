@@ -6,14 +6,14 @@
     size="xl"
     @update:show="close"
   >
-    <form @submit.prevent="submit" class="space-y-6">
+    <form @submit.prevent="onSubmit" class="space-y-6">
       <!-- Image + Name Row -->
       <div class="flex gap-6 items-start">
         <div class="w-40 shrink-0">
           <ImageUpload
-            v-model="form.image"
+            v-model="image"
             label="Imagen Referencial"
-            :initial-preview="form.image_url"
+            :initial-preview="imageUrl"
             :readonly="readonly"
           />
         </div>
@@ -21,25 +21,63 @@
         <div class="flex-1 space-y-4">
           <div class="flex flex-col gap-1.5">
             <BaseInput
-              v-model="form.barcode"
-              label="Código (Opcional)"
-              placeholder="Ej. MAT-001 (se autogenera si se deja vacío)"
-              :disabled="readonly"
-            />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <BaseInput
-              v-model="form.name"
+              v-model="name"
+              name="name"
               label="Nombre del Material"
-              placeholder="Ej. Tela Gabardina Azul"
-              required
+              placeholder=""
               :disabled="readonly"
             />
           </div>
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Unidad de Medida</label>
-            <Select v-model="form.unit_measure_id" :options="unidades" placeholder="Seleccionar..." searchable :disabled="readonly" />
+          <div class="space-y-4">
+            <Select 
+              v-model="unitMeasureId" 
+              label="Unidad de Medida" 
+              :options="unidades" 
+              placeholder="Seleccionar unidad..." 
+              searchable 
+              :disabled="readonly" 
+              :error="errors.unit_measure_id" 
+            />
+            <Select 
+              v-model="colorId" 
+              label="Color (Opcional)" 
+              :options="colores" 
+              placeholder="Seleccionar color..." 
+              searchable 
+              :disabled="readonly" 
+              creatable 
+            />
           </div>
+
+          <!-- Quick Add Color Palette -->
+          <Transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="transform -translate-y-4 opacity-0"
+            enter-to-class="transform translate-y-0 opacity-100"
+          >
+            <div v-if="isNewColor && !readonly" class="bg-primary/[0.03] dark:bg-primary/[0.02] p-4 rounded-2xl border border-primary/10 flex items-center gap-4">
+              <div class="flex-1">
+                <p class="text-[10px] font-black uppercase text-primary mb-1 tracking-wider">Nuevo Color Detectado: <span class="text-slate-900 dark:text-white">{{ colorId }}</span></p>
+                <p class="text-[11px] text-slate-500 leading-relaxed">Este color no existe. Elige un tono para guardarlo en tu catálogo permanentemente.</p>
+              </div>
+              <div class="flex items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+                <div 
+                  class="w-10 h-10 rounded-lg border-2 border-slate-100 dark:border-white/5 relative overflow-hidden transition-transform hover:scale-105"
+                  :style="{ backgroundColor: newColorHex }"
+                >
+                  <input 
+                    type="color" 
+                    v-model="newColorHex" 
+                    class="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0" 
+                  />
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">HEX</span>
+                  <span class="text-xs font-mono font-black text-slate-700 dark:text-slate-200 uppercase">{{ newColorHex }}</span>
+                </div>
+              </div>
+            </div>
+          </Transition>
         </div>
       </div>
 
@@ -49,39 +87,28 @@
       <!-- Price + Stock Fields -->
       <div class="grid grid-cols-3 gap-4">
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Precio Unitario</label>
-          <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
-            <input
-              v-model="form.unit_price"
-              class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
-              placeholder="45.50"
-              type="number"
-              step="0.01"
-              required
-              :disabled="readonly"
-            />
-          </div>
-        </div>
-        <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">{{ itemToEdit ? 'Stock Actual' : 'Cantidad Inicial' }}</label>
-          <input
-            v-model="form.quantity"
-            class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
-            placeholder="150"
+          <BaseInput
+            v-model="unitPrice"
+            name="unit_price"
+            label="Precio Unitario"
+            placeholder="0.00"
             type="number"
-            required
             :disabled="readonly"
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Umbral Mínimo</label>
-          <input
-            v-model="form.min_threshold"
-            class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-3 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
-            placeholder="20"
-            type="number"
-            required
+          <BaseQuantityInput
+            v-model="quantity"
+            name="quantity"
+            :label="itemToEdit ? 'Stock Actual' : 'Cantidad Inicial'"
+            :disabled="readonly"
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <BaseQuantityInput
+            v-model="minThreshold"
+            name="min_threshold"
+            label="Umbral Mínimo"
             :disabled="readonly"
           />
         </div>
@@ -109,9 +136,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useForm, useField } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/yup'
+import * as yup from 'yup'
 import BaseButton from '~/components/BaseButton.vue'
 import BaseInput from '~/components/BaseInput.vue'
+import BaseQuantityInput from '~/components/BaseQuantityInput.vue'
 import ImageUpload from '~/components/ImageUpload.vue'
 import Select from '~/components/Select.vue'
 import { useToast } from '~/stores/toast'
@@ -120,6 +151,7 @@ import type { SelectOption, RawMaterial } from '~/types'
 const props = defineProps<{
   show: boolean
   unidades: SelectOption[]
+  colores: SelectOption[]
   itemToEdit: RawMaterial | null
   readonly?: boolean
 }>()
@@ -128,45 +160,53 @@ const emit = defineEmits(['update:show', 'saved'])
 const toast = useToast()
 const rawMaterialsStore = useRawMaterialsStore()
 const saving = ref(false)
+const newColorHex = ref('#3b82f6')
+const image = ref<File | string | undefined>(undefined)
+const imageUrl = ref('')
 
-const form = reactive({
-  id: null as number | null,
-  barcode: '',
-  name: '',
-  image: null as File | string | null,
-  image_url: '' as string,
-  unit_measure_id: null as number | string | null,
-  quantity: 0,
-  unit_price: null as number | null,
-  min_threshold: 0
+// ── Yup Schema ──
+const validationSchema = toTypedSchema(
+  yup.object({
+    name: yup.string().required('El nombre del material es obligatorio.').max(255, 'Máximo 255 caracteres.'),
+    unit_measure_id: yup.mixed().required('La unidad de medida es obligatoria.'),
+    color_id: yup.mixed().nullable(),
+    unit_price: yup.number().nullable().min(0, 'El precio no puede ser negativo.').transform((value, original) => original === '' ? null : value),
+    quantity: yup.number().nullable().min(0, 'La cantidad no puede ser negativa.').transform((value, original) => original === '' ? null : value),
+    min_threshold: yup.number().nullable().min(0, 'El umbral no puede ser negativo.').transform((value, original) => original === '' ? null : value),
+  })
+)
+
+const { handleSubmit, errors, resetForm, setValues } = useForm({
+  validationSchema
 })
 
-const resetForm = () => {
-  form.id = null
-  form.barcode = ''
-  form.name = ''
-  form.image = null
-  form.image_url = ''
-  form.unit_measure_id = null
-  form.quantity = 0
-  form.unit_price = null
-  form.min_threshold = 0
-}
+const { value: name } = useField<string>('name')
+const { value: unitMeasureId } = useField<number | string | undefined>('unit_measure_id')
+const { value: colorId } = useField<number | string | undefined>('color_id')
+const { value: unitPrice } = useField<number | undefined>('unit_price')
+const { value: quantity } = useField<number | undefined>('quantity')
+const { value: minThreshold } = useField<number | undefined>('min_threshold')
 
+const isNewColor = computed(() => typeof colorId.value === 'string' && colorId.value.length > 0)
+
+// ── Watch show prop to reset/populate form ──
 watch(() => props.show, (newVal) => {
   if (newVal) {
     if (props.itemToEdit) {
-      form.id = props.itemToEdit.id
-      form.barcode = props.itemToEdit.barcode || ''
-      form.name = props.itemToEdit.name
-      form.image = null
-      form.image_url = props.itemToEdit.image_url || ''
-      form.unit_measure_id = props.itemToEdit.unit_measure_id
-      form.quantity = props.itemToEdit.quantity
-      form.unit_price = props.itemToEdit.unit_price
-      form.min_threshold = props.itemToEdit.min_threshold
+      setValues({
+        name: props.itemToEdit.name,
+        unit_measure_id: props.itemToEdit.unit_measure_id || undefined,
+        color_id: props.itemToEdit.color_id || undefined,
+        unit_price: props.itemToEdit.unit_price || undefined,
+        quantity: props.itemToEdit.quantity,
+        min_threshold: props.itemToEdit.min_threshold,
+      })
+      image.value = undefined
+      imageUrl.value = props.itemToEdit.image_url || ''
     } else {
       resetForm()
+      image.value = undefined
+      imageUrl.value = ''
     }
   }
 })
@@ -176,27 +216,52 @@ const close = () => {
   emit('update:show', false)
 }
 
-const submit = async () => {
+// ── Submit Handler ──
+const onSubmit = handleSubmit(async (values) => {
   if (props.readonly) return
 
   try {
     saving.value = true
 
+    // Handle Quick Add Color if needed
+    let finalColorId = values.color_id
+    if (isNewColor.value) {
+      const config = useRuntimeConfig()
+      const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
+      const auth = useAuth()
+      
+      try {
+        const colorRes = await $fetch<any>(`${apiUrl}/api/colors`, {
+          method: 'POST',
+          body: { name: values.color_id, hex_code: newColorHex.value },
+          headers: { Authorization: `Bearer ${auth.token}` }
+        })
+        finalColorId = colorRes.data.id
+        const catalogsStore = useCatalogs()
+        catalogsStore.fetchAll(true)
+      } catch (err: any) {
+        toast.error('Error al crear el nuevo color: ' + (err.data?.message || err.message))
+        saving.value = false
+        return
+      }
+    }
+
     const payload: any = {
-      barcode: form.barcode,
-      name: form.name,
-      unit_measure_id: form.unit_measure_id,
-      unit_price: form.unit_price,
-      quantity: form.quantity,
-      min_threshold: form.min_threshold,
+      name: values.name,
+      unit_measure_id: values.unit_measure_id,
+      color_id: finalColorId,
+      unit_price: values.unit_price,
+      quantity: values.quantity,
+      min_threshold: values.min_threshold,
     }
 
-    if (form.id) {
-      payload.id = form.id
+    if (props.itemToEdit) {
+      payload.id = props.itemToEdit.id
+      payload.barcode = props.itemToEdit.barcode
     }
 
-    if (form.image instanceof File) {
-      payload.image = form.image
+    if (image.value instanceof File) {
+      payload.image = image.value
     }
 
     const result = await rawMaterialsStore.saveMaterial(payload)
@@ -213,5 +278,5 @@ const submit = async () => {
   } finally {
     saving.value = false
   }
-}
+})
 </script>

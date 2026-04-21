@@ -1,22 +1,30 @@
 <template>
   <div class="relative w-full" ref="container">
-    <label v-if="label" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">{{ label }}</label>
+    <label v-if="label" class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 mb-1.5 transition-colors">
+      {{ label }}
+    </label>
     <!-- Trigger Button -->
     <button 
       type="button"
       :class="[
-        'w-full flex items-center justify-between bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-[#1e293b]/20 shadow-sm transition-all focus:outline-none',
-        compact ? 'px-2 py-1 rounded-lg min-w-[70px]' : 'px-4 py-2.5 rounded-xl',
-        disabled ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/40' : 'hover:border-primary dark:hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/50'
+        'w-full flex items-center justify-between bg-white dark:bg-[#1e293b] border-2 shadow-sm transition-all focus:outline-none',
+        compact ? 'px-2 py-1 rounded-lg min-w-[70px]' : 'px-4 py-3 rounded-2xl',
+        error ? 'border-red-500/50 ring-4 ring-red-500/10' : 'border-slate-200/60 dark:border-transparent hover:border-slate-300 dark:hover:border-white/10',
+        disabled ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/40' : (error ? '' : 'focus:border-primary/50 focus:ring-4 focus:ring-primary/10')
       ]"
       :disabled="disabled"
       @click.stop="!disabled && openDropdown()"
     >
       <span :class="[
-        'truncate',
+        'truncate flex items-center gap-2',
         compact ? 'text-xs' : 'text-sm',
         selectedLabel ? 'text-slate-800 dark:text-slate-100 font-semibold' : 'text-slate-500 font-medium'
       ]">
+        <div 
+          v-if="selectedOption?.hex" 
+          class="w-3 h-3 rounded-full border border-slate-200 dark:border-white/10 shadow-sm shrink-0"
+          :style="{ backgroundColor: selectedOption.hex }"
+        ></div>
         {{ selectedLabel || placeholder }}
       </span>
       <Loader2Icon 
@@ -41,11 +49,11 @@
       <div 
         v-if="isOpen" 
         :class="[
-          'absolute z-[70] bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] shadow-2xl dark:shadow-blue-900/40 flex flex-col focus:outline-none overflow-hidden',
+          'absolute z-[70] bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col focus:outline-none overflow-hidden',
           menuWidth ? menuWidth : (
             compact 
               ? (direction === 'down' ? 'mt-2 w-56 rounded-lg left-0 top-full' : 'bottom-full mb-2 w-24 rounded-lg right-0') 
-              : 'mt-2 w-full rounded-xl left-0'
+              : 'mt-2 w-full rounded-2xl left-0'
           )
         ]"
       >
@@ -83,11 +91,32 @@
             modelValue == option.value ? 'text-primary font-bold bg-primary/5 dark:bg-primary/10' : 'text-slate-700 dark:text-slate-300'
           ]"
         >
-          <span class="truncate pr-4">{{ option.label }}</span>
+          <div class="flex items-center gap-2 truncate pr-4">
+            <div 
+              v-if="option.hex" 
+              class="w-2.5 h-2.5 rounded-full border border-slate-200 dark:border-white/10 shadow-sm shrink-0"
+              :style="{ backgroundColor: option.hex }"
+            ></div>
+            <span class="truncate">{{ option.label }}</span>
+          </div>
           <CheckIcon v-if="modelValue == option.value" class="w-3.5 h-3.5 text-primary shrink-0" />
         </button>
         </div>
       </div>
+    </Transition>
+
+    <!-- Error Message -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform -translate-y-2 opacity-0"
+      enter-to-class="transform translate-y-0 opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100"
+      leave-to-class="transform -translate-y-2 opacity-0"
+    >
+      <p v-if="error" class="text-[10px] font-bold text-red-500 dark:text-red-400 ml-1 mt-1 uppercase tracking-wider">
+        {{ error }}
+      </p>
     </Transition>
   </div>
 </template>
@@ -140,6 +169,10 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  error: {
+    type: String,
+    default: ''
   }
 })
 
@@ -152,10 +185,10 @@ const searchQuery = ref('')
 const highlightedIndex = ref(-1)
 
 // Determine what label to show
+const selectedOption = computed(() => props.options.find(opt => opt.value == props.modelValue))
 const selectedLabel = computed(() => {
   if (searchQuery.value) return ''
-  const selected = props.options.find(opt => opt.value == props.modelValue)
-  if (selected) return selected.label
+  if (selectedOption.value) return selectedOption.value.label
   if (props.creatable && props.modelValue) return props.modelValue
   return ''
 })

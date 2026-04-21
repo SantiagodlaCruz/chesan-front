@@ -10,13 +10,10 @@ export const recoverySchema = yup.object({
 })
 
 export const changePasswordSchema = yup.object({
-  current_password: yup.string().required('Debe ingresar su contraseña actual').min(8, 'Mínimo 8 caracteres'),
+  current_password: yup.string().required('Debe ingresar su contraseña actual'),
   new_password: yup.string()
     .required('La nueva contraseña es obligatoria')
-    .min(8, 'Mínimo 8 caracteres')
-    .matches(/\d/, 'Debe contener al menos un número')
-    .matches(/[!@#$%^&*(),.?':{}|<>]/, 'Debe contener al menos un símbolo especial')
-    .matches(/[A-Z]/, 'Debe contener al menos una mayúscula'),
+    .min(8, 'Mínimo 8 caracteres'),
   new_password_confirmation: yup.string()
     .required('Debe confirmar la contraseña')
     .oneOf([yup.ref('new_password')], 'Las contraseñas no coinciden')

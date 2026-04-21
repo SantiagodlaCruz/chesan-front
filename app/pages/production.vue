@@ -1,22 +1,33 @@
 <template>
   <div class="flex flex-col h-[calc(100vh-64px)] -m-4 md:-m-8 bg-background-light dark:bg-background-dark">
     <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark bg-white dark:bg-card-dark shrink-0">
-      <div class="flex items-center gap-4">
-        <h1 class="text-xl font-bold text-slate-900 dark:text-white">Producción</h1>
-        <div class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
-          <button class="px-3 py-1.5 text-xs font-bold bg-white dark:bg-[#1e293b] shadow-sm rounded-md text-slate-800 dark:text-slate-100">Tablero</button>
-          <button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">Lista</button>
-          <button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">Cronograma</button>
+    <div class="px-6 py-4 border-b border-border-light dark:border-border-dark bg-white dark:bg-card-dark shrink-0">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-4">
+          <h1 class="text-xl font-bold text-slate-900 dark:text-white">Producción</h1>
+          <span class="px-2.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-500/20">
+            En Desarrollo
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#1e293b] border border-border-light dark:border-white/5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+            <FilterIcon class="w-3.5 h-3.5" /> Filtrar
+          </button>
+          <button class="flex items-center gap-2 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+            <PlusIcon class="w-3.5 h-3.5" /> Nuevo Pedido
+          </button>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button class="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#1e293b] border border-border-light dark:border-white/5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
-          <FilterIcon class="w-3.5 h-3.5" /> Filtrar
-        </button>
-        <button class="flex items-center gap-2 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">
-          <PlusIcon class="w-3.5 h-3.5" /> Nuevo Pedido
-        </button>
+
+      <!-- Development Notice -->
+      <div class="bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3 flex items-center gap-3">
+        <div class="bg-amber-500/10 p-2 rounded-lg">
+          <AlertTriangleIcon class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p class="text-xs font-bold text-amber-800 dark:text-amber-300">Módulo en Desarrollo</p>
+          <p class="text-[10px] text-amber-700/70 dark:text-amber-400/60 font-medium">Este tablero de producción se encuentra actualmente en fase de implementación. Los registros mostrados son exclusivamente de prueba.</p>
+        </div>
       </div>
     </div>
 
@@ -47,7 +58,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { FilterIcon, PlusIcon } from 'lucide-vue-next'
+import { FilterIcon, PlusIcon, AlertTriangleIcon } from 'lucide-vue-next'
 import KanbanColumn from '~/components/kanban/KanbanColumn.vue'
 import KanbanCard from '~/components/kanban/KanbanCard.vue'
 

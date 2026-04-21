@@ -1,4 +1,4 @@
-import type { UnitMeasure } from './color';
+import type { UnitMeasure, Color } from './color';
 
 export interface RawMaterial {
   id: number;
@@ -8,6 +8,8 @@ export interface RawMaterial {
   image_url?: string;
   unit_measure_id: number | null;
   unit_measure?: UnitMeasure;
+  color_id: number | null;
+  color?: Color;
   unit_price: number;
   quantity: number;
   min_threshold: number;
