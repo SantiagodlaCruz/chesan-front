@@ -213,7 +213,7 @@
           </div>
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fecha de Liquidación *</label>
-            <input v-model="layawayDueDate" type="date" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
+            <input v-model="layawayDueDate" type="date" :min="todayDate" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
           </div>
         </div>
       </div>
@@ -477,6 +477,13 @@ const isLayaway = ref(false)
 const customerName = ref('')
 const layawayDeposit = ref(0)
 const layawayDueDate = ref('')
+const todayDate = computed(() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})
 
 // — Sistema de Alertas POS —
 const posAlert = ref({ message: '', type: 'error' })
