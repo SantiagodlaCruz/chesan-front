@@ -154,7 +154,7 @@
               <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nº Ticket</th>
               <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identidad</th>
               <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Volumen</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Neto</th>
+              <th class="px-6 py-4 text-[10px) font-black text-slate-400 uppercase tracking-widest">Neto</th>
               <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
               <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
             </tr>
@@ -180,6 +180,7 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, watch } from 'vue'
 import { 
   RocketIcon, 
   CheckCircleIcon, 
@@ -191,9 +192,7 @@ import {
   TrendingUpIcon
 } from 'lucide-vue-next'
 
-const config = useRuntimeConfig()
-const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-const token = useCookie('auth_token')
+const api = useApi()
 
 const iconMap = {
   RocketIcon,
@@ -245,15 +244,15 @@ const chartData = ref({ series: [0, 0, 0, 0, 0, 0, 0], labels: ['Lun', 'Mar', 'M
 
 const chartPoints = computed(() => {
     const series = chartData.value.series
-    const max = Math.max(...series, 10) // prevent div by zero
+    const max = Math.max(...series, 10) 
     const w = 800
-    const h = 180 // leave 20px bottom padding inside SVG
+    const h = 180 
     const step = w / Math.max(series.length - 1, 1)
     
     return series.map((val, i) => {
         return {
             x: i * step,
-            y: h - (val / max * h) + 10 // top padding
+            y: h - (val / max * h) + 10 
         }
     })
 })
@@ -278,16 +277,14 @@ const svgAreaPath = computed(() => {
 
 const fetchDashboardData = async () => {
     try {
-        const response = await $fetch(`${backendURL}/api/dashboard`, {
+        const response = await api.get('/api/dashboard', {
             params: {
                 type: chartType.value,
                 period: chartPeriod.value
-            },
-            headers: { Authorization: `Bearer ${token.value}` }
+            }
         })
         
         if (response.data) {
-            // Merge labels and bg colors for stats
             const newStats = response.data.stats.map((s, idx) => {
                 const base = stats.value[idx] || {}
                 return {
@@ -310,13 +307,9 @@ const fetchDashboardData = async () => {
     }
 }
 
-watch([chartType, chartPeriod], () => {
-    fetchDashboardData()
-})
+watch([chartType, chartPeriod], fetchDashboardData)
 
-onMounted(() => {
-    fetchDashboardData()
-})
+onMounted(fetchDashboardData)
 </script>
 
 <style>
@@ -328,7 +321,6 @@ onMounted(() => {
   animation: bounce-slow 3s infinite;
 }
 
-/* Light mode */
 .glass-panel {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -337,7 +329,6 @@ onMounted(() => {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
-/* Dark mode */
 .dark .glass-panel {
   background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.05);

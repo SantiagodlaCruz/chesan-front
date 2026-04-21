@@ -138,6 +138,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:show', 'saved'])
 const toast = useToast()
+const api = useApi()
 
 const barcodeInput = ref(null)
 const barcodeQuery = ref('')
@@ -145,7 +146,7 @@ const scannedProduct = ref(null)
 const error = ref('')
 const saving = ref(false)
 
-const discountMode = ref('percentage') // 'percentage' | 'amount'
+const discountMode = ref('percentage') 
 const discountPercentage = ref(0)
 const discountAmount = ref(0)
 
@@ -169,7 +170,6 @@ const finalPrice = computed(() => {
 watch(() => props.show, (newVal) => {
   if (newVal) {
     resetScanner()
-    // Autofocus in timeout to wait for teleport/render
     setTimeout(() => {
        barcodeInput.value?.focus()
     }, 100)
@@ -190,20 +190,11 @@ const searchProduct = async () => {
     if (!barcodeQuery.value.trim()) return
     error.value = ''
     
-    // Normalizar posible error de apóstrofe de teclado ES
     const query = barcodeQuery.value.trim().replace(/'/g, '-')
     barcodeQuery.value = ''
 
     try {
-        const config = useRuntimeConfig()
-        const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-        const token = useCookie('auth_token').value
-
-        const response = await $fetch(`${backendURL}/api/stock-products`, {
-          params: { search: query },
-          headers: { Authorization: `Bearer ${token}` }
-        })
-
+        const response = await api.get('/api/stock-products', { params: { search: query } })
         const productsArray = Array.isArray(response.data) ? response.data : (response.data?.data || [])
 
         if (productsArray.length > 0) {
@@ -229,26 +220,17 @@ const applyDiscount = async () => {
     saving.value = true
 
     try {
-        const config = useRuntimeConfig()
-        const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-        const token = useCookie('auth_token').value
-
-        await $fetch(`${backendURL}/api/stock-products/${scannedProduct.value.id}/apply-discount`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          body: {
-              discount_type: discountMode.value,
-              discount_percentage: discountMode.value === 'percentage' ? discountPercentage.value : 0,
-              discount_amount: discountMode.value === 'amount' ? discountAmount.value : 0
-          }
+        await api.post(`/api/stock-products/${scannedProduct.value.id}/apply-discount`, {
+            discount_type: discountMode.value,
+            discount_percentage: discountMode.value === 'percentage' ? discountPercentage.value : 0,
+            discount_amount: discountMode.value === 'amount' ? discountAmount.value : 0
         })
 
         toast.success('Descuento actualizado para compras futuras en P.O.S.')
         emit('saved')
         close()
     } catch (err) {
-        let msg = 'Error al aplicar el descuento.'
-        if (err.data && err.data.message) msg = err.data.message
+        let msg = err.data?.message || err.message || 'Error al aplicar el descuento.'
         toast.error(msg)
     } finally {
         saving.value = false

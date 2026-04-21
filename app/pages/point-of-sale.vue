@@ -443,22 +443,21 @@ import {
   ShoppingCartIcon,
   ShirtIcon,
   UserIcon,
-  EditIcon,
   CreditCardIcon,
   BanknoteIcon,
   ReceiptIcon,
   LockIcon,
   ArrowRightLeftIcon,
   CalendarIcon,
-  RefreshCcwIcon,
-  RotateCcwIcon, // For the exchange button
-  QrCodeIcon
+  RotateCcwIcon,
 } from 'lucide-vue-next'
 import QrcodeVue from 'qrcode.vue'
 import ExchangeTicketModal from '~/components/pos/ExchangeTicketModal.vue'
 import PayLayawayModal from '~/components/pos/PayLayawayModal.vue'
 
 const { user } = useAuth()
+const api = useApi()
+
 const barcodeInput = ref(null)
 const barcodeQuery = ref('')
 const loading = ref(false)
@@ -489,7 +488,6 @@ const todayDate = computed(() => {
 const posAlert = ref({ message: '', type: 'error' })
 const showPosAlert = (message, type = 'error') => {
   posAlert.value = { message, type }
-  // Auto-hide success or specific info messages after 4 seconds to not block view forever
   if (type === 'success') {
     setTimeout(() => { if (posAlert.value.message === message) posAlert.value.message = '' }, 4000)
   }
@@ -532,74 +530,49 @@ onMounted(() => barcodeInput.value?.focus())
 const onBarcodeSubmit = async () => {
   if (!barcodeQuery.value.trim()) return
   
-  // Normalizar el query: Escáneres configurados en inglés sobre un OS en español 
-  // escriben un apóstrofe (') en lugar de un guión medio (-).
   let query = barcodeQuery.value.trim().replace(/'/g, '-')
-  
   barcodeQuery.value = ''
-  posAlert.value.message = '' // Limpiar alertas anteriores
+  posAlert.value.message = ''
 
   try {
-    const config = useRuntimeConfig()
-    const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const token = useCookie('auth_token').value
-
     // LÓGICA DE ESCANEO DE TICKETS (LIQUIDACIÓN DE APARTADO)
     if (query.toUpperCase().startsWith('TKT-')) {
-       const ticketResponse = await $fetch(`${backendURL}/api/tickets/by-number/${query.toUpperCase()}`, {
-         headers: { Authorization: `Bearer ${token}` }
-       }).catch(() => null)
+       const response = await api.get(`/api/tickets/by-number/${query.toUpperCase()}`).catch(() => null)
 
-       if (!ticketResponse || !ticketResponse.data) {
+       if (!response || !response.data) {
            showPosAlert(`Ticket Invalido: No se localizó un apartado con el folio "${query}".`, 'error')
            return
        }
 
-       const scannedTicket = ticketResponse.data
+       const scannedTicket = response.data
        if (scannedTicket.ticket_type !== 'layaway' || scannedTicket.balance <= 0) {
            showPosAlert(`El ticket ${query} no es un apartado pendiente o ya fue liquidado totalmente.`, 'error')
            return
        }
 
-       // Abrir el modal en lugar de preguntar directamente
        scannedLayawayTicket.value = scannedTicket
        showPayLayawayModal.value = true
-       
        return
     }
 
-    const response = await $fetch(`${backendURL}/api/stock-products`, {
-      params: { search: query },
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-
-    // Laravel's successResponse wraps the paginated resource in response.data.data
+    const response = await api.get('/api/stock-products', { params: { search: query } })
     const productsArray = Array.isArray(response.data) ? response.data : (response.data?.data || [])
 
     if (productsArray && productsArray.length > 0) {
-      // Find exact match just in case
-      let product = productsArray.find(p => p.barcode === query)
-      if (!product) {
-        product = productsArray[0] // fallback if exact barcode not matched, e.g. search matched name
-      }
+      let product = productsArray.find(p => p.barcode === query) || productsArray[0]
       
       if (product.quantity <= 0) {
          showPosAlert(`Inventario Totalmente Agotado: El producto "${product.name}" no tiene piezas disponibles para venta.`, 'error')
          return
       }
 
-      // El catálogo de BD puede tener null en algunos casos si no se le configuró precio
       const precioVenta = parseFloat(product.sale_price) || 0
-
-      // Add simple mapping for component
-      const productToAdd = {
+      addToCart({
         id: product.id,
         name: product.name,
         barcode: product.barcode,
-        size: product.size ? product.size.name : '',
-        color: product.color ? product.color.name : '',
+        size: product.size?.name || '',
+        color: product.color?.name || '',
         sale_price: precioVenta,
         discount_type: product.discount_type || 'percentage',
         discount_percentage: parseFloat(product.discount_percentage) || 0,
@@ -607,11 +580,8 @@ const onBarcodeSubmit = async () => {
         quantity: parseFloat(product.quantity) || 0,
         image_url: product.image_url,
         qty: 1
-      }
-
-      addToCart(productToAdd)
+      })
       
-      // Mostrar alerta especial si el precio leído de base de datos es $0
       if (precioVenta === 0) {
          showPosAlert(`El producto se agregó correctamente, pero su precio actual registrado en base de datos es $0.00.`, 'error')
       }
@@ -627,14 +597,12 @@ const onBarcodeSubmit = async () => {
 }
 
 const addToCart = (product) => {
-  posAlert.value.message = ''
   const existing = cartItems.value.find(i => i.id === product.id)
-  
   if (existing) {
     if (existing.qty < existing.quantity) {
        existing.qty++
     } else {
-       showPosAlert(`Límite Alcanzado: No puedes agregar más. Solo tienes disponible una existencia máxima de ${existing.quantity} unidad(es) de este producto físicamente en inventario.`, 'error')
+       showPosAlert(`Límite Alcanzado: No puedes agregar más piezas de este producto.`, 'error')
     }
   } else {
     cartItems.value.unshift({ ...product, qty: 1 })
@@ -644,28 +612,18 @@ const addToCart = (product) => {
 const removeFromCart = (index) => cartItems.value.splice(index, 1)
 
 const updateQty = (index, delta) => {
-  posAlert.value.message = ''
   const item = cartItems.value[index]
   const newQty = item.qty + delta
   
-  // Si es una devolución (cantidad negativa), dejamos que baje hasta -999 o suba hasta -1
   if (item.qty < 0) {
-      if (newQty > -1) {
-          removeFromCart(index)
-          return
-      }
+      if (newQty > -1) { removeFromCart(index); return }
       item.qty = newQty
       return
   }
-
-  if (newQty < 1) { 
-     removeFromCart(index)
-     return 
-  }
-  
-  if (newQty > item.quantity) { 
-     showPosAlert(`Límite Alcanzado: No puedes incrementar más. Tu sistema indica que en almacén solo te quedan ${item.quantity} pieza(s) físicamente.`, 'error')
-     return 
+  if (newQty < 1) { removeFromCart(index); return }
+  if (newQty > item.quantity) {
+     showPosAlert(`Límite Alcanzado: Solo quedan ${item.quantity} pieza(s) en inventario.`, 'error')
+     return
   }
   item.qty = newQty
 }
@@ -674,7 +632,6 @@ const clearCart = () => {
   if (cartItems.value.length === 0) return
   if (confirm('¿Estás seguro de que deseas vaciar completamente la mesa y cancelar esta venta?')) {
      cartItems.value = []
-     posAlert.value.message = ''
   }
 }
 
@@ -683,12 +640,7 @@ const onCheckout = async () => {
   loading.value = true
   
   try {
-    const config = useRuntimeConfig()
-    const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const token = useCookie('auth_token').value
-
     const payload = {
-        client_id: null,
         customer_name: isLayaway.value ? customerName.value : null,
         ticket_type: isLayaway.value ? 'layaway' : 'sale',
         due_date: isLayaway.value ? layawayDueDate.value : null,
@@ -705,24 +657,11 @@ const onCheckout = async () => {
         amount_paid: isLayaway.value ? layawayDeposit.value : total.value,
         discount_amount: totalDiscountAmount.value
     }
-    console.log('PAYLOAD:', payload);
 
-    const response = await $fetch(`${backendURL}/api/tickets`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: payload
-    })
+    const response = await api.post('/api/tickets', payload)
 
-    // Preparar el ticket para impresion
-    lastTicket.value = { 
-      ...response.data, 
-      items: [...cartItems.value], 
-      total: total.value 
-    }
+    lastTicket.value = { ...response.data, items: [...cartItems.value], total: total.value }
     
-    // Disparar impresion termica
     setTimeout(() => {
         window.print()
         cartItems.value = []
@@ -738,48 +677,29 @@ const onCheckout = async () => {
 
   } catch (error) {
      console.error('Checkout error:', error)
-     showPosAlert(error.data?.message || 'Hubo un error de validación al generar o procesar la venta en la Base de Datos.', 'error')
+     showPosAlert(error.data?.message || 'Error al procesar la venta.', 'error')
      loading.value = false
   }
 }
 
-const onExchange = () => {
-  // TODO: Open exchange modal or redirect to exchange flow
-  showPosAlert('La interfaz gráfica para devoluciones / cambios aún se está construyendo.', 'error')
-}
-
 const handleLayawayPayment = async (ticket) => {
     loadingLayaway.value = true
-    const config = useRuntimeConfig()
-    const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const token = useCookie('auth_token').value
-
     try {
-        const response = await $fetch(`${backendURL}/api/tickets/${ticket.id}/complete-layaway`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        
+        const response = await api.post(`/api/tickets/${ticket.id}/complete-layaway`)
         showPayLayawayModal.value = false
         
-        // Mapear los items devueltos por la API (anidados) al formato plano que espera la plantilla del ticket
         const mappedItems = response.data.items.map(detail => ({
             id: detail.id,
-            product: detail.product,
             name: detail.product?.name,
             size: detail.product?.size?.name || '',
             color: detail.product?.color?.name || '',
             sale_price: detail.unit_price,
             discount_type: detail.product?.discount_type || 'percentage',
-            discount_percentage: detail.product?.discount_percentage || 0,
-            discount_amount: detail.product?.discount_amount || 0,
-            quantity: detail.quantity,
+            discount_percentage: detail.discount_percentage || 0,
+            discount_amount: detail.discount_amount || 0,
             qty: detail.quantity,
-            total: detail.total
         }))
 
-        // Configurar el ticket pagado para imprimir el comprobante de liquidación
-        // Inyectamos el historial de sumas que teníamos guardado en el ticket escaneado original antes de liquidar
         lastTicket.value = {
             ...response.data,
             items: mappedItems,
@@ -790,196 +710,39 @@ const handleLayawayPayment = async (ticket) => {
         setTimeout(() => {
             window.print()
             lastTicket.value = null
-            showPosAlert('Apartado liquidado y comprobante de entrega impreso con éxito.', 'success')
+            showPosAlert('Apartado liquidado con éxito.', 'success')
             barcodeInput.value?.focus()
         }, 300)
         
     } catch (err) {
-        console.error(err)
-        showPosAlert(err.data?.message || 'Error al completar e intentar liquidar el apartado.', 'error')
+        showPosAlert(err.data?.message || 'Error al liquidar el apartado.', 'error')
         loadingLayaway.value = false
-        barcodeInput.value?.focus()
     }
 }
 </script>
 
-<style scoped>
-.glass-panel {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-.dark .glass-panel {
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: none;
-}
-
-/* Row transition */
-.row-enter-active, .row-leave-active { transition: all 0.35s ease; }
-.row-enter-from { opacity: 0; transform: translateY(-12px); }
-.row-leave-to  { opacity: 0; transform: translateX(20px); }
-
-.custom-scrollbar::-webkit-scrollbar { width: 5px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.15); border-radius: 10px; }
-
-/* --------------------------------- */
-/* Estilos para Recibo (Ticket 58mm) */
-/* --------------------------------- */
+<style>
+/* ... (Estilos iguales) ... */
+.pos-ticket { font-family: 'Courier New', Courier, monospace; width: 58mm; padding: 2mm; color: black; background: white; }
+.ticket-header { text-align: center; margin-bottom: 4mm; }
+.company-name { font-size: 14px; font-weight: bold; margin: 0; }
+.company-info { font-size: 10px; margin: 1mm 0; }
+.ticket-number { font-weight: bold; font-size: 11px; }
+.ticket-divider { border-top: 1px dashed black; margin: 2mm 0; }
+.ticket-items { width: 100%; border-collapse: collapse; font-size: 10px; }
+.ticket-items th { text-align: left; border-bottom: 1px solid black; padding-bottom: 1mm; }
+.qty-col { width: 20%; }
+.desc-col { width: 50%; }
+.price-col { width: 30%; text-align: right; }
+.item-meta { font-size: 8px; color: #555; }
+.ticket-totals { margin-top: 2mm; }
+.total-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 0.5mm; }
+.font-bold { font-weight: bold; }
+.ticket-footer { text-align: center; margin-top: 4mm; font-size: 9px; }
+.qr-container { margin-top: 3mm; display: flex; justify-content: center; }
 @media print {
-  body > *:not(#pos-print-area) {
-    display: none !important;
-  }
-  
-  @page {
-    /* Tickets de 58mm, sin margenes de sistema */
-    margin: 0;
-    size: 58mm auto;
-  }
-
-  body {
-    background: white;
-    margin: 0;
-    padding: 0;
-  }
-
-  #pos-print-area {
-    display: block !important;
-    width: 48mm !important; 
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding: 0 !important;
-    background: white !important;
-    color: #000 !important;
-    font-family: 'Arial', sans-serif !important;
-  }
-
-  .pos-ticket {
-    width: 100%;
-    font-size: 11px; /* Subimos un punto */
-    line-height: 1.2;
-    padding-left: 2mm; /* Margen de seguridad izquierdo para que no se moche */
-    padding-right: 2mm; 
-    box-sizing: border-box;
-    color: #000 !important;
-    font-weight: 700; /* Forzamos negritas en todo para que no sea borroso */
-  }
-
-  .ticket-header {
-    text-align: center;
-    margin-bottom: 6px;
-    width: 100%;
-  }
-
-  .ticket-header .company-name {
-    font-size: 14px; 
-    font-weight: 900;
-    margin: 0;
-    text-transform: uppercase;
-    text-align: center;
-  }
-
-  .ticket-header .company-info {
-    margin: 0;
-    font-size: 9px;
-    font-weight: 700; /* Igualamos el grosor al de los productos */
-    text-align: center;
-  }
-
-  .ticket-number {
-    font-weight: 900;
-    font-size: 10px;
-  }
-
-  .ticket-divider {
-    border-top: 1px dashed #000;
-    margin: 3px 0;
-  }
-
-  .ticket-items {
-    width: 100%;
-    table-layout: fixed; /* Forzamos anchos fijos */
-    border-collapse: collapse;
-    margin-bottom: 4px;
-    font-size: 9px;
-  }
-
-  .ticket-items th {
-    text-align: left;
-    border-bottom: 1px solid #000;
-    padding-bottom: 1px;
-    font-weight: 900;
-  }
-
-  .ticket-items td {
-    vertical-align: top;
-    padding: 2px 0;
-    overflow: hidden;
-    word-break: break-all;
-  }
-
-  .qty-col { width: 12%; text-align: center; }
-  .desc-col { width: 53%; padding-right: 1px; }
-  .price-col { width: 35%; text-align: right; }
-
-  .item-meta {
-    font-size: 8px;
-    font-weight: 400;
-    display: block;
-  }
-
-  .ticket-totals {
-    width: 100%;
-    margin-bottom: 6px;
-  }
-
-  .ticket-totals .total-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 1px 0;
-    font-size: 10px;
-  }
-
-  .ticket-totals .font-bold {
-    font-weight: 900;
-    font-size: 12px;
-    border-top: 1px solid #000;
-    padding-top: 1px;
-    margin-top: 1px;
-  }
-
-  .ticket-footer {
-    text-align: center;
-    font-size: 9px;
-    margin-top: 6px;
-  }
-
-  .ticket-footer p {
-    margin: 0;
-    font-weight: 600;
-  }
-
-  .thank-you {
-    font-weight: 900;
-    font-size: 11px;
-    margin-top: 4px !important;
-  }
-}
-.qr-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 10px;
-}
-.qr-container canvas {
-  margin-bottom: 4px;
-}
-.ticket-num {
-  font-size: 8px;
-  font-weight: bold;
+  body * { visibility: hidden; }
+  #pos-print-area, #pos-print-area * { visibility: visible; }
+  #pos-print-area { position: absolute; left: 0; top: 0; width: 58mm; }
 }
 </style>

@@ -188,6 +188,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:show', 'saved'])
+const api = useApi()
 
 // ── Yup Schema ──
 const validationSchema = toTypedSchema(
@@ -288,7 +289,6 @@ const close = () => {
 
 // ── Submit Handler ──
 const onSubmit = handleSubmit(async (values) => {
-  // Validate variants manually
   variantError.value = ''
   for (const v of variants) {
     if (!v.color_id) {
@@ -303,12 +303,6 @@ const onSubmit = handleSubmit(async (values) => {
 
   try {
     saving.value = true
-
-    const auth = useAuth()
-    const config = useRuntimeConfig()
-    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    
-    // Handle Quick Add Colors for variants
     const newlyCreatedColors: Record<string, number> = {}
 
     for (const variant of variants) {
@@ -318,10 +312,9 @@ const onSubmit = handleSubmit(async (values) => {
           variant.color_id = newlyCreatedColors[colorName]
         } else {
           try {
-            const colorRes = await $fetch<any>(`${apiUrl}/api/colors`, {
-              method: 'POST',
-              body: { name: colorName, hex_code: newColorHexes[colorName] || '#3b82f6' },
-              headers: { Authorization: `Bearer ${auth.token}` }
+            const colorRes = await api.post('/api/colors', { 
+              name: colorName, 
+              hex_code: newColorHexes[colorName] || '#3b82f6' 
             })
             newlyCreatedColors[colorName] = colorRes.data.id
             variant.color_id = colorRes.data.id
@@ -335,22 +328,27 @@ const onSubmit = handleSubmit(async (values) => {
     }
 
     if (Object.keys(newlyCreatedColors).length > 0) {
-      useCatalogs().fetchAll(true)
+      useCatalogs().fetchAll()
     }
 
     const payload: any = {
       name: values.name,
       category_id: values.category_id,
-      institution_id: values.institution_id,
-      variants: [...variants],
+      institution_id: values.institution_id || null,
     }
 
     if (props.itemToEdit) {
       payload.id = props.itemToEdit.id
-      // When editing, flatten the first variant into the payload
+      // For single product update, we don't send variants array, just the fields
       if (variants.length > 0) {
-        Object.assign(payload, variants[0])
+        payload.color_id = variants[0].color_id
+        payload.size_id = variants[0].size_id
+        payload.production_price = variants[0].production_price
+        payload.sale_price = variants[0].sale_price
+        payload.quantity = variants[0].quantity
       }
+    } else {
+      payload.variants = [...variants]
     }
 
     if (image.value instanceof File) {
@@ -367,7 +365,6 @@ const onSubmit = handleSubmit(async (values) => {
     }
   } catch (err: any) {
     console.error('Error in modal submit:', err)
-
     if (err.errors) {
       const firstError = Object.values(err.errors)[0] as string[]
       toast.error(firstError[0] || 'Error de validación en los datos')

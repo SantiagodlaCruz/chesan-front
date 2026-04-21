@@ -108,6 +108,7 @@ const props = defineProps({
   show: Boolean
 })
 const emit = defineEmits(['update:show', 'addReturn'])
+const api = useApi()
 
 const qrInput = ref(null)
 const ticketNumberQuery = ref('')
@@ -138,13 +139,7 @@ const searchTicket = async () => {
     ticketNumberQuery.value = ''
 
     try {
-        const config = useRuntimeConfig()
-        const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-        const token = useCookie('auth_token').value
-
-        const response = await $fetch(`${backendURL}/api/tickets/by-number/${query}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const response = await api.get(`/api/tickets/by-number/${query}`)
 
         if (response.data) {
            scannedTicket.value = response.data
@@ -171,18 +166,17 @@ const addToCartAsReturn = (detail) => {
         size: product.size?.name || '',
         color: product.color?.name || '',
         sale_price: parseFloat(detail.unit_price) || 0,
-        discount_percentage: 0, // En devoluciones usualmente tomamos el precio neto pagado
+        discount_percentage: 0, 
         discount_amount: 0,
         discount_type: 'percentage',
-        quantity: 999, // Stock infinito para la devolución (entra al almacen)
+        quantity: 999, 
         image_url: product.image_url,
-        qty: -1, // CANTIDAD NEGATIVA
+        qty: -1, 
         is_return: true,
         origin_ticket: scannedTicket.value.ticket_number,
-        parent_detail_id: detail.id // El ID del renglón original
+        parent_detail_id: detail.id 
     }
 
-    console.log('Agregando al carrito para Devolución:', itemToReturn)
     emit('addReturn', itemToReturn)
     close()
 }

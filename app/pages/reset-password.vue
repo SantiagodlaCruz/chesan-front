@@ -117,6 +117,8 @@ import {
 definePageMeta({ layout: 'auth' })
 
 const route = useRoute()
+const api = useApi()
+
 const token = ref('')
 const email = ref('')
 
@@ -150,17 +152,11 @@ const onSubmit = async (values: any) => {
   errorMsg.value = ''
   
   try {
-    const config = useRuntimeConfig()
-    const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    
-    await $fetch(`${backendURL}/api/auth/reset-password`, {
-      method: 'POST',
-      body: {
+    await api.post('/api/auth/reset-password', {
         token: token.value,
         email: email.value,
         password: values.password,
         password_confirmation: values.password_confirmation
-      }
     })
     
     successMsg.value = '¡Tu contraseña ha sido restablecida exitosamente!'

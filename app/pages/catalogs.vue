@@ -64,7 +64,7 @@
           endpoint="/api/colors"
           :fields="[
             { key: 'name', label: 'Nombre del Color', type: 'text', required: true, placeholder: 'Ej. Azul Marino' },
-            { key: 'hex_code', label: 'Código Hex (Opcional)', type: 'text', placeholder: '#0000FF' }
+            { key: 'hex_code', label: 'Código Hex (Opcional)', type: 'color', placeholder: '#0000FF' }
           ]"
         />
       </div>
