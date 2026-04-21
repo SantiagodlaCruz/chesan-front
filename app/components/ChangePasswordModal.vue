@@ -130,11 +130,11 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const auth = useAuth()
 const loading = ref(false)
 const passwordSuccess = ref('')
 const passwordError = ref('')
 
+const api = useApi()
 const typedPasswordSchema = toTypedSchema(changePasswordSchema)
 
 const close = () => {
@@ -151,17 +151,7 @@ const submitPasswordChange = async (values, { resetForm }) => {
   passwordSuccess.value = ''
 
   try {
-    const config = useRuntimeConfig()
-    const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const token = useCookie('auth_token').value
-    
-    await $fetch(`${backendURL}/api/auth/change-password`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: values
-    })
+    await api.post('/api/auth/change-password', values)
     
     passwordSuccess.value = 'Contraseña actualizada exitosamente.'
     resetForm()

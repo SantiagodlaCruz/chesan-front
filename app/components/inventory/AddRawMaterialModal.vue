@@ -159,6 +159,7 @@ const props = defineProps<{
 const emit = defineEmits(['update:show', 'saved'])
 const toast = useToast()
 const rawMaterialsStore = useRawMaterialsStore()
+const api = useApi()
 const saving = ref(false)
 const newColorHex = ref('#3b82f6')
 const image = ref<File | string | undefined>(undefined)
@@ -189,7 +190,6 @@ const { value: minThreshold } = useField<number | undefined>('min_threshold')
 
 const isNewColor = computed(() => typeof colorId.value === 'string' && colorId.value.length > 0)
 
-// ── Watch show prop to reset/populate form ──
 watch(() => props.show, (newVal) => {
   if (newVal) {
     if (props.itemToEdit) {
@@ -223,22 +223,15 @@ const onSubmit = handleSubmit(async (values) => {
   try {
     saving.value = true
 
-    // Handle Quick Add Color if needed
     let finalColorId = values.color_id
     if (isNewColor.value) {
-      const config = useRuntimeConfig()
-      const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-      const auth = useAuth()
-      
       try {
-        const colorRes = await $fetch<any>(`${apiUrl}/api/colors`, {
-          method: 'POST',
-          body: { name: values.color_id, hex_code: newColorHex.value },
-          headers: { Authorization: `Bearer ${auth.token}` }
+        const colorRes = await api.post('/api/colors', { 
+            name: values.color_id, 
+            hex_code: newColorHex.value 
         })
         finalColorId = colorRes.data.id
-        const catalogsStore = useCatalogs()
-        catalogsStore.fetchAll(true)
+        useCatalogs().fetchAll()
       } catch (err: any) {
         toast.error('Error al crear el nuevo color: ' + (err.data?.message || err.message))
         saving.value = false

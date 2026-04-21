@@ -1,22 +1,31 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useAuth } from './useAuth'
 
 export const useUnitMeasuresStore = defineStore('unitMeasures', () => {
+  const api = useApi()
   const items = ref<{id: number, name: string}[]>([])
   const loading = ref(false)
 
   async function fetchUnitMeasures() {
     loading.value = true
-    const config = useRuntimeConfig()
-    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const auth = useAuth()
-
     try {
-      const res = await $fetch<any>(`${apiUrl}/api/unit-measures`, {
-        headers: { Authorization: `Bearer ${auth.token}` }
+      const res = await api.get('/api/unit-measures', { 
+        params: { 
+          per_page: 500,
+          sort_by: 'name',
+          sort_direction: 'asc'
+        } 
       })
-      items.value = res.data || []
+      
+      let rawItems = []
+      if (res.data && Array.isArray(res.data.data)) rawItems = res.data.data
+      else if (Array.isArray(res.data)) rawItems = res.data
+      
+      items.value = rawItems.map((i: any) => ({
+        label: i.name,
+        value: i.id,
+        ...i
+      }))
     } catch (err) {
       console.error('Error loading unit measures', err)
     } finally {
@@ -25,16 +34,8 @@ export const useUnitMeasuresStore = defineStore('unitMeasures', () => {
   }
 
   async function saveUnitMeasure(name: string) {
-    const config = useRuntimeConfig()
-    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const auth = useAuth()
-
     try {
-      await $fetch(`${apiUrl}/api/unit-measures`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${auth.token}` },
-        body: { name }
-      })
+      await api.post('/api/unit-measures', { name })
       await fetchUnitMeasures()
       return true
     } catch (err: any) {

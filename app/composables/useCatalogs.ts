@@ -1,55 +1,63 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useAuth } from './useAuth'
-import type { SelectOption, Category, Client, ApiResponse, Color, Size } from '~/types'
 
 export const useCatalogsStore = defineStore('catalogs', () => {
-  const categories = ref<SelectOption[]>([])
-  const institutions = ref<SelectOption[]>([])
-  const colors = ref<SelectOption[]>([])
-  const sizes = ref<SelectOption[]>([])
-  
+  const colors = ref([])
+  const sizes = ref([])
+  const units = ref([])
+  const categories = ref([])
+  const clients = ref([])
+  const institutions = ref([])
   const loading = ref(false)
-  const lastFetched = ref(0)
   
-  async function fetchAll(force = false) {
-    const now = Date.now()
-    // Cache for 5 minutes unless forced
-    if (!force && categories.value.length > 0 && (now - lastFetched.value < 5 * 60 * 1000)) {
-      return
-    }
-    
+  const api = useApi()
+
+  async function fetchAll() {
     loading.value = true
-    const config = useRuntimeConfig()
-    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const auth = useAuth()
-    
     try {
-      const [catRes, instRes, colorRes, sizeRes] = await Promise.all([
-        $fetch<ApiResponse<Category[]>>(`${apiUrl}/api/categories`, { headers: { Authorization: `Bearer ${auth.token}` } }),
-        $fetch<ApiResponse<Client[]>>(`${apiUrl}/api/clients/institutions`, { headers: { Authorization: `Bearer ${auth.token}` } }),
-        $fetch<ApiResponse<Color[]>>(`${apiUrl}/api/colors`, { headers: { Authorization: `Bearer ${auth.token}` } }),
-        $fetch<ApiResponse<Size[]>>(`${apiUrl}/api/sizes`, { headers: { Authorization: `Bearer ${auth.token}` } })
+      const config = { 
+        params: { 
+          per_page: 500,
+          sort_by: 'name',
+          sort_direction: 'asc'
+        } 
+      }
+      const [cols, szs, unts, cats, clis, insts] = await Promise.all([
+        api.get('/api/colors', config),
+        api.get('/api/sizes', config),
+        api.get('/api/unit-measures', config),
+        api.get('/api/categories', config),
+        api.get('/api/clients', config),
+        api.get('/api/clients/institutions', config)
       ])
 
-      categories.value = (catRes.data || []).map((c: Category) => ({ label: c.name, value: c.id }))
-      institutions.value = (instRes.data || []).map((i: Client) => ({ label: i.name, value: i.id }))
-      colors.value = (colorRes.data || []).map((c: Color) => ({ label: c.name, value: c.id, hex: c.hex_code || undefined }))
-      sizes.value = (sizeRes.data || []).map((s: Size) => ({ label: s.name, value: s.id }))
-      
-      lastFetched.value = now
-    } catch (err) {
-      console.error('Error fetching catalogs', err)
+      const mapToOptions = (res: any) => {
+        let items = []
+        if (res.data && Array.isArray(res.data.data)) items = res.data.data
+        else if (Array.isArray(res.data)) items = res.data
+        
+        return items.map((i: any) => ({
+          label: i.name,
+          value: i.id,
+          hex: i.hex_code || null, // For color select
+          ...i
+        }))
+      }
+
+      colors.value = mapToOptions(cols)
+      sizes.value = mapToOptions(szs)
+      units.value = mapToOptions(unts)
+      categories.value = mapToOptions(cats)
+      clients.value = mapToOptions(clis)
+      institutions.value = mapToOptions(insts)
+    } catch (error) {
+      console.error('Error fetching catalogs', error)
     } finally {
       loading.value = false
     }
   }
 
-  function invalidateCache() {
-    lastFetched.value = 0
-  }
-
-  return { categories, institutions, colors, sizes, loading, fetchAll, invalidateCache }
+  return { colors, sizes, units, categories, clients, institutions, loading, fetchAll }
 })
 
 export const useCatalogs = () => useCatalogsStore()

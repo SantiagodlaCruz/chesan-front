@@ -3,8 +3,7 @@ import { computed } from 'vue'
 import type { User } from '~/types'
 
 export const useAuthStore = defineStore('auth', () => {
-  const config = useRuntimeConfig()
-  const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
+  const api = useApi()
   const cookieMaxAge = 60 * 60 * 24 * 7 // 7 días
 
   // useCookie es síncrono y compatible con SSR en Nuxt
@@ -23,14 +22,11 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => !!token.value)
 
   async function login(credentials: Record<string, string>) {
-    const response = await $fetch<{
+    const response = await api.post<{
       success: boolean
       message: string
       data: { access_token: string; user: User }
-    }>(`${backendURL}/api/auth/login`, {
-      method: 'POST',
-      body: credentials,
-    })
+    }>('/api/auth/login', credentials)
 
     token.value = response.data.access_token
     user.value = response.data.user
@@ -39,10 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     try {
       if (token.value) {
-        await $fetch(`${backendURL}/api/auth/logout`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token.value}` },
-        })
+        await api.post('/api/auth/logout')
       }
     } catch (error) {
       console.error('Logout error', error)

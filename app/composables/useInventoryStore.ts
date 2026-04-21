@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useAuth } from './useAuth'
 import type { StockProduct, ApiMeta, ApiLinks, ApiPaginatedResponse } from '~/types'
 
 export const useInventoryStore = defineStore('inventory', () => {
@@ -9,32 +8,21 @@ export const useInventoryStore = defineStore('inventory', () => {
   const links = ref<Partial<ApiLinks>>({})
   const loading = ref(false)
   const error = ref<string | null>(null)
+  
+  const api = useApi()
 
   async function fetchProducts(params: Record<string, string | number> = {}) {
     loading.value = true
     error.value = null
-    const config = useRuntimeConfig()
-    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const auth = useAuth()
 
     try {
-      const query = new URLSearchParams()
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          query.append(key, value.toString())
-        }
-      })
-
-      const res = await $fetch<ApiPaginatedResponse<StockProduct>>(`${apiUrl}/api/stock-products?${query.toString()}`, {
-        headers: { Authorization: `Bearer ${auth.token}` }
-      })
+      const res = await api.get<ApiPaginatedResponse<StockProduct>>('/api/stock-products', { params })
 
       items.value = res.data?.data || []
       meta.value = res.data?.meta || {}
       links.value = res.data?.links || {}
-    } catch (err: unknown) {
-      const e = err as { data?: { message?: string }, message?: string }
-      error.value = e.data?.message || e.message || 'Error al cargar productos'
+    } catch (err: any) {
+      error.value = err.data?.message || err.message || 'Error al cargar inventario'
       console.error(error.value, err)
     } finally {
       loading.value = false
@@ -42,99 +30,54 @@ export const useInventoryStore = defineStore('inventory', () => {
   }
 
   async function saveProduct(data: any) {
-    const config = useRuntimeConfig()
-    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const auth = useAuth()
-
     try {
-      const isArray = Array.isArray(data)
-      const hasImage = (!isArray && data.image instanceof File) || (isArray && data.some((item: any) => item.image instanceof File))
+      const hasImage = data.image instanceof File
 
-      if (hasImage && !isArray) {
-        // Handle single with image via FormData
+      if (hasImage) {
+        // Correctly handle nested objects/arrays for FormData
         const formData = new FormData()
+        
+        const appendToFormData = (key: string, value: any) => {
+          if (value instanceof File) {
+            formData.append(key, value)
+          } else if (Array.isArray(value)) {
+            value.forEach((v, i) => appendToFormData(`${key}[${i}]`, v))
+          } else if (typeof value === 'object' && value !== null) {
+            Object.entries(value).forEach(([k, v]) => appendToFormData(`${key}[${k}]`, v))
+          } else {
+            formData.append(key, value ?? '')
+          }
+        }
+
         Object.entries(data).forEach(([key, value]) => {
           if (value === null || value === undefined) return
-          if (key === 'variants' && Array.isArray(value)) {
-            value.forEach((v, i) => {
-              Object.entries(v).forEach(([vk, vv]) => {
-                formData.append(`variants[${i}][${vk}]`, vv as any)
-              });
-            });
-          } else {
-            formData.append(key, value as any)
-          }
+          appendToFormData(key, value)
         })
 
-        await $fetch(`${apiUrl}/api/stock-products${data.id ? '/' + data.id : ''}`, {
-          method: 'POST', // Use POST for both since we might need _method for PUT with FormData
-          headers: { 
-            'Authorization': `Bearer ${auth.token}`,
-            'Accept': 'application/json'
-          },
-          params: data.id ? { _method: 'PUT' } : {},
-          body: formData
+        // For updates with images, we use POST + _method=PUT to bypass PHP's PUT-formdata limitations
+        await api.post(`/api/stock-products${data.id ? '/' + data.id : ''}`, formData, {
+          params: data.id ? { _method: 'PUT' } : {}
         })
-      } else if (isArray) {
-        // Current bulk logic (JSON)
-        await Promise.all(data.map((product: any) => 
-          $fetch(`${apiUrl}/api/stock-products`, {
-            method: 'POST',
-            headers: { 
-              'Authorization': `Bearer ${auth.token}`,
-              'Accept': 'application/json'
-            },
-            body: product
-          })
-        ))
       } else if (data.id) {
-        await $fetch(`${apiUrl}/api/stock-products/${data.id}`, {
-          method: 'PUT',
-          headers: { 
-            'Authorization': `Bearer ${auth.token}`,
-            'Accept': 'application/json'
-          },
-          body: data
-        })
+        await api.put(`/api/stock-products/${data.id}`, data)
       } else {
-        await $fetch(`${apiUrl}/api/stock-products`, {
-          method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${auth.token}`,
-            'Accept': 'application/json'
-          },
-          body: data
-        })
+        await api.post('/api/stock-products', data)
       }
       return true
     } catch (err: any) {
       console.error('Error saving product', err)
-      if (err.response?._data) {
-        throw err.response._data
-      }
+      if (err.data) throw err.data
       throw err
     }
   }
 
   async function deleteProduct(id: number | string) {
-    const config = useRuntimeConfig()
-    const apiUrl = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    const auth = useAuth()
-
     try {
-      await $fetch(`${apiUrl}/api/stock-products/${id}`, {
-        method: 'DELETE',
-        headers: { 
-          'Authorization': `Bearer ${auth.token}`,
-          'Accept': 'application/json'
-        }
-      })
+      await api.delete(`/api/stock-products/${id}`)
       return true
     } catch (err: any) {
       console.error('Error deleting product', err)
-      if (err.response?._data) {
-        throw err.response._data
-      }
+      if (err.data) throw err.data
       throw err
     }
   }

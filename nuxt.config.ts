@@ -13,7 +13,7 @@ export default defineNuxtConfig({
         { name: 'keywords', content: 'uniformes, producción, inventario, pos, gestión, chesan' },
         // Open Graph / Facebook
         { property: 'og:type', content: 'website' },
-        { property: 'og:title', content: 'Chesan Uniformes - Sistema de Gestión' },
+        { property: 'og:title', content: 'Uniformes Chesan - Sistema de Gestión' },
         { property: 'og:description', content: 'Automatización y control total para tu negocio de uniformes.' },
         { property: 'og:image', content: '/favicon.ico' },
       ],

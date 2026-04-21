@@ -270,6 +270,8 @@ import { loginSchema, recoverySchema } from '~/utils/auth.validation'
 definePageMeta({ layout: 'auth' })
 
 const { login } = useAuth()
+const api = useApi()
+
 const isSubmitting = ref(false)
 const showPassword = ref(false)
 const loginError = ref('')
@@ -280,25 +282,15 @@ const recoveryError = ref('')
 const recoverySuccess = ref('')
 const lastRecoveryEmail = ref('')
 
-const typedSchema = hideToTypedSchema(loginSchema)
-const typedRecoverySchema = hideToTypedSchema(recoverySchema)
-
-// Workaround for toTypedSchema if needed or use it directly
-function hideToTypedSchema(schema: any) {
-  return toTypedSchema(schema)
-}
+const typedSchema = toTypedSchema(loginSchema)
+const typedRecoverySchema = toTypedSchema(recoverySchema)
 
 const onRecoverySubmit = async (values: any) => {
   isSubmittingRecovery.value = true
   recoveryError.value = ''
   recoverySuccess.value = ''
   try {
-    const config = useRuntimeConfig()
-    const backendURL = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
-    await $fetch(`${backendURL}/api/auth/forgot-password`, {
-      method: 'POST',
-      body: { email: values.email }
-    })
+    await api.post('/api/auth/forgot-password', { email: values.email })
     recoverySuccess.value = 'Se han enviado las instrucciones a tu correo electrónico registrado.'
     lastRecoveryEmail.value = values.email
   } catch (e: any) {
