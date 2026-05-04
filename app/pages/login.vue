@@ -305,7 +305,16 @@ const onSubmit = async (values: any) => {
   loginError.value = ''
   try {
     await login({ email: values.email, password: values.password })
-    await navigateTo('/')
+    
+    // Redirección inteligente basada en PERMISOS (no en nombres de roles)
+    const authStore = useAuth()
+    
+    // Si puede usar el POS pero no tiene permiso de ver reportes (dashboard), va a ventas
+    if (authStore.can('punto_de_venta.ver') && !authStore.can('reportes.ver')) {
+      await navigateTo('/point-of-sale')
+    } else {
+      await navigateTo('/')
+    }
   } catch (e: any) {
     loginError.value = e?.data?.message || e?.message || 'Credenciales incorrectas. Por favor intente de nuevo.'
   } finally {

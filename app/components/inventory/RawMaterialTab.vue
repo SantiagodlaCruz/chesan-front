@@ -24,6 +24,8 @@
         { key: 'quantity', label: 'Stock Actual', align: 'center' }
       ]"
       show-actions
+      permission-edit="materia_prima.editar"
+      permission-delete="materia_prima.eliminar"
       :items="items" 
       :loading="pending" 
       :meta="meta"

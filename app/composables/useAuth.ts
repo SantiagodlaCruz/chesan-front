@@ -21,6 +21,21 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value)
 
+  /**
+   * Verifica si el usuario tiene un permiso específico
+   */
+  function can(permission: string): boolean {
+    if (user.value?.roles?.includes('super_admin')) return true
+    return user.value?.permissions?.includes(permission) || false
+  }
+
+  /**
+   * Verifica si el usuario tiene un rol específico
+   */
+  function hasRole(role: string): boolean {
+    return user.value?.roles?.includes(role) || false
+  }
+
   async function login(credentials: Record<string, string>) {
     const response = await api.post<{
       success: boolean
@@ -45,7 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, token, isLoggedIn, login, logout }
+  return { user, token, isLoggedIn, can, hasRole, login, logout }
 })
 
 export const useAuth = () => useAuthStore()

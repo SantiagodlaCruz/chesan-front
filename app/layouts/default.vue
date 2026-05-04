@@ -31,7 +31,7 @@
       <!-- Navigation -->
       <nav class="flex-1 px-3 space-y-1 mt-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
         <NuxtLink 
-          v-for="item in navItems" 
+          v-for="item in filteredNavItems" 
           :key="item.path"
           :to="item.path"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative"
@@ -177,13 +177,26 @@ const user = computed(() => auth.user)
 const isCollapsed = useState('sidebar-collapsed', () => false)
 
 const navItems = [
-  { label: 'Inicio', path: '/', icon: LayoutDashboardIcon },
-  { label: 'Productos', path: '/inventory/products', icon: BoxIcon },
-  { label: 'Materia Prima', path: '/inventory/raw-materials', icon: PackageIcon },
-  { label: 'Producción', path: '/production', icon: FactoryIcon },
-  { label: 'Punto de venta', path: '/point-of-sale', icon: ShoppingCartIcon },
-  { label: 'Catálogos', path: '/catalogs', icon: SettingsIcon },
+  { label: 'Inicio', path: '/', icon: LayoutDashboardIcon, permission: 'reportes.ver' },
+  { label: 'Productos', path: '/inventory/products', icon: BoxIcon, permission: 'inventario.ver' },
+  { label: 'Materia Prima', path: '/inventory/raw-materials', icon: PackageIcon, permission: 'materia_prima.ver' },
+  { label: 'Producción', path: '/production', icon: FactoryIcon, permission: 'produccion.ver' },
+  { label: 'Punto de venta', path: '/point-of-sale', icon: ShoppingCartIcon, permission: 'punto_de_venta.ver' },
+  { label: 'Catálogos', path: '/catalogs', icon: SettingsIcon, permission: 'catalogos.ver' },
 ]
+
+const filteredNavItems = computed(() => {
+  return navItems.filter(item => {
+    // Si no tiene permiso requerido, se muestra siempre (ej. "/" si fuera pública)
+    if (!item.permission) return true
+    
+    // Si es super_admin, tiene acceso a todo
+    if (user.value?.roles?.includes('super_admin')) return true
+    
+    // Verificar si el usuario tiene el permiso específico
+    return user.value?.permissions?.includes(item.permission)
+  })
+})
 
 const showProfileMenu = ref(false)
 const showPasswordModal = ref(false)

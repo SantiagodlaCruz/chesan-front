@@ -13,10 +13,20 @@
       @per-page-change="handlePerPageChange"
     >
       <template #actions="{ item }">
-        <button @click="openModal(item)" class="p-1.5 hover:bg-yellow-500/10 rounded-xl transition-all group/btn" title="Editar">
+        <button 
+          v-if="can(permissionEdit)"
+          @click="openModal(item)" 
+          class="p-1.5 hover:bg-yellow-500/10 rounded-xl transition-all group/btn" 
+          title="Editar"
+        >
           <EditIcon class="w-4 h-4 text-[#eab308] group-hover/btn:scale-110 transition-transform" />
         </button>
-        <button @click="deleteItem(item.id)" class="p-1.5 hover:bg-red-500/10 rounded-xl transition-all group/btn" title="Eliminar">
+        <button 
+          v-if="can(permissionDelete)"
+          @click="deleteItem(item.id)" 
+          class="p-1.5 hover:bg-red-500/10 rounded-xl transition-all group/btn" 
+          title="Eliminar"
+        >
           <TrashIcon class="w-4 h-4 text-accent-red group-hover/btn:scale-110 transition-transform" />
         </button>
       </template>
@@ -99,9 +109,12 @@ import { useCatalogs } from '~/composables/useCatalogs'
 const props = defineProps({
   endpoint: String,
   itemLabel: String,
-  fields: Array
+  fields: Array,
+  permissionEdit: { type: String, default: 'catalogos.editar' },
+  permissionDelete: { type: String, default: 'catalogos.eliminar' }
 })
 
+const { can } = useAuth()
 const toast = useToast()
 const items = ref([])
 const meta = ref({})

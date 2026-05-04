@@ -8,6 +8,7 @@
       </div>
 
       <button
+        v-if="can('catalogos.crear')"
         @click="triggerAdd"
         class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20 shrink-0"
       >
@@ -99,6 +100,8 @@ import { ref, computed } from 'vue'
 import { TagIcon, SchoolIcon, PaletteIcon, ScaleIcon, RulerIcon, PlusIcon } from 'lucide-vue-next'
 import CatalogManager from '~/components/catalogs/CatalogManager.vue'
 
+const auth = useAuth()
+const { can } = auth
 const activeTab = ref('categories')
 
 // Component refs to trigger openModal

@@ -32,6 +32,8 @@
         { key: 'quantity', label: 'Stock', align: 'center' }
       ]"
       show-actions
+      permission-edit="inventario.editar"
+      permission-delete="inventario.eliminar"
       :items="items" 
       :loading="pending" 
       :meta="meta"

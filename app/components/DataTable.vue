@@ -73,10 +73,20 @@
                     <button @click="$emit('view', item)" class="p-1.5 hover:bg-primary/10 rounded-xl transition-all group/btn" title="Ver Detalle">
                       <EyeIcon class="w-4 h-4 text-primary group-hover/btn:scale-110 transition-transform" />
                     </button>
-                    <button @click="$emit('edit', item)" class="p-1.5 hover:bg-yellow-500/10 rounded-xl transition-all group/btn" title="Editar">
+                    <button 
+                      v-if="!permissionEdit || can(permissionEdit)"
+                      @click="$emit('edit', item)" 
+                      class="p-1.5 hover:bg-yellow-500/10 rounded-xl transition-all group/btn" 
+                      title="Editar"
+                    >
                       <EditIcon class="w-4 h-4 text-[#eab308] group-hover/btn:scale-110 transition-transform" />
                     </button>
-                    <button @click="$emit('delete', item)" class="p-1.5 hover:bg-red-500/10 rounded-xl transition-all group/btn" title="Eliminar">
+                    <button 
+                      v-if="!permissionDelete || can(permissionDelete)"
+                      @click="$emit('delete', item)" 
+                      class="p-1.5 hover:bg-red-500/10 rounded-xl transition-all group/btn" 
+                      title="Eliminar"
+                    >
                       <TrashIcon class="w-4 h-4 text-accent-red group-hover/btn:scale-110 transition-transform" />
                     </button>
                   </slot>
@@ -167,7 +177,11 @@ const props = defineProps<{
   links?: Partial<ApiLinks>
   perPage?: number | string
   showActions?: boolean
+  permissionEdit?: string
+  permissionDelete?: string
 }>()
+
+const { can } = useAuth()
 
 defineEmits(['view', 'edit', 'delete', 'print', 'page-change', 'per-page-change'])
 

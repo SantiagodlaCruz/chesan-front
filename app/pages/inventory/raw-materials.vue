@@ -16,7 +16,11 @@
         </div>
       </div>
 
-      <button @click="triggerAdd = true" class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20 shrink-0">
+      <button 
+        v-if="can('materia_prima.crear')"
+        @click="triggerAdd = true" 
+        class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20 shrink-0"
+      >
         <PlusIcon class="w-5 h-5" />
         Añadir Material
       </button>
@@ -31,6 +35,8 @@ import { ref } from 'vue'
 import { PlusIcon, SearchIcon } from 'lucide-vue-next'
 import RawMaterialTab from '~/components/inventory/RawMaterialTab.vue'
 
+const auth = useAuth()
+const { can } = auth
 const triggerAdd = ref(false)
 const searchQuery = ref('')
 
