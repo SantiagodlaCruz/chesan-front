@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Table -->
-    <DataTable
+    <CatalogTable
       :columns="fields"
       :items="items"
       :loading="loading"
@@ -11,26 +11,9 @@
       show-actions
       @page-change="fetchData"
       @per-page-change="handlePerPageChange"
-    >
-      <template #actions="{ item }">
-        <button 
-          v-if="can(permissionEdit)"
-          @click="openModal(item)" 
-          class="p-1.5 hover:bg-yellow-500/10 rounded-xl transition-all group/btn" 
-          title="Editar"
-        >
-          <EditIcon class="w-4 h-4 text-[#eab308] group-hover/btn:scale-110 transition-transform" />
-        </button>
-        <button 
-          v-if="can(permissionDelete)"
-          @click="deleteItem(item.id)" 
-          class="p-1.5 hover:bg-red-500/10 rounded-xl transition-all group/btn" 
-          title="Eliminar"
-        >
-          <TrashIcon class="w-4 h-4 text-accent-red group-hover/btn:scale-110 transition-transform" />
-        </button>
-      </template>
-    </DataTable>
+      @edit="openModal"
+      @delete="(item) => deleteItem(item.id)"
+    />
 
     <BaseModal
       v-model:show="showModal"
@@ -100,8 +83,8 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { EditIcon, TrashIcon } from 'lucide-vue-next'
-import DataTable from '~/components/DataTable.vue'
+import { PencilIcon, Trash2Icon } from 'lucide-vue-next'
+import CatalogTable from '~/components/catalogs/CatalogTable.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import { useToast } from '~/stores/toast'
 import { useCatalogs } from '~/composables/useCatalogs'
