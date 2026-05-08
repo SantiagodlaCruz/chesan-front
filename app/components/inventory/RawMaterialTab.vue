@@ -41,7 +41,7 @@
     >
       <template #footer-left>
         <div class="flex items-center gap-2 border-l border-slate-200 dark:border-slate-800 pl-4">
-          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-tight">Ordenar:</span>
+          <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-[0.2em] ml-1 transition-colors">Ordenar:</span>
           <Select 
             v-model="filtroOrden" 
             :options="opcionesOrden" 
@@ -84,7 +84,7 @@
       </template>
 
       <template #cell-unit_price="{ value }">
-        <span class="font-bold text-slate-900 dark:text-white">${{ parseFloat(value || 0).toFixed(2) }}</span>
+        <span class="font-bold text-slate-900 dark:text-white">{{ formatMoney(value) }}</span>
       </template>
 
       <template #cell-quantity="{ item, value }">
@@ -135,6 +135,9 @@ import AddRawMaterialModal from './AddRawMaterialModal.vue'
 import PrintBarcodeModal from './PrintBarcodeModal.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import { useToast } from '~/stores/toast'
+import { useFormatter } from '~/composables/useFormatter'
+
+const { formatMoney } = useFormatter()
 import type { RawMaterial, ApiMeta, ApiLinks, ApiPaginatedResponse, SelectOption } from '~/types'
 
 const props = defineProps({

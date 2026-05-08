@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    title="Aplicar Descuento a Producto"
+    title="Aplicar descuento a producto"
     subtitle="Escanea un producto para asignarle un descuento especial para ventas futuras."
     size="md"
     @update:show="close"
@@ -10,7 +10,7 @@
       
       <!-- Paso 1: Escanear -->
       <div v-if="!scannedProduct">
-        <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Escanear Código de Barras</label>
+        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block transition-colors">Escanear código de barras</label>
         <div class="relative">
           <ScanLineIcon class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -45,11 +45,11 @@
                <p class="text-xs font-mono text-slate-500">{{ scannedProduct.barcode }}</p>
                <div class="flex items-center gap-2 mt-1">
                   <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">{{ scannedProduct.size?.name || 'S/T' }}</span>
-                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">{{ scannedProduct.color?.name || 'S/C' }}</span>
+
                </div>
             </div>
             <div class="text-right shrink-0">
-               <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Precio Base</p>
+               <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Precio base</p>
                <p class="text-lg font-black text-slate-900 dark:text-white">${{ parseFloat(scannedProduct.sale_price).toFixed(2) }}</p>
             </div>
         </div>
@@ -82,7 +82,7 @@
               
               <!-- Monto -->
               <div v-else>
-                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Descuento en Dinero ($)</label>
+                  <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block transition-colors">Descuento en dinero ($)</label>
                  <div class="relative">
                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                    <input
@@ -98,11 +98,12 @@
             </div>
             
             <div class="flex flex-col justify-center">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Precio Final</p>
+                 <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Precio final</p>
                 <p class="text-2xl font-black" :class="(discountMode === 'percentage' ? discountPercentage : discountAmount) > 0 ? 'text-primary' : 'text-slate-400'">
                   ${{ finalPrice.toFixed(2) }}
                 </p>
                 <p class="text-[10px] text-slate-400 mt-1" v-if="discountMode === 'amount'">Equivale a -{{ calculatedPercentage.toFixed(1) }}% de desc.</p>
+                <p class="text-[10px] text-slate-400 mt-1" v-if="discountMode === 'percentage'">Equivale a -${{ calculatedAmount.toFixed(2) }} de desc.</p>
             </div>
         </div>
 
@@ -155,6 +156,12 @@ const calculatedPercentage = computed(() => {
   const base = parseFloat(scannedProduct.value.sale_price) || 0
   if (base === 0) return 0
   return Math.min(100, Math.max(0, (discountAmount.value / base) * 100))
+})
+
+const calculatedAmount = computed(() => {
+  if (!scannedProduct.value || discountMode.value !== 'percentage') return 0
+  const base = parseFloat(scannedProduct.value.sale_price) || 0
+  return base * (discountPercentage.value / 100)
 })
 
 const finalPrice = computed(() => {

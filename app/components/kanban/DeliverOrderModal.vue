@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    title="Finalizar Entrega de Pedido"
+    title="Finalizar entrega de pedido"
     subtitle="Confirme la liquidación del pago para completar la entrega."
     size="md"
     @update:show="close"
@@ -10,15 +10,15 @@
       <!-- Resumen Financiero -->
       <div class="bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden">
         <div class="p-4 border-b border-slate-200 dark:border-white/5 flex justify-between items-center">
-          <span class="text-xs font-bold text-slate-500 uppercase">Total del Pedido</span>
+          <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Total del pedido</span>
           <span class="text-lg font-black text-slate-900 dark:text-white">${{ card.order?.total_amount }}</span>
         </div>
         <div class="p-4 border-b border-slate-200 dark:border-white/5 flex justify-between items-center">
-          <span class="text-xs font-bold text-slate-500 uppercase">Anticipo Pagado</span>
+          <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Anticipo pagado</span>
           <span class="text-sm font-bold text-emerald-600">-${{ card.order?.advance_payment || 0 }}</span>
         </div>
         <div class="p-5 bg-primary/5 flex justify-between items-center">
-          <span class="text-sm font-black text-primary uppercase tracking-wider">Monto a Liquidar</span>
+          <span class="text-[10px] font-bold text-primary dark:text-primary-400 uppercase tracking-[0.2em] ml-1 transition-colors">Monto a liquidar</span>
           <span class="text-2xl font-black text-primary">${{ pendingAmount }}</span>
         </div>
       </div>
@@ -40,7 +40,7 @@
           :loading="loading"
           @click="confirmDelivery"
         >
-          Confirmar Pago y Entregar
+          Confirmar pago y entregar
         </BaseButton>
         <BaseButton variant="secondary" class="w-full" @click="close">
           Cancelar

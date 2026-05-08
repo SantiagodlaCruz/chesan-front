@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    :title="'Detalle de Pedido ' + card?.orderId"
+    :title="'Detalle de pedido ' + card?.orderId"
     subtitle="Información detallada de la orden de producción."
     size="3xl"
     @update:show="close"
@@ -10,11 +10,11 @@
       <!-- Info Superior -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Cliente</p>
+          <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-1">Cliente</p>
           <p class="text-sm font-bold text-slate-900 dark:text-white">{{ card.title }}</p>
         </div>
         <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Fecha de Entrega</p>
+          <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-1">Fecha de entrega</p>
           <div class="flex items-center justify-between">
             <p class="text-sm font-bold text-slate-900 dark:text-white">{{ card.deliveryDate }}</p>
             <p class="text-[10px] font-black px-2 py-1 rounded bg-primary/10 text-primary uppercase">
@@ -70,7 +70,7 @@
 
       <!-- Acciones del Modal -->
       <div class="flex justify-end pt-4">
-        <BaseButton variant="secondary" @click="close">Cerrar Detalle</BaseButton>
+        <BaseButton variant="secondary" @click="close">Cerrar detalle</BaseButton>
       </div>
     </div>
   </BaseModal>

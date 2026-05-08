@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    :title="readOnly ? 'Detalles de Cotización' : (isEdit ? 'Editar Cotización' : 'Nueva Cotización')"
+    :title="readOnly ? 'Detalles de cotización' : (isEdit ? 'Editar cotización' : 'Nueva cotización')"
     :subtitle="readOnly ? 'Vista de solo lectura de la propuesta.' : (isEdit ? 'Modifique los detalles de la propuesta existente.' : 'Cree una propuesta formal basada en el catálogo de precios.')"
     size="5xl"
     @update:show="close"
@@ -14,7 +14,7 @@
       <!-- Client Section -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-5 pb-6 border-b border-dashed border-slate-200 dark:border-slate-800">
         <div class="flex flex-col gap-1.5 md:col-span-4">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Cliente</label>
+          <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Cliente</label>
           <Select 
             v-model="form.client_id" 
             :options="clients" 
@@ -30,7 +30,7 @@
       <!-- Items Table -->
       <div class="space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-black uppercase tracking-widest text-slate-400">Productos a Cotizar</h3>
+          <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Productos a cotizar</h3>
           <button v-if="!readOnly" type="button" @click="addItem" class="text-xs font-bold text-primary hover:text-primary/80 flex items-center gap-1.5 transition-colors">
             <PlusIcon class="w-4 h-4" />
             Añadir Línea
@@ -40,12 +40,12 @@
         <div class="bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-visible">
           <table class="w-full text-left table-fixed">
             <thead>
-              <tr class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+              <tr class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] border-b border-slate-200 dark:border-slate-800">
                 <th class="px-4 py-3 w-[35%]">Producto</th>
                 <th class="px-4 py-3 w-[20%]">Material</th>
                 <th class="px-4 py-3 w-[10%] text-center">Talla</th>
                 <th class="px-4 py-3 w-[10%] text-center">Cant.</th>
-                <th class="px-4 py-3 w-[12%] text-right">P. Base</th>
+                <th class="px-4 py-3 w-[12%] text-right">P. base</th>
                 <th class="px-4 py-3 w-[10%] text-center">Extras</th>
                 <th class="px-4 py-3 w-[13%] text-right text-primary">Subtotal</th>
                 <th class="px-4 py-3 w-10"></th>
@@ -135,7 +135,7 @@
                 </td>
                 <!-- Subtotal -->
                 <td class="px-2 py-3 text-right font-black text-primary">
-                   <span class="text-sm font-black text-primary">${{ item.subtotal.toFixed(2) }}</span>
+                   <span class="text-sm font-black text-primary">{{ formatMoney(item.subtotal) }}</span>
                 </td>
                 <!-- Eliminar -->
                 <td class="px-2 py-3 text-center">
@@ -152,7 +152,7 @@
       <!-- Totales y Notas -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
         <div class="space-y-4">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Notas (aparecerán en la cotización)</label>
+          <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Notas (aparecerán en la cotización)</label>
           <textarea 
             v-model="form.notes" 
             rows="4" 
@@ -165,11 +165,11 @@
         <div class="bg-slate-50 dark:bg-white/5 rounded-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-800">
           <div class="flex justify-between items-center text-sm">
             <span class="font-bold text-slate-500">Subtotal</span>
-            <span class="font-bold text-slate-900 dark:text-white">${{ totalAmount.toFixed(2) }}</span>
+            <span class="font-bold text-slate-900 dark:text-white">{{ formatMoney(totalAmount) }}</span>
           </div>
           <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
-            <span class="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Total Cotizado</span>
-            <span class="text-2xl font-black text-primary">${{ totalAmount.toFixed(2) }}</span>
+            <span class="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">Total cotizado</span>
+            <span class="text-2xl font-black text-primary">{{ formatMoney(totalAmount) }}</span>
           </div>
           <p class="text-[10px] text-slate-400 italic text-center">* Precios sujetos a cambios sin previo aviso.</p>
         </div>
@@ -185,23 +185,38 @@
           {{ readOnly ? 'Cerrar' : 'Cancelar' }}
         </BaseButton>
         <BaseButton v-if="!readOnly" type="submit" variant="primary" :loading="saving">
-          {{ isEdit ? 'Actualizar Cotización' : 'Guardar Cotización' }}
+          {{ isEdit ? 'Actualizar cotización' : 'Guardar cotización' }}
         </BaseButton>
       </div>
     </form>
 
     <!-- Extras Modal -->
-    <BaseModal v-model:show="showExtrasModal" title="Cargos Extras" subtitle="Agregue costos manuales para este ítem." size="md">
+    <BaseModal v-model:show="showExtrasModal" title="Cargos extras" subtitle="Agregue costos manuales para este ítem." size="md">
        <div class="space-y-4 py-4">
          <div v-for="(extra, eIdx) in currentItemExtras" :key="eIdx" class="flex gap-2 items-center">
-            <input v-model="extra.description" :disabled="readOnly" placeholder="Ej. Logo manga" class="flex-1 bg-slate-50 dark:bg-white/5 border-none outline-none px-3 py-2 rounded-lg text-sm" />
-            <input v-model.number="extra.cost" :disabled="readOnly" type="number" step="0.01" class="w-24 bg-slate-50 dark:bg-white/5 border-none outline-none px-3 py-2 rounded-lg text-sm text-right font-bold" />
-            <button v-if="!readOnly" @click="currentItemExtras.splice(eIdx, 1)" class="text-red-500 p-1"><TrashIcon class="w-4 h-4" /></button>
+            <input 
+              v-model="extra.description" 
+              :disabled="readOnly" 
+              placeholder="Ej. Logo manga" 
+              class="flex-1 bg-slate-50 dark:bg-white/5 border-none outline-none px-3 py-2 rounded-lg text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400" 
+            />
+            <input 
+              v-model.number="extra.cost" 
+              :disabled="readOnly" 
+              type="number" 
+              step="0.01" 
+              class="w-24 bg-slate-50 dark:bg-white/5 border-none outline-none px-3 py-2 rounded-lg text-sm text-right font-bold text-slate-800 dark:text-slate-200" 
+            />
+            <button v-if="!readOnly" @click="currentItemExtras.splice(eIdx, 1)" class="text-red-500 p-1 hover:bg-red-500/10 rounded-lg transition-colors">
+              <TrashIcon class="w-4 h-4" />
+            </button>
          </div>
-         <button v-if="!readOnly" @click="currentItemExtras.push({description: '', cost: 0})" class="text-xs font-bold text-primary">+ Añadir concepto</button>
+         <button v-if="!readOnly" @click="currentItemExtras.push({description: '', cost: 0})" class="text-xs font-bold text-primary hover:underline ml-1">
+           + Añadir concepto
+         </button>
        </div>
        <template #footer>
-         <BaseButton v-if="!readOnly" variant="primary" block @click="saveExtras">Guardar Cambios</BaseButton>
+         <BaseButton v-if="!readOnly" variant="primary" block @click="saveExtras">Guardar cambios</BaseButton>
          <BaseButton v-else variant="secondary" block @click="showExtrasModal = false">Cerrar</BaseButton>
        </template>
     </BaseModal>
@@ -215,6 +230,9 @@ import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
 import Select from '~/components/Select.vue'
 import { useToast } from '~/stores/toast'
+import { useFormatter } from '~/composables/useFormatter'
+
+const { formatMoney } = useFormatter()
 
 const props = defineProps({
   show: Boolean,

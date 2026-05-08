@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-4">
     <div class="flex flex-wrap justify-between items-center gap-4 mb-2">
       <div class="flex items-center gap-6 grow">
-        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap">Materia Prima</h2>
+        <h2 class="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100 whitespace-nowrap">Materia prima</h2>
         
         <!-- Barrita de búsqueda compacta junto al título -->
         <div class="relative max-w-md w-full">
@@ -22,7 +22,7 @@
         class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20 shrink-0"
       >
         <PlusIcon class="w-5 h-5" />
-        Añadir Material
+        Añadir material
       </button>
     </div>
 

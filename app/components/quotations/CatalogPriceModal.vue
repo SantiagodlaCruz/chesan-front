@@ -1,14 +1,14 @@
 <template>
   <BaseModal
     :show="show"
-    title="Nueva Variación de Precio"
+    title="Nueva variación de precio"
     subtitle="Agregue materiales y rangos de tallas al catálogo de venta."
     size="lg"
     @update:show="close"
   >
     <form @submit.prevent="onSubmit" class="space-y-4">
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Producto del Catálogo</label>
+        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Producto del catálogo</label>
         <Select 
           v-model="form.product_catalog_id" 
           :options="productOptions" 
@@ -19,7 +19,7 @@
 
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Material / Variación</label>
+          <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Material / variación</label>
           <input 
             v-model="form.material" 
             placeholder="Ej. Piqué Blanco"
@@ -28,7 +28,7 @@
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Rango de Tallas</label>
+          <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Rango de tallas</label>
           <input 
             v-model="form.size_range" 
             placeholder="Ej. 6-10"
@@ -40,7 +40,7 @@
 
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Precio Menudeo</label>
+          <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Precio menudeo</label>
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
             <input 
@@ -52,7 +52,7 @@
           </div>
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-primary pl-1">Precio Mayoreo (>=25)</label>
+          <label class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] ml-1 transition-colors">Precio mayoreo (>=25)</label>
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-primary/50">$</span>
             <input 
@@ -70,7 +70,7 @@
           Cancelar
         </BaseButton>
         <BaseButton type="submit" variant="primary" :loading="saving">
-          Guardar Variación
+          Guardar variación
         </BaseButton>
       </div>
     </form>

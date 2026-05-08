@@ -80,8 +80,12 @@
             
             <circle v-for="(point, index) in chartPoints" :key="index" :cx="point.x" :cy="point.y" fill="#3b82f6" r="3.5" stroke="white" stroke-width="2"></circle>
           </svg>
-          <div class="flex justify-between mt-6 px-1">
-            <span v-for="label in chartData.labels" :key="label" class="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+        </div>
+
+        <!-- Labels move outside fixed height container -->
+        <div class="flex justify-between mt-3 -mx-2">
+          <div v-for="(label, idx) in chartData.labels" :key="idx" class="flex-1 text-center">
+            <span class="text-[10px] font-bold text-primary dark:text-blue-400 uppercase tracking-widest block">
               {{ label }}
             </span>
           </div>
@@ -136,44 +140,70 @@
     </div>
 
     <!-- Recent Sales Table -->
-    <div class="rounded-2xl p-2 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 overflow-hidden">
-      <div class="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-2 px-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-          <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">Ventas Recientes</h3>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Sales Column -->
+      <div class="rounded-2xl p-2 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 overflow-hidden">
+        <div class="p-4 flex items-center justify-between gap-4 border-b border-slate-200/50 dark:border-white/5 mb-2">
+          <div class="flex items-center gap-2 px-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+            <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">Ventas Recientes</h3>
+          </div>
+          <NuxtLink to="/point-of-sale" class="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">Ir a Caja</NuxtLink>
         </div>
-        <NuxtLink to="/point-of-sale" class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20">
-          Nuevo Ticket
-        </NuxtLink>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <tbody class="divide-y divide-slate-200/50 dark:divide-white/5">
+              <tr v-for="ticket in recentTickets" :key="ticket.id" class="hover:bg-slate-400/5 transition-colors group">
+                <td class="px-4 py-4">
+                  <p class="text-[10px] font-bold text-primary tracking-tighter">{{ ticket.id }}</p>
+                  <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest">{{ ticket.date }}</p>
+                </td>
+                <td class="px-4 py-4 text-xs font-bold text-slate-700 dark:text-slate-200">{{ ticket.customer }}</td>
+                <td class="px-4 py-4 font-black text-slate-800 dark:text-white text-xs">{{ ticket.total }}</td>
+                <td class="px-4 py-4 text-right">
+                  <div :class="`inline-flex text-[8px] font-black uppercase rounded-md px-2 py-0.5 tracking-wider ${ticket.status === 'Completed' || ticket.status === 'Pagado' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-200 text-slate-500'}`">
+                    {{ ticket.status }}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead class="bg-transparent border-b border-slate-200/50 dark:border-white/5">
-            <tr>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nº Ticket</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identidad</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Volumen</th>
-              <th class="px-6 py-4 text-[10px) font-black text-slate-400 uppercase tracking-widest">Neto</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-              <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200/50 dark:divide-white/5">
-            <tr v-for="ticket in recentOrders" :key="ticket.id" class="hover:bg-slate-400/5 transition-colors group">
-              <td class="px-6 py-4 font-mono text-[11px] font-bold text-primary tracking-tighter">{{ ticket.id }}</td>
-              <td class="px-6 py-4 text-xs font-bold text-slate-700 dark:text-slate-200">{{ ticket.customer }}</td>
-              <td class="px-6 py-4 text-[10px] text-slate-500 font-bold uppercase">{{ ticket.items_count }}</td>
-              <td class="px-6 py-4 font-black text-slate-900 dark:text-white text-xs">{{ ticket.total }}</td>
-              <td class="px-6 py-4 text-[9px] text-slate-400 font-black uppercase tracking-widest">{{ ticket.date }}</td>
-              <td class="px-6 py-4">
-                <div :class="`inline-flex text-[9px] font-black uppercase rounded-md px-2 py-0.5 tracking-wider ${ticket.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-200 text-slate-500'}`">
-                  {{ ticket.status }}
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+
+      <!-- Active Orders Column -->
+      <div class="rounded-2xl p-2 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 overflow-hidden">
+        <div class="p-4 flex items-center justify-between gap-4 border-b border-slate-200/50 dark:border-white/5 mb-2">
+          <div class="flex items-center gap-2 px-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+            <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">Pedidos Activos</h3>
+          </div>
+          <NuxtLink to="/production" class="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">Ver Tablero</NuxtLink>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <tbody class="divide-y divide-slate-200/50 dark:divide-white/5">
+              <tr v-for="order in activeProductionOrders" :key="order.id" class="hover:bg-slate-400/5 transition-colors group">
+                <td class="px-4 py-4">
+                  <p class="text-[10px] font-bold text-orange-500 tracking-tighter">{{ order.id }}</p>
+                  <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest">{{ order.date }}</p>
+                </td>
+                <td class="px-4 py-4 text-xs font-bold text-slate-700 dark:text-slate-200">{{ order.customer }}</td>
+                <td class="px-4 py-4 font-black text-slate-800 dark:text-white text-xs">{{ order.total }}</td>
+                <td class="px-4 py-4 text-right">
+                  <div class="inline-flex text-[8px] font-black uppercase rounded-md px-2 py-0.5 tracking-wider bg-orange-500/10 text-orange-500">
+                    {{ order.status }}
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="!activeProductionOrders.length" class="opacity-30">
+                <td colspan="4" class="px-4 py-10 text-center text-[10px] font-black uppercase tracking-widest">No hay pedidos en curso</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -237,7 +267,8 @@ const inventoryAlerts = ref({ products: [], materials: [] })
 const activeInventoryTab = ref('products')
 const currentAlerts = computed(() => inventoryAlerts.value[activeInventoryTab.value] || [])
 
-const recentOrders = ref([])
+const recentTickets = ref([])
+const activeProductionOrders = ref([])
 const chartType = ref('ingresos')
 const chartPeriod = ref('semana')
 const chartData = ref({ series: [0, 0, 0, 0, 0, 0, 0], labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] })
@@ -297,7 +328,8 @@ const fetchDashboardData = async () => {
             })
             stats.value = newStats
             inventoryAlerts.value = response.data.inventoryAlerts
-            recentOrders.value = response.data.recentTickets
+            recentTickets.value = response.data.recentTickets
+            activeProductionOrders.value = response.data.recentOrders
             if (response.data.chartData) {
                 chartData.value = response.data.chartData
             }

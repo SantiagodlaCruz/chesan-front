@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    :title="readonly ? 'Ver Material' : (itemToEdit ? 'Editar Material' : 'Añadir Nueva Materia Prima')"
+    :title="readonly ? 'Ver material' : (itemToEdit ? 'Editar material' : 'Añadir nueva materia prima')"
     :subtitle="readonly ? 'Detalles del material registrado.' : (itemToEdit ? 'Modifique los detalles del material.' : 'Registre nuevo material en el inventario.')"
     size="xl"
     @update:show="close"
@@ -128,7 +128,7 @@
           :loading="saving"
           loading-text="Guardando..."
         >
-          {{ itemToEdit ? 'Actualizar Material' : 'Guardar Material' }}
+          {{ itemToEdit ? 'Actualizar material' : 'Guardar material' }}
         </BaseButton>
       </div>
     </form>

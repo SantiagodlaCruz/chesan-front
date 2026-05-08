@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    title="Escaneo de Ticket para Cambio"
+    title="Escaneo de ticket para cambio"
     subtitle="Escanea el código QR del ticket original para gestionar la devolución."
     size="md"
     @update:show="close"
@@ -9,7 +9,7 @@
     <div class="space-y-6">
       <!-- Input de Escaneo -->
       <div v-if="!scannedTicket" class="animate-in fade-in duration-300">
-         <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Escanear Ticket (QR)</label>
+         <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-2 block">Escanear ticket (QR)</label>
          <div class="relative">
            <QrCodeIcon class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
            <input
@@ -33,8 +33,8 @@
       <!-- Detalle del Ticket y Selección -->
       <div v-else class="space-y-6 animate-in zoom-in-95 duration-300">
          <div class="p-4 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
-            <p class="text-[10px] font-black uppercase text-slate-500 tracking-tighter mb-1">Ticket Encontrado</p>
-            <h4 class="text-lg font-black text-slate-900 dark:text-white break-all leading-tight">{{ scannedTicket.ticket_number }}</h4>
+            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-1">Ticket encontrado</p>
+            <h4 class="text-lg font-black text-slate-800 dark:text-white break-all leading-tight">{{ scannedTicket.ticket_number }}</h4>
             <p class="text-xs text-slate-500 mt-1">{{ scannedTicket.created_at_formatted || scannedTicket.created_at }}</p>
          </div>
 
@@ -62,7 +62,7 @@
 
                <div class="text-right mr-2">
                   <p class="text-xs font-black truncate" :class="(detail.is_returned || detail.quantity < 0) ? 'text-slate-400' : 'text-slate-900 dark:text-white'">
-                    ${{ parseFloat(detail.unit_price).toFixed(2) }}
+                    {{ formatMoney(detail.unit_price) }}
                   </p>
                </div>
 
@@ -86,7 +86,7 @@
             </p>
             <BaseButton variant="secondary" @click="resetScanner" class="w-full">
                <QrCodeIcon class="w-4 h-4 mr-2" />
-               Escanear Otro Ticket
+               Escanear otro ticket
             </BaseButton>
          </div>
       </div>
@@ -103,6 +103,9 @@ import { ref, watch, nextTick } from 'vue'
 import { QrCodeIcon, InfoIcon, ShirtIcon, RotateCcwIcon } from 'lucide-vue-next'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
+import { useFormatter } from '~/composables/useFormatter'
+
+const { formatMoney } = useFormatter()
 
 const props = defineProps({
   show: Boolean

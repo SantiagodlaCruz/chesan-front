@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    title="Nuevo Pedido de Producción"
+    title="Nuevo pedido de producción"
     subtitle="Registre los detalles del cliente y los productos a fabricar."
     size="4xl"
     @update:show="close"
@@ -30,7 +30,7 @@
       <!-- Info General -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5 pb-6 border-b border-dashed border-slate-200 dark:border-slate-800">
         <div class="flex flex-col gap-1.5 md:col-span-2">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Cliente</label>
+          <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Cliente</label>
           <Select 
             v-model="form.client_id" 
             :options="catalogs.clients" 
@@ -42,7 +42,7 @@
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Fecha de Entrega</label>
+          <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Fecha de entrega</label>
           <input 
             v-model="form.delivery_date" 
             type="date" 
@@ -146,7 +146,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
         <div class="space-y-4">
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Notas u Observaciones</label>
+            <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Notas u observaciones</label>
             <textarea 
               v-model="form.notes" 
               rows="3" 
@@ -185,7 +185,7 @@
           Cancelar
         </BaseButton>
         <BaseButton type="submit" variant="primary" :loading="saving" loading-text="Generando Pedido...">
-          Confirmar y Enviar a Producción
+          Confirmar y enviar a producción
         </BaseButton>
       </div>
 

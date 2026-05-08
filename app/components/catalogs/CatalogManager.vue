@@ -1,5 +1,26 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4">
+    <!-- Top Bar: Search + Add -->
+    <div class="flex items-center justify-between gap-4 bg-white dark:bg-card-dark p-4 rounded-2xl border border-border-light dark:border-border-dark shadow-sm">
+      <div class="flex-1 max-w-sm relative">
+        <SearchIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input 
+          v-model="searchQuery" 
+          type="text" 
+          :placeholder="'Buscar ' + itemLabel.toLowerCase() + '...'"
+          class="w-full bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary/30 outline-none pl-9 pr-4 py-2 rounded-xl text-sm transition-all"
+          @input="debouncedFetch"
+        />
+      </div>
+      <button
+        @click="openModal()"
+        class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20 shrink-0"
+      >
+        <PlusIcon class="w-4 h-4" />
+        {{ gender === 'f' ? 'Nueva' : 'Nuevo' }} {{ itemLabel.toLowerCase() }}
+      </button>
+    </div>
+
     <!-- Table -->
     <CatalogTable
       :columns="fields"
@@ -17,12 +38,15 @@
 
     <BaseModal
       v-model:show="showModal"
-      :title="(selectedItem ? 'Editar ' : 'Añadir ') + itemLabel"
+      :title="(selectedItem ? 'Editar ' : (gender === 'f' ? 'Añadir Nueva ' : 'Añadir Nuevo ')) + itemLabel"
       size="md"
     >
-      <form @submit.prevent="save" class="space-y-4">
+      <template #title>
+        <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ (selectedItem ? 'Editar ' : (gender === 'f' ? 'Nueva ' : 'Nuevo ')) + itemLabel.toLowerCase() }}</h3>
+      </template>
+      <form @submit.prevent="save" class="space-y-4 pt-2">
         <div v-for="field in fields" :key="field.key" class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">{{ field.label }}</label>
+          <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1">{{ field.label }}</label>
           
           <!-- Color Picker Custom Field -->
           <div v-if="field.type === 'color'" class="flex items-center gap-3 bg-slate-50 dark:bg-[#1e293b] p-2 rounded-xl border-2 border-transparent focus-within:border-primary transition-all">
@@ -83,7 +107,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { PencilIcon, Trash2Icon } from 'lucide-vue-next'
+import { PencilIcon, Trash2Icon, PlusIcon, SearchIcon } from 'lucide-vue-next'
 import CatalogTable from '~/components/catalogs/CatalogTable.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import { useToast } from '~/stores/toast'
@@ -93,6 +117,7 @@ const props = defineProps({
   endpoint: String,
   itemLabel: String,
   fields: Array,
+  permissionCreate: { type: String, default: 'catalogos.crear' },
   permissionEdit: { type: String, default: 'catalogos.editar' },
   permissionDelete: { type: String, default: 'catalogos.eliminar' }
 })
@@ -107,6 +132,7 @@ const loading = ref(false)
 const showModal = ref(false)
 const selectedItem = ref(null)
 const form = reactive({})
+const searchQuery = ref('')
 
 const api = useApi()
 
@@ -117,6 +143,7 @@ const fetchData = async (page = 1) => {
       params: { 
         page, 
         per_page: perPage.value,
+        search: searchQuery.value,
         sort_by: 'name',
         sort_direction: 'asc'
       }
@@ -169,6 +196,14 @@ const fetchData = async (page = 1) => {
   } finally {
     loading.value = false
   }
+}
+
+let searchTimeout = null
+const debouncedFetch = () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    fetchData(1)
+  }, 500)
 }
 
 const handlePerPageChange = (newSize) => {

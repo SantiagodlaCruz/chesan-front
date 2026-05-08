@@ -75,6 +75,7 @@
 
       <!-- Badge de Días Restantes con Semáforo y Alerta de Retraso -->
       <div 
+        v-if="card.status !== 'Entregados'"
         class="flex items-center gap-1 px-2.5 py-1 rounded-lg font-black text-[10px] uppercase tracking-wider transition-all"
         :class="[
           card.daysLeft < 0 ? 'bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse' :

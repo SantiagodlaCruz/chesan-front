@@ -7,7 +7,7 @@
             <th 
               v-for="col in columns" 
               :key="col.key" 
-              class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider transition-all whitespace-nowrap"
+              class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] transition-all whitespace-nowrap"
               :class="{
                 'text-left': col.align === 'left' || !col.align,
                 'text-right': col.align === 'right',
@@ -16,7 +16,7 @@
             >
               {{ col.label }}
             </th>
-            <th v-if="showActions" class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Acciones</th>
+            <th v-if="showActions" class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] text-right whitespace-nowrap">Acciones</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-border-light dark:divide-border-dark relative">

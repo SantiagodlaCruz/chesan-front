@@ -8,9 +8,7 @@
       <div class="w-44 shrink-0">
         <Select v-model="filtroCategoria" :options="categoriasOp" label="Categoría" placeholder="Todas" searchable :loading="catalogs.loading" @update:modelValue="debouncedFetch" />
       </div>
-      <div class="w-36 shrink-0">
-        <Select v-model="filtroColor" :options="coloresOp" label="Color" placeholder="Todas" searchable :loading="catalogs.loading" @update:modelValue="debouncedFetch" />
-      </div>
+
       <div class="w-32 shrink-0">
         <Select v-model="filtroTalla" :options="tallasOp" label="Talla" placeholder="Todas" searchable :loading="catalogs.loading" @update:modelValue="debouncedFetch" />
       </div>
@@ -27,7 +25,7 @@
         { key: 'name', label: 'Producto' },
         { key: 'category', label: 'Categoría' },
         { key: 'institution', label: 'Escuela' },
-        { key: 'variants', label: 'Color / Talla', align: 'center' },
+        { key: 'variants', label: 'Talla', align: 'center' },
         { key: 'sale_price', label: 'Precio', align: 'right' },
         { key: 'quantity', label: 'Stock', align: 'center' }
       ]"
@@ -87,20 +85,12 @@
 
       <template #cell-variants="{ item }">
         <div class="flex items-center justify-center gap-2 text-[11px]">
-          <div class="flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium border border-blue-100 dark:border-blue-500/20">
-            <div 
-              v-if="(item as StockProduct).color?.hex_code"
-              class="w-2.5 h-2.5 rounded-full border border-blue-200 dark:border-blue-500/30 shadow-sm"
-              :style="{ backgroundColor: (item as StockProduct).color?.hex_code || '' }"
-            ></div>
-            <span>{{ (item as StockProduct).color?.name || '---' }}</span>
-          </div>
           <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold uppercase border border-slate-200 dark:border-white/10">{{ (item as StockProduct).size?.name || '---' }}</span>
         </div>
       </template>
 
       <template #cell-sale_price="{ value }">
-        <span class="font-bold text-slate-900 dark:text-white">${{ parseFloat(value || 0).toFixed(2) }}</span>
+        <span class="font-bold text-slate-900 dark:text-white">{{ formatMoney(value) }}</span>
       </template>
 
       <template #cell-quantity="{ value }">
@@ -127,7 +117,7 @@
     <ConfirmModal 
       v-model:show="showDeleteConfirm"
       title="Eliminar Producto"
-      :message="`¿Estás seguro de que deseas eliminar permanentemente esta variante?\n\nProducto: ${itemToDelete?.name}\nColor: ${itemToDelete?.color?.name || '---'}\nTalla: ${itemToDelete?.size?.name || '---'}\n\nEsta acción no se puede deshacer.`"
+      :message="`¿Estás seguro de que deseas eliminar permanentemente esta variante?\n\nProducto: ${itemToDelete?.name}\nTalla: ${itemToDelete?.size?.name || '---'}\n\nEsta acción no se puede deshacer.`"
       confirm-text="Eliminar Definitivamente"
       confirm-variant="danger"
       :loading="deleting"
@@ -138,7 +128,6 @@
       v-model:show="showAddModal"
       :categorias="catalogs.categories"
       :instituciones="catalogs.institutions"
-      :colores="catalogs.colors"
       :tallas="catalogs.sizes"
       :item-to-edit="selectedItem"
       :readonly="isReadOnly"
@@ -161,6 +150,9 @@ import AddProductModal from './AddProductModal.vue'
 import PrintBarcodeModal from './PrintBarcodeModal.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import { useToast } from '~/stores/toast'
+import { useFormatter } from '~/composables/useFormatter'
+
+const { formatMoney } = useFormatter()
 import type { StockProduct, ApiMeta, ApiLinks, ApiPaginatedResponse } from '~/types'
 
 const props = defineProps({
@@ -204,7 +196,6 @@ watch(() => props.showModalTrigger, (val) => {
 const filtroBusqueda = ref('')
 const filtroCategoria = ref('')
 const filtroInstitucion = ref('')
-const filtroColor = ref('')
 const filtroTalla = ref('')
 const filtroStock = ref('')
 const filtroOrden = ref('id_desc')
@@ -223,7 +214,6 @@ const errorMsg = computed(() => inventoryStore.error || '')
 // Computed options sourced from global catalog store
 const categoriasOp = computed(() => [{ label: 'Todas', value: '' }, ...(catalogs.categories || [])])
 const institucionesOp = computed(() => [{ label: 'Todas', value: '' }, ...(catalogs.institutions || [])])
-const coloresOp = computed(() => [{ label: 'Todas', value: '' }, ...(catalogs.colors || [])])
 const tallasOp = computed(() => [{ label: 'Todas', value: '' }, ...(catalogs.sizes || [])])
 const opcionesStock = [
   { label: 'Todos', value: '' },
@@ -249,7 +239,6 @@ const fetchData = async () => {
     search: filtroBusqueda.value,
     category_id: filtroCategoria.value || '',
     institution_id: filtroInstitucion.value || '',
-    color_id: filtroColor.value,
     size_id: filtroTalla.value,
     stock_status: filtroStock.value,
     sort_by: sortBy || 'id',
