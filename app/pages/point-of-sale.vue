@@ -51,17 +51,17 @@
       <!-- Cart Table -->
       <div class="flex-1 glass-panel rounded-xl overflow-hidden flex flex-col">
         <div class="px-6 py-4 border-b border-border-light dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/30 flex justify-between items-center shrink-0">
-          <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">
-            Venta Actual — {{ cartItems.length }} {{ cartItems.length === 1 ? 'Artículo' : 'Artículos' }}
+          <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">
+            Venta actual — {{ cartItems.length }} {{ cartItems.length === 1 ? 'Artículo' : 'Artículos' }}
           </h3>
           <div class="flex items-center gap-3">
             <button @click="showExchangeModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all flex items-center gap-1">
               <RotateCcwIcon class="w-3 h-3" />
-              Procesar Cambio
+              Procesar cambio
             </button>
             <button @click="clearCart" class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1.5">
               <Trash2Icon class="w-3.5 h-3.5" />
-              Limpiar Todo
+              Limpiar todo
             </button>
           </div>
         </div>
@@ -70,12 +70,12 @@
           <table class="w-full text-left border-collapse">
             <thead class="sticky top-0 bg-panel-light/95 dark:bg-white/5 backdrop-blur border-b border-border-light dark:border-border-dark z-10">
               <tr>
-                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Producto</th>
-                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">SKU</th>
-                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">Unitario</th>
-                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">Descuento</th>
-                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">Cantidad</th>
-                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">Total</th>
+                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Producto</th>
+                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">SKU</th>
+                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap text-right">Unitario</th>
+                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap text-right">Descuento</th>
+                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap text-center">Cantidad</th>
+                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap text-right">Total</th>
                 <th class="px-4 py-2.5 w-10"></th>
               </tr>
             </thead>
@@ -112,9 +112,9 @@
                   </td>
                   <!-- Unit Price & Discount logic -->
                   <td class="px-4 py-2 text-right">
-                    <span v-if="item.discount_percentage > 0 || item.discount_amount > 0" class="block text-[10px] text-slate-400 line-through">{{ formatCurrency(item.sale_price) }}</span>
+                    <span v-if="item.discount_percentage > 0 || item.discount_amount > 0" class="block text-[10px] text-slate-400 line-through">{{ formatMoney(item.sale_price) }}</span>
                     <span :class="(item.discount_percentage > 0 || item.discount_amount > 0) ? 'text-[13px] font-bold text-red-500' : 'text-[13px] font-medium text-slate-600 dark:text-slate-300'">
-                      {{ formatCurrency(item.discount_type === 'amount' ? Math.max(0, item.sale_price - item.discount_amount) : item.sale_price * (1 - (item.discount_percentage / 100))) }}
+                      {{ formatMoney(item.discount_type === 'amount' ? Math.max(0, item.sale_price - item.discount_amount) : item.sale_price * (1 - (item.discount_percentage / 100))) }}
                     </span>
                   </td>
                   <!-- Discount Indicator -->
@@ -147,7 +147,7 @@
                   </td>
                   <!-- Subtotal -->
                   <td class="px-4 py-2 text-right">
-                    <span class="text-sm font-black text-primary">{{ formatCurrency((item.discount_type === 'amount' ? Math.max(0, item.sale_price - item.discount_amount) : item.sale_price * (1 - (item.discount_percentage / 100))) * item.qty) }}</span>
+                    <span class="text-sm font-black text-primary">{{ formatMoney((item.discount_type === 'amount' ? Math.max(0, item.sale_price - item.discount_amount) : item.sale_price * (1 - (item.discount_percentage / 100))) * item.qty) }}</span>
                   </td>
                   <!-- Delete -->
                   <td class="px-4 py-2 text-right">
@@ -178,7 +178,7 @@
       <!-- Customer and Type Selection -->
       <div class="mb-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Datos de Venta</h3>
+          <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Datos de venta</h3>
         </div>
         
         <!-- Toggle Operation Type -->
@@ -204,15 +204,15 @@
         <!-- Layaway Inputs -->
         <div v-if="isLayaway" class="space-y-3 bg-primary/5 dark:bg-primary/10 border border-primary/20 p-4 rounded-xl">
           <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Nombre del Cliente *</label>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1.5 ml-1">Nombre del cliente *</label>
             <input v-model="customerName" type="text" placeholder="Ej. Juan Pérez" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
           </div>
           <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Anticipo ($) *</label>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1.5 ml-1">Anticipo ($) *</label>
             <input v-model.number="layawayDeposit" type="number" min="0" :max="Math.abs(total)" placeholder="0.00" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
           </div>
           <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fecha de Liquidación *</label>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1.5 ml-1">Fecha de liquidación *</label>
             <input v-model="layawayDueDate" type="date" :min="todayDate" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
           </div>
         </div>
@@ -220,15 +220,15 @@
 
       <!-- Order Summary -->
       <div class="flex-1">
-        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Resumen de Orden</h3>
+        <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-6">Resumen de orden</h3>
         <div class="space-y-4">
           <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
             <span class="text-sm font-medium">Subtotal Sin Descuento</span>
-            <span class="text-sm font-mono tracking-tight">{{ formatCurrency(rawSubtotal) }}</span>
+            <span class="text-sm font-mono tracking-tight">{{ formatMoney(rawSubtotal) }}</span>
           </div>
           <div class="flex justify-between items-center text-red-500" v-if="totalDiscountAmount > 0">
             <span class="text-sm font-medium">Descuento Aplicado</span>
-            <span class="text-sm font-mono tracking-tight">-{{ formatCurrency(totalDiscountAmount) }}</span>
+            <span class="text-sm font-mono tracking-tight">-{{ formatMoney(totalDiscountAmount) }}</span>
           </div>
 
           <div class="h-px bg-border-light dark:bg-white/10 my-2"></div>
@@ -238,10 +238,10 @@
                {{ total < 0 ? 'Monto a Devolver' : 'Total a Pagar' }}
             </span>
             <div class="flex items-baseline justify-center gap-2">
-              <span class="block text-4xl font-black leading-none tracking-normal" :class="total < 0 ? 'text-red-600' : 'text-primary'" style="text-shadow: 0 0 40px rgba(59,130,246,0.5)">
-                {{ formatCurrency(Math.abs(total)) }}
+              <span class="block text-4xl font-black leading-none tracking-normal text-primary" style="text-shadow: 0 0 40px rgba(59,130,246,0.5)">
+                {{ formatMoney(Math.abs(total)) }}
               </span>
-              <span class="text-[10px] text-slate-400/80 font-bold uppercase tracking-widest pl-1">MXN</span>
+              <span class="text-[10px] text-slate-400/80 font-bold uppercase tracking-[0.2em] pl-1">MXN</span>
             </div>
             
             <div v-if="total < 0" class="mt-4 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
@@ -280,7 +280,7 @@
               : 'bg-panel-light dark:bg-background-dark border-border-light dark:border-border-dark text-slate-400 hover:border-primary/30 shadow-sm dark:shadow-none'"
           >
             <CreditCardIcon class="w-5 h-5 mb-2" />
-            <span class="text-[9px] font-black uppercase tracking-widest text-center">Tarjeta</span>
+            <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-center">Tarjeta</span>
           </button>
           <button
             @click="paymentMethod = 'cash'"
@@ -290,7 +290,7 @@
               : 'bg-panel-light dark:bg-background-dark border-border-light dark:border-border-dark text-slate-400 hover:border-primary/30 shadow-sm dark:shadow-none'"
           >
             <BanknoteIcon class="w-5 h-5 mb-2" />
-            <span class="text-[9px] font-black uppercase tracking-widest text-center">Efectivo</span>
+            <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-center">Efectivo</span>
           </button>
           <button
             @click="paymentMethod = 'transfer'"
@@ -300,7 +300,7 @@
               : 'bg-panel-light dark:bg-background-dark border-border-light dark:border-border-dark text-slate-400 hover:border-primary/30 shadow-sm dark:shadow-none'"
           >
             <ArrowRightLeftIcon class="w-5 h-5 mb-2" />
-            <span class="text-[9px] font-black uppercase tracking-widest text-center">Transf.</span>
+            <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-center">Transf.</span>
           </button>
         </div>
 
@@ -319,7 +319,7 @@
           class="w-full py-3.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 border border-border-light dark:border-white/5 active:scale-95"
         >
           <RotateCcwIcon class="w-4 h-4" />
-          Realizar Cambio
+          Realizar cambio
         </button>
 
         <div class="flex items-center justify-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -381,8 +381,8 @@
                 </div>
               </td>
               <td class="price-col">
-                <span v-if="item.discount_percentage > 0 || item.discount_amount > 0" style="text-decoration: line-through; font-size: 8px;">{{ formatCurrency((item.qty || item.quantity) * item.sale_price) }}</span><br v-if="item.discount_percentage > 0 || item.discount_amount > 0"/>
-                {{ formatCurrency((item.qty || item.quantity) * (item.discount_type === 'amount' ? Math.max(0, item.sale_price - item.discount_amount) : item.sale_price * (1 - ((item.discount_percentage || 0) / 100)))) }}
+                <span v-if="item.discount_percentage > 0 || item.discount_amount > 0" style="text-decoration: line-through; font-size: 8px;">{{ formatMoney((item.qty || item.quantity) * item.sale_price) }}</span><br v-if="item.discount_percentage > 0 || item.discount_amount > 0"/>
+                {{ formatMoney((item.qty || item.quantity) * (item.discount_type === 'amount' ? Math.max(0, item.sale_price - item.discount_amount) : item.sale_price * (1 - ((item.discount_percentage || 0) / 100)))) }}
               </td>
             </tr>
           </tbody>
@@ -393,29 +393,29 @@
         <div class="ticket-totals">
           <div class="total-row" v-if="lastTicket.discount_amount > 0">
             <span>Ahorro en Descuentos:</span>
-            <span>-{{ formatCurrency(lastTicket.discount_amount) }}</span>
+            <span>-{{ formatMoney(lastTicket.discount_amount) }}</span>
           </div>
           <div class="total-row font-bold">
             <span>Total {{ lastTicket.ticket_type === 'layaway' ? 'Apartado' : '' }}:</span>
-            <span>{{ formatCurrency(lastTicket.total) }}</span>
+            <span>{{ formatMoney(lastTicket.total) }}</span>
           </div>
           <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">
             <span>Anticipo Original:</span>
-            <span>{{ formatCurrency(lastTicket.original_deposit || 0) }}</span>
+            <span>{{ formatMoney(lastTicket.original_deposit || 0) }}</span>
           </div>
           <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">
             <span>Pago Liquidación:</span>
-            <span>{{ formatCurrency(lastTicket.payment_made_today || 0) }}</span>
+            <span>{{ formatMoney(lastTicket.payment_made_today || 0) }}</span>
           </div>
           
           <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0">
             <span>Anticipo Pagado:</span>
-            <span>{{ formatCurrency(lastTicket.received_amount) }}</span>
+            <span>{{ formatMoney(lastTicket.received_amount) }}</span>
           </div>
           
           <div class="total-row font-bold" v-if="lastTicket.ticket_type === 'layaway'" style="font-size: 12px; margin-top: 2px;">
             <span>RESTA POR PAGAR:</span>
-            <span>{{ formatCurrency(lastTicket.balance) }}</span>
+            <span>{{ formatMoney(lastTicket.balance) }}</span>
           </div>
         </div>
 
@@ -509,6 +509,8 @@ const total = computed(() =>
 )
 const totalDiscountAmount = computed(() => rawSubtotal.value - total.value)
 
+const { formatMoney } = useFormatter()
+
 const paymentMethodName = computed(() => {
   if (paymentMethod.value === 'cash') return 'Efectivo'
   if (paymentMethod.value === 'card') return 'Tarjeta'
@@ -517,12 +519,7 @@ const paymentMethodName = computed(() => {
 })
 
 // — Helpers —
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN'
-  }).format(value)
-}
+
 
 // — Actions —
 onMounted(() => barcodeInput.value?.focus())

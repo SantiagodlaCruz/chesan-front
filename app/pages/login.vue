@@ -21,7 +21,7 @@
             <div class="size-14 bg-primary rounded-xl flex items-center justify-center shadow-xl shadow-primary/20 shrink-0">
               <ShirtIcon class="text-white size-8" stroke-width="2.5" />
             </div>
-            <h1 class="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
+            <h1 class="text-5xl font-black text-slate-800 dark:text-white tracking-tighter">
               CheSan
             </h1>
           </div>
@@ -89,7 +89,7 @@
           <div class="size-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
             <ShirtIcon class="text-white size-5" stroke-width="2.5" />
           </div>
-          <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">CheSan</span>
+          <span class="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">CheSan</span>
         </div>
 
         <!-- ======================= -->
@@ -98,7 +98,7 @@
         <div v-if="currentView === 'login'">
           <!-- Heading -->
           <div class="mb-8">
-            <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Bienvenido</h2>
+            <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-2">Bienvenido</h2>
             <p class="text-slate-500 dark:text-slate-400 text-sm">Ingrese sus credenciales para acceder al sistema de gestión.</p>
           </div>
 
@@ -185,7 +185,7 @@
               <ChevronLeftIcon class="w-4 h-4 mr-1" />
               Volver
             </button>
-            <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Restablecer</h2>
+            <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-2">Restablecer</h2>
             <p class="text-slate-500 dark:text-slate-400 text-sm">Ingrese su correo electrónico registrado y le enviaremos instrucciones de recuperación.</p>
           </div>
 
@@ -305,7 +305,16 @@ const onSubmit = async (values: any) => {
   loginError.value = ''
   try {
     await login({ email: values.email, password: values.password })
-    await navigateTo('/')
+    
+    // Redirección inteligente basada en PERMISOS (no en nombres de roles)
+    const authStore = useAuth()
+    
+    // Si puede usar el POS pero no tiene permiso de ver reportes (dashboard), va a ventas
+    if (authStore.can('punto_de_venta.ver') && !authStore.can('reportes.ver')) {
+      await navigateTo('/point-of-sale')
+    } else {
+      await navigateTo('/')
+    }
   } catch (e: any) {
     loginError.value = e?.data?.message || e?.message || 'Credenciales incorrectas. Por favor intente de nuevo.'
   } finally {

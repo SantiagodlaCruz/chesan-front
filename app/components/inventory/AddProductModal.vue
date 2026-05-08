@@ -1,8 +1,8 @@
 <template>
   <BaseModal
     :show="show"
-    :title="itemToEdit ? 'Editar Producto' : 'Añadir Nuevo Producto'"
-    :subtitle="itemToEdit ? 'Modifique los detalles generales y de stock del producto.' : 'Configure el producto y sus diferentes variantes (tallas/colores).'"
+    :title="itemToEdit ? 'Editar producto' : 'Añadir nuevo producto'"
+    :subtitle="itemToEdit ? 'Modifique los detalles generales y de stock del producto.' : 'Configure el producto y sus diferentes variantes (tallas).'"
     size="4xl"
     @update:show="close"
   >
@@ -25,18 +25,37 @@
             <BaseInput
               v-model="name"
               name="name"
-              label="Nombre Base del Producto"
+              label="Nombre base del producto"
               placeholder=""
               :disabled="readonly"
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Categoría</label>
-            <Select v-model="categoryId" :options="categorias" placeholder="Seleccionar" searchable :loading="useCatalogs().loading" :disabled="readonly" :error="errors.category_id" />
+            <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Categoría</label>
+            <Select 
+              v-model="categoryId" 
+              :options="localCategorias" 
+              placeholder="Buscar o escribir para crear..." 
+              searchable 
+              creatable
+              :loading="useCatalogs().loading" 
+              :disabled="readonly" 
+              :error="errors.category_id" 
+              @create="handleCreateCategory"
+            />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-bold text-slate-600 dark:text-slate-400 pl-1">Escuela</label>
-            <Select v-model="institutionId" :options="instituciones" placeholder="Seleccionar" searchable :loading="useCatalogs().loading" :disabled="readonly" />
+            <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Escuela / Cliente</label>
+            <Select 
+              v-model="institutionId" 
+              :options="localInstituciones" 
+              placeholder="Buscar o escribir nombre para crear..." 
+              searchable 
+              creatable
+              :loading="useCatalogs().loading" 
+              :disabled="readonly" 
+              @create="handleCreateClient"
+            />
           </div>
         </div>
       </div>
@@ -44,7 +63,7 @@
       <!-- Variants Section -->
       <div class="space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">Variantes y Stock</h3>
+          <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Variantes y stock</h3>
           <button v-if="!itemToEdit && !readonly" type="button" @click="addVariant" class="text-xs font-bold text-primary hover:text-primary/80 flex items-center gap-1.5 transition-colors">
             <PlusIcon class="w-4 h-4" />
             Añadir otra variante
@@ -66,19 +85,16 @@
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold shadow-sm border-b border-slate-200 dark:border-slate-800 text-xs whitespace-nowrap">
-                <th class="px-4 py-3 min-w-[180px]">Color</th>
-                <th class="px-4 py-3 min-w-[90px]">Talla</th>
-                <th class="px-4 py-3 w-24">P. Producción</th>
-                <th class="px-4 py-3 w-24">P. Venta</th>
-                <th class="px-4 py-3 w-36 text-center">Stock Inicial</th>
+                <th class="px-4 py-3 w-24 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Talla</th>
+                <th class="px-4 py-3 w-40 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Precio producción</th>
+                <th class="px-4 py-3 w-40 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Precio venta</th>
+                <th class="px-4 py-3 w-36 text-center text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Stock inicial</th>
                 <th v-if="!itemToEdit && !readonly" class="px-4 py-3 w-10 text-center"></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
               <tr v-for="(v, idx) in variants" :key="idx" class="group transition-colors">
-                <td class="px-2 py-2">
-                  <Select v-model="v.color_id" :options="colores" placeholder="Color" searchable compact direction="down" :loading="useCatalogs().loading" :disabled="readonly" creatable />
-                </td>
+
                 <td class="px-2 py-2">
                   <Select v-model="v.size_id" :options="tallas" placeholder="Talla" searchable compact direction="down" :loading="useCatalogs().loading" :disabled="readonly" />
                 </td>
@@ -115,34 +131,6 @@
         </p>
       </div>
 
-      <!-- Variant Quick Add Color Palette -->
-      <div v-if="newColors.length > 0 && !readonly" class="space-y-3 bg-primary/[0.03] dark:bg-primary/[0.02] p-4 rounded-2xl border border-primary/10">
-        <div class="flex items-center gap-2 mb-2">
-          <PaletteIcon class="w-4 h-4 text-primary" />
-          <h4 class="text-xs font-black uppercase text-primary tracking-wider">Nuevos Colores Detectados</h4>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div v-for="colorName in newColors" :key="colorName" class="flex items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
-            <div class="flex-1 min-w-0">
-              <p class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate">{{ colorName }}</p>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <div 
-                class="w-6 h-6 rounded-md border border-slate-100 dark:border-white/5 relative overflow-hidden"
-                :style="{ backgroundColor: newColorHexes[colorName] || '#3b82f6' }"
-              >
-                <input 
-                  type="color" 
-                  :value="newColorHexes[colorName] || '#3b82f6'" 
-                  @input="(e) => newColorHexes[colorName] = (e.target as HTMLInputElement).value"
-                  class="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0" 
-                />
-              </div>
-              <span class="text-[10px] font-mono font-bold text-slate-400 uppercase w-14">{{ newColorHexes[colorName] || '#3B82F6' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div class="flex items-center justify-end gap-3 pt-4 mt-6 border-t border-border-light dark:border-[#1e293b]">
         <BaseButton type="button" variant="secondary" :full="false" @click="close" :disabled="saving">
@@ -169,7 +157,7 @@ import { ref, reactive, watch, computed } from 'vue'
 import { useForm, useField } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/yup'
 import * as yup from 'yup'
-import { PlusIcon, TrashIcon, PaletteIcon } from 'lucide-vue-next'
+import { PlusIcon, TrashIcon } from 'lucide-vue-next'
 import BaseButton from '~/components/BaseButton.vue'
 import BaseInput from '~/components/BaseInput.vue'
 import BaseQuantityInput from '~/components/BaseQuantityInput.vue'
@@ -181,7 +169,6 @@ const props = defineProps<{
   show: boolean
   categorias: SelectOption[]
   instituciones: SelectOption[]
-  colores: SelectOption[]
   tallas: SelectOption[]
   itemToEdit: StockProduct | null
   readonly?: boolean
@@ -189,6 +176,44 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:show', 'saved'])
 const api = useApi()
+const catalogs = useCatalogs()
+
+const localInstituciones = ref<SelectOption[]>([])
+const localCategorias = ref<SelectOption[]>([])
+
+watch(() => props.instituciones, (newVal) => {
+  localInstituciones.value = [...newVal]
+}, { immediate: true })
+
+watch(() => props.categorias, (newVal) => {
+  localCategorias.value = [...newVal]
+}, { immediate: true })
+
+const handleCreateClient = async (name: string) => {
+  try {
+    const res = await api.post('/api/clients', { name })
+    const newClient = { value: res.data.id, label: res.data.name }
+    localInstituciones.value.push(newClient)
+    institutionId.value = res.data.id
+    toast.success('Nueva escuela/cliente registrado')
+    catalogs.fetchAll()
+  } catch (err) {
+    toast.error('Error al crear escuela')
+  }
+}
+
+const handleCreateCategory = async (name: string) => {
+  try {
+    const res = await api.post('/api/categories', { name })
+    const newCat = { value: res.data.id, label: res.data.name }
+    localCategorias.value.push(newCat)
+    categoryId.value = res.data.id
+    toast.success('Nueva categoría registrada')
+    catalogs.fetchAll()
+  } catch (err) {
+    toast.error('Error al crear categoría')
+  }
+}
 
 // ── Yup Schema ──
 const validationSchema = toTypedSchema(
@@ -212,7 +237,6 @@ const imageUrl = ref('')
 const variantError = ref('')
 
 interface ProductVariant {
-  color_id: number | string
   size_id: number | string
   production_price: number | null
   sale_price: number | null
@@ -221,21 +245,10 @@ interface ProductVariant {
 
 const variants = reactive<ProductVariant[]>([])
 
-const newColorHexes = reactive<Record<string, string>>({})
-const newColors = computed(() => {
-  const names = new Set<string>()
-  variants.forEach(v => {
-    if (typeof v.color_id === 'string' && v.color_id.length > 0) {
-      names.add(v.color_id)
-    }
-  })
-  return Array.from(names)
-})
 
 const addVariant = () => {
   const last = variants[variants.length - 1]
   variants.push({
-    color_id: last?.color_id || '',
     size_id: '',
     production_price: last?.production_price || null,
     sale_price: last?.sale_price || null,
@@ -248,7 +261,7 @@ const removeVariant = (idx: number) => {
 }
 
 const resetVariants = () => {
-  variants.splice(0, variants.length, { color_id: '', size_id: '', production_price: null, sale_price: null, quantity: 1 })
+  variants.splice(0, variants.length, { size_id: '', production_price: null, sale_price: null, quantity: 1 })
 }
 
 watch(() => props.show, (newVal) => {
@@ -263,7 +276,6 @@ watch(() => props.show, (newVal) => {
       image.value = null
       imageUrl.value = props.itemToEdit.image_url || ''
       variants.splice(0, variants.length, {
-        color_id: props.itemToEdit.color_id || '',
         size_id: props.itemToEdit.size_id || '',
         production_price: props.itemToEdit.production_price || null,
         sale_price: props.itemToEdit.sale_price || null,
@@ -291,10 +303,6 @@ const close = () => {
 const onSubmit = handleSubmit(async (values) => {
   variantError.value = ''
   for (const v of variants) {
-    if (!v.color_id) {
-      variantError.value = 'Cada variante debe tener un color asignado.'
-      return
-    }
     if (!v.size_id) {
       variantError.value = 'Cada variante debe tener una talla asignada.'
       return
@@ -303,33 +311,7 @@ const onSubmit = handleSubmit(async (values) => {
 
   try {
     saving.value = true
-    const newlyCreatedColors: Record<string, number> = {}
 
-    for (const variant of variants) {
-      if (typeof variant.color_id === 'string') {
-        const colorName = variant.color_id
-        if (newlyCreatedColors[colorName]) {
-          variant.color_id = newlyCreatedColors[colorName]
-        } else {
-          try {
-            const colorRes = await api.post('/api/colors', { 
-              name: colorName, 
-              hex_code: newColorHexes[colorName] || '#3b82f6' 
-            })
-            newlyCreatedColors[colorName] = colorRes.data.id
-            variant.color_id = colorRes.data.id
-          } catch (err: any) {
-            toast.error(`Error al crear el color "${colorName}": ` + (err.data?.message || err.message))
-            saving.value = false
-            return
-          }
-        }
-      }
-    }
-
-    if (Object.keys(newlyCreatedColors).length > 0) {
-      useCatalogs().fetchAll()
-    }
 
     const payload: any = {
       name: values.name,
@@ -341,7 +323,6 @@ const onSubmit = handleSubmit(async (values) => {
       payload.id = props.itemToEdit.id
       // For single product update, we don't send variants array, just the fields
       if (variants.length > 0) {
-        payload.color_id = variants[0].color_id
         payload.size_id = variants[0].size_id
         payload.production_price = variants[0].production_price
         payload.sale_price = variants[0].sale_price

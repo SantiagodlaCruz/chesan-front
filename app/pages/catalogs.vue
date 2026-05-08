@@ -3,17 +3,10 @@
     <!-- Main Header -->
     <div class="flex flex-wrap justify-between items-start gap-4">
       <div class="space-y-1">
-        <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Catálogos</h2>
+        <h2 class="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100">Catálogos</h2>
         <p class="text-sm text-slate-500 dark:text-slate-400">Datos maestros para la gestión del sistema.</p>
       </div>
 
-      <button
-        @click="triggerAdd"
-        class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20 shrink-0"
-      >
-        <PlusIcon class="w-5 h-5" />
-        Nuevo {{ currentTabLabel }}
-      </button>
     </div>
 
     <!-- Navigation Tabs -->
@@ -26,7 +19,7 @@
         class="px-5 py-2 rounded-lg text-sm transition-all flex items-center gap-2"
       >
         <component :is="tab.icon" class="w-4 h-4" />
-        {{ tab.label }}
+        <span class="uppercase tracking-widest text-[10px] font-bold">{{ tab.label }}</span>
       </button>
     </div>
 
@@ -36,6 +29,7 @@
         <CatalogManager
           ref="categoriesMgr"
           item-label="Categoría"
+          gender="f"
           endpoint="/api/categories"
           :fields="[
             { key: 'name', label: 'Nombre', type: 'text', required: true, placeholder: 'Ej. Playeras' },
@@ -48,6 +42,7 @@
         <CatalogManager
           ref="institutionsMgr"
           item-label="Escuela"
+          gender="f"
           endpoint="/api/clients/institutions"
           :fields="[
             { key: 'name', label: 'Nombre de la Escuela', type: 'text', required: true, placeholder: 'Ej. Colegio Americano' },
@@ -61,6 +56,7 @@
         <CatalogManager
           ref="colorsMgr"
           item-label="Color"
+          gender="m"
           endpoint="/api/colors"
           :fields="[
             { key: 'name', label: 'Nombre del Color', type: 'text', required: true, placeholder: 'Ej. Azul Marino' },
@@ -73,6 +69,7 @@
         <CatalogManager
           ref="sizesMgr"
           item-label="Talla"
+          gender="f"
           endpoint="/api/sizes"
           :fields="[
             { key: 'name', label: 'Nombre de la Talla', type: 'text', required: true, placeholder: 'Ej. M, XL, 10, UNICO' }
@@ -84,6 +81,7 @@
         <CatalogManager
           ref="unitMeasuresMgr"
           item-label="Unidad de Medida"
+          gender="f"
           endpoint="/api/unit-measures"
           :fields="[
             { key: 'name', label: 'Nombre de Unidad', type: 'text', required: true, placeholder: 'Ej. Metros, Piezas' }
@@ -99,6 +97,8 @@ import { ref, computed } from 'vue'
 import { TagIcon, SchoolIcon, PaletteIcon, ScaleIcon, RulerIcon, PlusIcon } from 'lucide-vue-next'
 import CatalogManager from '~/components/catalogs/CatalogManager.vue'
 
+const auth = useAuth()
+const { can } = auth
 const activeTab = ref('categories')
 
 // Component refs to trigger openModal

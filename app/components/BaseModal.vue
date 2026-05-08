@@ -25,7 +25,7 @@
           <!-- Header -->
           <div class="px-8 py-6 border-b border-border-light dark:border-[#1e293b] flex justify-between items-start shrink-0">
             <div>
-              <h2 class="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{{ title }}</h2>
+              <h2 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{{ title }}</h2>
               <slot name="subtitle">
                 <p v-if="subtitle" class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ subtitle }}</p>
               </slot>

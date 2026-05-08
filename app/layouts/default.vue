@@ -31,7 +31,7 @@
       <!-- Navigation -->
       <nav class="flex-1 px-3 space-y-1 mt-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
         <NuxtLink 
-          v-for="item in navItems" 
+          v-for="item in filteredNavItems" 
           :key="item.path"
           :to="item.path"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative"
@@ -93,7 +93,7 @@
               class="absolute bottom-full left-0 mb-3 w-48 bg-white dark:bg-[#0f172a] rounded-xl shadow-2xl border border-border-light dark:border-border-dark p-1.5 z-50 origin-bottom-left"
             >
               <button 
-                @click="showProfileMenu = false"
+                @click="showProfileMenu = false; showProfileModal = true" 
                 class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1e293b] hover:text-slate-900 dark:hover:text-white transition-colors text-left"
               >
                 <UserIcon class="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -146,9 +146,9 @@
       </main>
     </div>
 
-    <!-- Password Change Modal -->
     <Teleport to="body">
       <ChangePasswordModal v-model="showPasswordModal" />
+      <UserProfileModal v-model="showProfileModal" />
     </Teleport>
   </div>
 </template>
@@ -167,26 +167,52 @@ import {
   PackageIcon,
   ShirtIcon,
   ShieldIcon,
-  SettingsIcon
+  SettingsIcon,
+  ClipboardListIcon,
+  TicketIcon
 } from 'lucide-vue-next'
 import ChangePasswordModal from '~/components/ChangePasswordModal.vue'
+import UserProfileModal from '~/components/UserProfileModal.vue'
 
 const auth = useAuth()
 const user = computed(() => auth.user)
 
 const isCollapsed = useState('sidebar-collapsed', () => false)
-
-const navItems = [
-  { label: 'Inicio', path: '/', icon: LayoutDashboardIcon },
-  { label: 'Productos', path: '/inventory/products', icon: BoxIcon },
-  { label: 'Materia Prima', path: '/inventory/raw-materials', icon: PackageIcon },
-  { label: 'Producción', path: '/production', icon: FactoryIcon },
-  { label: 'Punto de venta', path: '/point-of-sale', icon: ShoppingCartIcon },
-  { label: 'Catálogos', path: '/catalogs', icon: SettingsIcon },
-]
-
 const showProfileMenu = ref(false)
 const showPasswordModal = ref(false)
+const showProfileModal = ref(false)
+
+const navItems = [
+  { label: 'Inicio', path: '/', icon: LayoutDashboardIcon, permission: 'reportes.ver' },
+  { label: 'Productos', path: '/inventory/products', icon: BoxIcon, permission: 'inventario.ver' },
+  { label: 'Materia Prima', path: '/inventory/raw-materials', icon: PackageIcon, permission: 'materia_prima.ver' },
+  { label: 'Producción', path: '/production', icon: FactoryIcon, permission: 'produccion.ver' },
+  { label: 'Punto de venta', path: '/point-of-sale', icon: ShoppingCartIcon, permission: 'punto_de_venta.ver' },
+  { label: 'Historial Tickets', path: '/tickets', icon: TicketIcon, role: 'admin|super_admin' },
+  { label: 'Cotizaciones', path: '/production/quotations', icon: ClipboardListIcon, permission: 'produccion.ver' },
+  { label: 'Catálogos', path: '/catalogs', icon: SettingsIcon, permission: 'catalogos.ver' },
+]
+
+const filteredNavItems = computed(() => {
+  return navItems.filter(item => {
+    // Si es super_admin, tiene acceso a todo
+    if (user.value?.roles?.includes('super_admin')) return true
+
+    // Si tiene un rol específico requerido (formato: "role1|role2")
+    if (item.role) {
+      const allowedRoles = item.role.split('|')
+      const hasRole = user.value?.roles?.some(r => allowedRoles.includes(r))
+      if (!hasRole) return false
+    }
+    
+    // Si no tiene permiso requerido, se muestra
+    if (!item.permission) return true
+    
+    // Verificar si el usuario tiene el permiso específico
+    return user.value?.permissions?.includes(item.permission)
+  })
+})
+
 const handleLogout = async () => {
   await auth.logout()
   await navigateTo('/login')

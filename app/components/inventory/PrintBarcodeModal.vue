@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    title="Imprimir Etiquetas"
+    title="Imprimir etiquetas"
     subtitle="Genera e imprime etiquetas de código de barras."
     size="md"
     @update:show="close"

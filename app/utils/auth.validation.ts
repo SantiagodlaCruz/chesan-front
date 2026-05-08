@@ -18,3 +18,9 @@ export const changePasswordSchema = yup.object({
     .required('Debe confirmar la contraseña')
     .oneOf([yup.ref('new_password')], 'Las contraseñas no coinciden')
 })
+
+export const updateProfileSchema = yup.object({
+  name: yup.string().required('El nombre es obligatorio'),
+  email: yup.string().required('El correo es obligatorio').email('Formato de correo inválido'),
+  phone: yup.string().nullable().notRequired()
+})

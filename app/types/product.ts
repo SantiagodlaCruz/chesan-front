@@ -9,8 +9,7 @@ export interface StockProduct {
   category?: Category;
   institution_id: number;
   institution?: Client;
-  color_id: number | null;
-  color?: Color;
+
   size_id: number | null;
   size?: Size;
   barcode: string | null;

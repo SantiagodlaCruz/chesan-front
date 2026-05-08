@@ -8,7 +8,7 @@
       type="button"
       :class="[
         'w-full flex items-center justify-between bg-white dark:bg-[#1e293b] border-2 shadow-sm transition-all focus:outline-none',
-        compact ? 'px-2 py-1 rounded-lg min-w-[70px]' : 'px-4 py-3 rounded-2xl',
+        compact ? 'px-3 py-2 rounded-xl min-w-[150px]' : 'px-4 py-3 rounded-2xl',
         error ? 'border-red-500/50 ring-4 ring-red-500/10' : 'border-slate-200/60 dark:border-transparent hover:border-slate-300 dark:hover:border-white/10',
         disabled ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/40' : (error ? '' : 'focus:border-primary/50 focus:ring-4 focus:ring-primary/10')
       ]"
@@ -176,7 +176,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'create'])
 
 const container = ref(null)
 const searchInput = ref(null)
@@ -189,7 +189,7 @@ const selectedOption = computed(() => props.options.find(opt => opt.value == pro
 const selectedLabel = computed(() => {
   if (searchQuery.value) return ''
   if (selectedOption.value) return selectedOption.value.label
-  if (props.creatable && props.modelValue) return props.modelValue
+  if (props.creatable && props.modelValue && !props.options.some(o => o.value == props.modelValue)) return props.modelValue
   return ''
 })
 
@@ -198,7 +198,12 @@ const filteredOptions = computed(() => {
   let result = props.options
   
   if (query) {
-    result = props.options.filter(opt => opt.label.toString().toLowerCase().includes(query))
+    const words = query.split(' ').filter(w => w.length > 0)
+    result = props.options.filter(opt => {
+      const label = opt.label.toString().toLowerCase()
+      // Todas las palabras ingresadas deben estar presentes en el label (en cualquier orden)
+      return words.every(word => label.includes(word))
+    })
   }
 
   // If creatable, add a virtual option if query doesn't match exactly any existing option
@@ -230,8 +235,11 @@ const closeDropdown = () => {
 }
 
 const selectOption = (option) => {
-  // If it's a custom option, we emit the raw value
-  emit('update:modelValue', option.value)
+  if (option.isCustom) {
+    emit('create', option.value)
+  } else {
+    emit('update:modelValue', option.value)
+  }
   closeDropdown()
 }
 

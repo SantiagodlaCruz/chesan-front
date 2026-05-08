@@ -7,7 +7,7 @@
             <th 
               v-for="col in columns" 
               :key="col.key" 
-              class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider transition-all whitespace-nowrap"
+              class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] transition-all whitespace-nowrap"
               :class="{
                 'text-left': col.align === 'left' || !col.align,
                 'text-right': col.align === 'right',
@@ -16,7 +16,7 @@
             >
               {{ col.label }}
             </th>
-            <th v-if="showActions" class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Acciones</th>
+            <th v-if="showActions" class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] text-right whitespace-nowrap">Acciones</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-border-light dark:divide-border-dark relative">
@@ -67,12 +67,7 @@
               <td v-if="showActions" class="px-4 py-2.5 whitespace-nowrap">
                 <div class="flex items-center gap-1 justify-end">
                   <slot name="actions" :item="item">
-                    <button @click="$emit('print', item)" class="p-1.5 hover:bg-slate-500/10 dark:hover:bg-slate-400/10 rounded-xl transition-all group/btn" title="Imprimir Código de Barras">
-                      <PrinterIcon class="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover/btn:scale-110 transition-transform" />
-                    </button>
-                    <button @click="$emit('view', item)" class="p-1.5 hover:bg-primary/10 rounded-xl transition-all group/btn" title="Ver Detalle">
-                      <EyeIcon class="w-4 h-4 text-primary group-hover/btn:scale-110 transition-transform" />
-                    </button>
+                    <!-- Default actions for catalogs -->
                     <button 
                       v-if="!permissionEdit || can(permissionEdit)"
                       @click="$emit('edit', item)" 
