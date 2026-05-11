@@ -8,7 +8,7 @@
       leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95"
     >
-      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div v-if="show" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <!-- Backdrop -->
         <div 
           class="absolute inset-0 bg-slate-900/40 dark:bg-blue-950/40 backdrop-blur-sm" 
@@ -30,7 +30,7 @@
                 <p v-if="subtitle" class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ subtitle }}</p>
               </slot>
             </div>
-            <button @click="close" class="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400">
+            <button v-if="showClose" @click="close" class="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400">
               <XIcon class="w-5 h-5" />
             </button>
           </div>
@@ -74,6 +74,10 @@ const props = defineProps({
   closeOnBackdrop: {
     type: Boolean,
     default: false // USER explicitly asked to only close by button
+  },
+  showClose: {
+    type: Boolean,
+    default: true
   }
 })
 

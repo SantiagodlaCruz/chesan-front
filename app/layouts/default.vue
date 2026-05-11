@@ -149,6 +149,7 @@
     <Teleport to="body">
       <ChangePasswordModal v-model="showPasswordModal" />
       <UserProfileModal v-model="showProfileModal" />
+      <Toast />
     </Teleport>
   </div>
 </template>
@@ -190,6 +191,7 @@ const navItems = [
   { label: 'Producción', path: '/production', icon: FactoryIcon, permission: 'produccion.ver' },
   { label: 'Punto de venta', path: '/point-of-sale', icon: ShoppingCartIcon, permission: 'punto_de_venta.ver' },
   { label: 'Historial Tickets', path: '/tickets', icon: TicketIcon, role: 'admin|super_admin' },
+  { label: 'Historial Cortes', path: '/cash-register/history', icon: ClipboardListIcon, role: 'admin|super_admin' },
   { label: 'Catálogos', path: '/catalogs', icon: SettingsIcon, permission: 'catalogos.ver' },
 ]
 
