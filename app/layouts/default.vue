@@ -186,10 +186,10 @@ const navItems = [
   { label: 'Inicio', path: '/', icon: LayoutDashboardIcon, permission: 'reportes.ver' },
   { label: 'Productos', path: '/inventory/products', icon: BoxIcon, permission: 'inventario.ver' },
   { label: 'Materia Prima', path: '/inventory/raw-materials', icon: PackageIcon, permission: 'materia_prima.ver' },
+  { label: 'Cotizaciones', path: '/production/quotations', icon: ClipboardListIcon, permission: 'produccion.ver' },
   { label: 'Producción', path: '/production', icon: FactoryIcon, permission: 'produccion.ver' },
   { label: 'Punto de venta', path: '/point-of-sale', icon: ShoppingCartIcon, permission: 'punto_de_venta.ver' },
   { label: 'Historial Tickets', path: '/tickets', icon: TicketIcon, role: 'admin|super_admin' },
-  { label: 'Cotizaciones', path: '/production/quotations', icon: ClipboardListIcon, permission: 'produccion.ver' },
   { label: 'Catálogos', path: '/catalogs', icon: SettingsIcon, permission: 'catalogos.ver' },
 ]
 
