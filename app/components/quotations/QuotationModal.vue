@@ -37,115 +37,134 @@
           </button>
         </div>
 
-        <div class="bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-visible">
-          <table class="w-full text-left table-fixed">
-            <thead>
-              <tr class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] border-b border-slate-200 dark:border-slate-800">
-                <th class="px-4 py-3 w-[35%]">Producto</th>
-                <th class="px-4 py-3 w-[20%]">Material</th>
-                <th class="px-4 py-3 w-[10%] text-center">Talla</th>
-                <th class="px-4 py-3 w-[10%] text-center">Cant.</th>
-                <th class="px-4 py-3 w-[12%] text-right">P. base</th>
-                <th class="px-4 py-3 w-[10%] text-center">Extras</th>
-                <th class="px-4 py-3 w-[13%] text-right text-primary">Subtotal</th>
-                <th class="px-4 py-3 w-10"></th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-              <tr v-for="(item, idx) in form.items" :key="idx" class="group transition-colors hover:bg-slate-100/50 dark:hover:bg-white/[0.02]">
-                <!-- Selector de Producto/Precio -->
-                <td class="px-2 py-3">
-                    <Select 
-                      v-model="item.product_catalog_id" 
-                      :options="productOptions" 
-                      placeholder="Seleccionar..." 
-                      compact 
-                      searchable
-                      menu-width="w-[500px]"
-                      :disabled="readOnly"
-                      @update:modelValue="onBaseProductChange(idx)"
-                    />
-                    <input 
-                      v-if="!item.product_catalog_id"
-                      v-model="item.custom_description" 
-                      :disabled="readOnly"
-                      placeholder="Descripción manual..."
-                      class="w-full bg-transparent border-none outline-none px-2 py-1 text-[10px] text-slate-500 italic mt-1"
-                    />
-                </td>
-                <!-- Material -->
-                <td class="px-1 py-3">
-                    <Select 
-                      v-model="item.material" 
-                      :options="getMaterialOptions(item.product_catalog_id)" 
-                      placeholder="Material..." 
-                      compact 
-                      menu-width="w-[250px]"
-                      :disabled="readOnly || !item.product_catalog_id"
-                      @update:modelValue="onMaterialChange(idx)"
-                    />
-                </td>
-                <!-- Talla Específica -->
-                <td class="px-1 py-3 text-center">
-                   <input 
-                    v-model="item.specific_size" 
-                    :disabled="readOnly"
-                    class="w-full bg-transparent border-none outline-none px-1 py-1 text-sm text-center font-bold text-slate-900 dark:text-white uppercase placeholder:text-[10px] placeholder:font-normal"
-                    placeholder="Talla..."
-                    @input="onSizeBlur(idx)"
-                  />
-                </td>
-                <!-- Cantidad -->
-                <td class="px-1 py-3 text-center">
+        <div class="grid grid-cols-1 gap-4">
+          <div v-for="(item, idx) in form.items" :key="idx" class="relative group bg-white dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/10 p-5 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20">
+            <!-- Header Line: Product Selection -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+              <div class="md:col-span-5 flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Producto</label>
+                <Select 
+                  v-model="item.product_catalog_id" 
+                  :options="productOptions" 
+                  placeholder="Seleccionar..." 
+                  searchable
+                  :disabled="readOnly"
+                  @update:modelValue="onBaseProductChange(idx)"
+                />
+                <input 
+                  v-if="!item.product_catalog_id"
+                  v-model="item.custom_description" 
+                  :disabled="readOnly"
+                  placeholder="Descripción manual..."
+                  class="w-full bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-slate-500 italic mt-1"
+                />
+              </div>
+
+              <div class="md:col-span-4 flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Material / Variación</label>
+                <Select 
+                  v-model="item.material" 
+                  :options="getMaterialOptions(item.product_catalog_id)" 
+                  placeholder="Material..." 
+                  searchable
+                  menu-width="w-[350px]"
+                  :disabled="readOnly || !item.product_catalog_id"
+                  @update:modelValue="onMaterialChange(idx)"
+                />
+              </div>
+
+              <div class="md:col-span-3 flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Talla</label>
+                <Select 
+                  v-model="item.specific_size" 
+                  :options="getSizeOptions(item.product_catalog_id, item.material)"
+                  placeholder="Talla..."
+                  searchable
+                  creatable
+                  menu-width="w-[250px]"
+                  :disabled="readOnly || !item.material"
+                  @update:modelValue="onSizeBlur(idx)"
+                />
+              </div>
+            </div>
+
+            <!-- Middle Line: Quantity, Price, Subtotal -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-white/5 items-center">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Cantidad</label>
+                <div class="relative">
                   <input 
                     v-model.number="item.quantity" 
                     type="number" 
                     :disabled="readOnly"
-                    class="w-full bg-transparent border-none outline-none px-1 py-1 text-sm text-center font-bold text-slate-900 dark:text-white"
+                    class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm font-black text-slate-900 dark:text-white"
                     min="1"
                     @input="calculateRow(idx)"
                   />
-                </td>
-                <!-- Precio Base (Calculado) -->
-                <td class="px-1 py-3 text-right">
-                  <div class="flex items-center justify-end gap-1">
-                    <span class="text-slate-400 text-[10px]">$</span>
-                    <input 
-                      v-model.number="item.unit_price" 
-                      type="number" 
-                      step="0.01"
-                      :disabled="readOnly"
-                      class="w-16 bg-transparent border-none outline-none py-1 text-sm text-right font-medium text-slate-700 dark:text-slate-300"
-                      @input="calculateRow(idx)"
-                    />
-                  </div>
-                  <span v-if="item.is_wholesale" class="text-[8px] font-black text-primary uppercase block">MAYOREO</span>
-                </td>
-                <!-- Extras -->
-                <td class="px-1 py-3 text-center">
-                   <button 
-                    type="button" 
-                    @click="openExtras(idx)"
-                    class="text-[10px] font-bold text-slate-500 hover:text-primary inline-flex items-center gap-1"
-                   >
-                     <span v-if="item.extras_total > 0" class="text-primary">+${{ item.extras_total }}</span>
-                     <span v-else>{{ readOnly ? '$0.00' : '+ Agregar' }}</span>
-                     <Settings2Icon class="w-3 h-3" />
-                   </button>
-                </td>
-                <!-- Subtotal -->
-                <td class="px-2 py-3 text-right font-black text-primary">
-                   <span class="text-sm font-black text-primary">{{ formatMoney(item.subtotal) }}</span>
-                </td>
-                <!-- Eliminar -->
-                <td class="px-2 py-3 text-center">
-                  <button v-if="form.items.length > 1 && !readOnly" type="button" @click="removeItem(idx)" class="p-1 text-slate-400 hover:text-red-500 transition-colors">
-                    <TrashIcon class="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio Unitario</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
+                  <input 
+                    v-model.number="item.unit_price" 
+                    type="number" 
+                    step="0.01"
+                    :disabled="readOnly"
+                    class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-2 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300"
+                    @input="calculateRow(idx)"
+                  />
+                </div>
+                <span v-if="item.is_wholesale" class="text-[8px] font-black text-primary uppercase absolute -top-1 right-0 bg-primary/10 px-1.5 py-0.5 rounded-full">MAYOREO</span>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Extras / Cargos</label>
+                <button 
+                  type="button" 
+                  @click="openExtras(idx)"
+                  class="h-10 flex items-center justify-center gap-2 bg-slate-50 dark:bg-white/5 border-2 border-transparent hover:border-primary/30 transition-all rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400"
+                >
+                  <span v-if="item.extras_total > 0" class="text-primary font-black">+${{ item.extras_total }}</span>
+                  <span v-else>Configurar</span>
+                  <Settings2Icon class="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div class="flex flex-col gap-1.5 items-end">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-1">Subtotal</label>
+                <div class="text-xl font-black text-primary">
+                  {{ formatMoney(item.subtotal) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Line: Observations -->
+            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Observaciones especiales del ítem</label>
+                <textarea 
+                  v-model="item.observations"
+                  rows="2"
+                  :disabled="readOnly"
+                  placeholder="Ej. Bordado de 10x10 cm en espalda, nombre bordado en hilo rojo..."
+                  class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Remove Button (Absolute) -->
+            <button 
+              v-if="form.items.length > 1 && !readOnly" 
+              type="button" 
+              @click="removeItem(idx)" 
+              class="absolute -top-2 -right-2 w-7 h-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full shadow-lg text-slate-400 hover:text-red-500 hover:scale-110 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 z-10"
+            >
+              <TrashIcon class="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -273,7 +292,8 @@ const initialForm = {
       subtotal: 0, 
       is_wholesale: false,
       extras: [],
-      extras_total: 0
+      extras_total: 0,
+      observations: ''
     }
   ]
 }
@@ -321,6 +341,16 @@ const getMaterialOptions = (productId) => {
   // Obtener materiales únicos para este producto
   const materials = [...new Set(prod.prices.map(p => p.material))]
   return materials.map(m => ({ value: m, label: m }))
+}
+
+const getSizeOptions = (productId, material) => {
+  if (!productId || !material) return []
+  const prod = catalog.value.find(p => p.id === productId)
+  if (!prod || !prod.prices) return []
+  
+  return prod.prices
+    .filter(p => p.material === material)
+    .map(p => ({ value: p.size_range, label: p.size_range }))
 }
 
 const fetchInitialData = async () => {
@@ -425,9 +455,10 @@ const calculateRow = (idx) => {
   }
 
   // Buscar la variante actual en el catálogo para obtener precios
+  const prod = catalog.value.find(p => p.id === item.product_catalog_id)
   let variant = null
+  
   if (item.product_catalog_price_id) {
-    const prod = catalog.value.find(p => p.id === item.product_catalog_id)
     variant = prod?.prices?.find(p => p.id === item.product_catalog_price_id)
     
     // Si la talla ya no coincide con el rango de esta variante, buscar una mejor
@@ -441,7 +472,8 @@ const calculateRow = (idx) => {
   }
   
   if (variant) {
-    item.is_wholesale = item.quantity >= 25
+    const minWholesale = prod?.wholesale_min_quantity || 25
+    item.is_wholesale = item.quantity >= minWholesale
     item.unit_price = item.is_wholesale ? Number(variant.wholesale_price) : Number(variant.retail_price)
   }
   
@@ -460,7 +492,8 @@ const addItem = () => {
     subtotal: 0, 
     is_wholesale: false,
     extras: [],
-    extras_total: 0
+    extras_total: 0,
+    observations: ''
   })
 }
 
@@ -498,7 +531,8 @@ const fetchQuotation = async (id) => {
         subtotal: Number(item.subtotal),
         extras: item.extras || [],
         extras_total,
-        is_wholesale: item.quantity >= 25
+        is_wholesale: item.quantity >= (variant?.product_catalog?.wholesale_min_quantity || variant?.productCatalog?.wholesaleMinQuantity || 25),
+        observations: item.observations || ''
       }
     })
   } catch (err) {

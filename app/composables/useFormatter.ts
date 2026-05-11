@@ -29,6 +29,28 @@ export const useFormatter = () => {
     return formatHumanDate(date)
   }
 
+  const formatDate = (dateString: string | Date) => {
+    if (!dateString) return '—'
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString
+    if (isNaN(date.getTime())) return '—'
+    return new Intl.DateTimeFormat('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date)
+  }
+
+  const formatTime = (dateString: string | Date) => {
+    if (!dateString) return '—'
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString
+    if (isNaN(date.getTime())) return '—'
+    return new Intl.DateTimeFormat('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).format(date)
+  }
+
   const formatMoney = (amount: number | string) => {
     const value = typeof amount === 'string' ? parseFloat(amount) : amount
     if (isNaN(value)) return '$0.00'
@@ -42,6 +64,8 @@ export const useFormatter = () => {
   return {
     formatHumanDate,
     formatRelativeTime,
-    formatMoney
+    formatMoney,
+    formatDate,
+    formatTime
   }
 }

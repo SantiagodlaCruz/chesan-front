@@ -8,7 +8,7 @@
       type="button"
       :class="[
         'w-full flex items-center justify-between bg-white dark:bg-[#1e293b] border-2 shadow-sm transition-all focus:outline-none',
-        compact ? 'px-3 py-2 rounded-xl min-w-[150px]' : 'px-4 py-3 rounded-2xl',
+        compact ? 'px-3 py-2 rounded-xl' : 'px-4 py-3 rounded-2xl',
         error ? 'border-red-500/50 ring-4 ring-red-500/10' : 'border-slate-200/60 dark:border-transparent hover:border-slate-300 dark:hover:border-white/10',
         disabled ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/40' : (error ? '' : 'focus:border-primary/50 focus:ring-4 focus:ring-primary/10')
       ]"

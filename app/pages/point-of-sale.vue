@@ -1,5 +1,61 @@
 <template>
-  <div class="flex h-[calc(100vh-64px)] -m-4 md:-m-8 overflow-hidden">
+  <div class="relative h-[calc(100vh-64px)] -m-4 md:-m-8 overflow-hidden">
+    <!-- Pantalla de carga inicial -->
+    <div v-if="checkingStatus" class="absolute inset-0 z-[100] bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+      <div class="flex flex-col items-center gap-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Sincronizando caja...</p>
+      </div>
+    </div>
+
+    <!-- Bloqueo visual si no hay sesión activa -->
+    <div v-if="!activeSession && !checkingStatus" class="absolute inset-0 z-[90] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6">
+      <div class="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 border border-white/10 animate-in fade-in zoom-in duration-300">
+        <div class="flex flex-col items-center text-center mb-8">
+          <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+            <BanknoteIcon class="w-8 h-8 text-primary" />
+          </div>
+          <h3 class="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight">
+            Inicio de Caja
+          </h3>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Ingresa el fondo inicial para comenzar a operar hoy.
+          </p>
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Fondo Inicial (Efectivo)</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span class="text-lg font-bold text-slate-400">$</span>
+              </div>
+              <input
+                v-model.number="openingBalance"
+                type="number"
+                step="0.01"
+                min="0"
+                class="block w-full pl-8 pr-4 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xl font-black text-slate-800 dark:text-white outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400"
+                placeholder="0.00"
+                @keyup.enter="handleOpenCash"
+              />
+            </div>
+          </div>
+
+          <button
+            @click="handleOpenCash"
+            :disabled="loadingOpenCash || openingBalance < 0"
+            class="w-full py-4 bg-primary hover:bg-primary/90 text-white font-black text-sm uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3"
+          >
+            <div v-if="loadingOpenCash" class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            <PlayIcon v-else class="w-5 h-5" />
+            Iniciar Turno de Caja
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex h-full w-full">
 
     <!-- Main Column: Scan + Cart -->
     <div class="flex-1 flex flex-col p-6 overflow-hidden">
@@ -24,29 +80,6 @@
       </div>
 
       <!-- Alertas Personalizadas (En reemplazo de alert() genéricos) -->
-      <Transition
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="-translate-y-2 opacity-0"
-        enter-to-class="translate-y-0 opacity-100"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="translate-y-0 opacity-100"
-        leave-to-class="-translate-y-2 opacity-0"
-      >
-        <div v-if="posAlert.message" class="mb-5 flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold relative shrink-0 overflow-hidden"
-             :class="posAlert.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400'">
-          <!-- Indicador lateral de color -->
-          <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="posAlert.type === 'error' ? 'bg-red-500' : 'bg-green-500'"></div>
-          
-          <AlertCircleIcon v-if="posAlert.type === 'error'" class="w-5 h-5 shrink-0" />
-          <CheckCircleIcon v-else class="w-5 h-5 shrink-0" />
-          
-          <span class="leading-snug">{{ posAlert.message }}</span>
-          
-          <button @click="posAlert.message = ''" class="ml-auto opacity-50 hover:opacity-100 transition-opacity">
-            <XIcon class="w-4 h-4" />
-          </button>
-        </div>
-      </Transition>
 
       <!-- Cart Table -->
       <div class="flex-1 glass-panel rounded-xl overflow-hidden flex flex-col">
@@ -55,6 +88,15 @@
             Venta actual — {{ cartItems.length }} {{ cartItems.length === 1 ? 'Artículo' : 'Artículos' }}
           </h3>
           <div class="flex items-center gap-3">
+            <button @click="showCashMovementModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-1">
+              <ArrowDownIcon class="w-3 h-3" />
+              Gasto/Salida
+            </button>
+            <button @click="showCloseCashModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-white border border-slate-900 hover:bg-slate-700 transition-all flex items-center gap-1">
+              <FlagIcon class="w-3 h-3" />
+              Corte de Caja
+            </button>
+            <div class="w-px h-4 bg-border-light dark:bg-white/10 mx-1"></div>
             <button @click="showExchangeModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all flex items-center gap-1">
               <RotateCcwIcon class="w-3 h-3" />
               Procesar cambio
@@ -136,7 +178,12 @@
                       >
                         <MinusIcon class="w-3.5 h-3.5" />
                       </button>
-                      <span class="text-sm font-black text-slate-800 dark:text-slate-100 w-5 text-center">{{ String(item.qty).padStart(2, '0') }}</span>
+                      <input
+                        type="number"
+                        v-model.number="item.qty"
+                        @change="validateManualQty(index)"
+                        class="w-10 h-7 bg-slate-50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-lg text-center text-xs font-black text-slate-800 dark:text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
                       <button
                         @click="updateQty(index, 1)"
                         class="w-7 h-7 rounded-lg border border-border-light dark:border-white/10 hover:border-primary/50 hover:text-primary flex items-center justify-center text-slate-400 transition-all"
@@ -328,7 +375,7 @@
         </div>
       </div>
     </aside>
-  </div>
+  </div></div>
 
   <!-- Modales Adicionales -->
   <ExchangeTicketModal 
@@ -341,6 +388,16 @@
      :ticket="scannedLayawayTicket"
      :loading="loadingLayaway"
      @confirm="handleLayawayPayment"
+  />
+
+  <CloseCashModal
+     v-model:show="showCloseCashModal"
+     @closed="onCashClosed"
+  />
+
+  <CashMovementModal
+     v-model:show="showCashMovementModal"
+     @success="onMovementRecorded"
   />
 
   <!-- Printable Area for pos 58mm Ticket (Hidden from screen view) -->
@@ -450,10 +507,14 @@ import {
   ArrowRightLeftIcon,
   CalendarIcon,
   RotateCcwIcon,
+  FlagIcon,
+  ArrowDownIcon,
 } from 'lucide-vue-next'
 import QrcodeVue from 'qrcode.vue'
 import ExchangeTicketModal from '~/components/pos/ExchangeTicketModal.vue'
 import PayLayawayModal from '~/components/pos/PayLayawayModal.vue'
+import CloseCashModal from '~/components/pos/CloseCashModal.vue'
+import CashMovementModal from '~/components/pos/CashMovementModal.vue'
 
 const { user } = useAuth()
 const api = useApi()
@@ -465,11 +526,63 @@ const paymentMethod = ref('cash')
 const currentCustomer = ref('Venta Directa / Mostrador')
 const lastTicket = ref(null)
 const showExchangeModal = ref(false)
+const showCloseCashModal = ref(false)
+const showCashMovementModal = ref(false)
+const activeSession = ref(null)
+const checkingStatus = ref(true)
+
+// Estado Inicio de Caja Integrado
+const openingBalance = ref(500)
+const loadingOpenCash = ref(false)
 
 // Estado Liquidar Apartado Escaneado
 const showPayLayawayModal = ref(false)
 const scannedLayawayTicket = ref(null)
 const loadingLayaway = ref(false)
+
+const { logout: authLogout } = useAuth()
+const logout = async () => {
+  await authLogout()
+  window.location.reload()
+}
+
+const handleOpenCash = async () => {
+  if (openingBalance.value < 0 || loadingOpenCash.value) return
+  loadingOpenCash.value = true
+  try {
+    const response = await api.post('/api/cash-register/open', {
+      opening_balance: openingBalance.value
+    })
+    activeSession.value = response.session
+    showPosAlert('¡Caja iniciada correctamente!', 'success')
+  } catch (error) {
+    console.error('Error opening cash register:', error)
+    
+    // Si el error es que ya está abierta (o cualquier error 400 en este contexto),
+    // forzamos la sincronización inmediata del estado para desbloquear al usuario.
+    if (error.data?.message?.includes('ya existe') || error.status === 400) {
+      showPosAlert('Detectamos una sesión activa. Sincronizando...', 'info')
+      
+      // Llamamos a status directamente para asegurar los datos frescos
+      try {
+        const res = await api.get('/api/cash-register/status')
+        if (res.has_open_session) {
+          activeSession.value = res.session
+          showPosAlert('Sesión sincronizada con éxito.', 'success')
+        } else {
+          showPosAlert('No se pudo sincronizar la sesión. Por favor intenta de nuevo.', 'error')
+        }
+      } catch (syncErr) {
+        showPosAlert('Error al sincronizar. Recarga la página.', 'error')
+      }
+    } else {
+      showPosAlert(error.data?.message || 'Error al abrir la caja', 'error')
+    }
+  } finally {
+    loadingOpenCash.value = false
+    checkingStatus.value = false // Nos aseguramos de que el estado de carga general también termine
+  }
+}
 
 // Estado del Apartado
 const isLayaway = ref(false)
@@ -484,13 +597,13 @@ const todayDate = computed(() => {
   return `${year}-${month}-${day}`
 })
 
+import { useToast } from '~/composables/useToast'
+
+const { showToast } = useToast()
+
 // — Sistema de Alertas POS —
-const posAlert = ref({ message: '', type: 'error' })
 const showPosAlert = (message, type = 'error') => {
-  posAlert.value = { message, type }
-  if (type === 'success') {
-    setTimeout(() => { if (posAlert.value.message === message) posAlert.value.message = '' }, 4000)
-  }
+  showToast(message, type)
 }
 
 const cartItems = ref([])
@@ -522,14 +635,45 @@ const paymentMethodName = computed(() => {
 
 
 // — Actions —
-onMounted(() => barcodeInput.value?.focus())
+const checkCashStatus = async () => {
+  checkingStatus.value = true
+  try {
+    const response = await api.get('/api/cash-register/status')
+    if (response && (response.has_open_session || response.session)) {
+      activeSession.value = response.session
+    } else {
+      activeSession.value = null
+    }
+  } catch (error) {
+    console.error('POS Sync Error:', error)
+    activeSession.value = null
+  } finally {
+    checkingStatus.value = false
+  }
+}
+
+onMounted(() => {
+  checkCashStatus().then(() => {
+    setTimeout(() => {
+      barcodeInput.value?.focus()
+    }, 500)
+  })
+})
+
+const onCashClosed = () => {
+  activeSession.value = null
+  showPosAlert('Caja cerrada correctamente. Se requiere abrir una nueva para continuar.', 'success')
+}
+
+const onMovementRecorded = (movement) => {
+  showPosAlert(`Movimiento registrado: ${movement.description} (${formatMoney(movement.amount)})`, 'success')
+}
 
 const onBarcodeSubmit = async () => {
   if (!barcodeQuery.value.trim()) return
   
   let query = barcodeQuery.value.trim().replace(/'/g, '-')
   barcodeQuery.value = ''
-  posAlert.value.message = ''
 
   try {
     // LÓGICA DE ESCANEO DE TICKETS (LIQUIDACIÓN DE APARTADO)
@@ -610,19 +754,52 @@ const removeFromCart = (index) => cartItems.value.splice(index, 1)
 
 const updateQty = (index, delta) => {
   const item = cartItems.value[index]
-  const newQty = item.qty + delta
+  const currentQty = parseInt(item.qty) || 0
+  const newQty = currentQty + delta
   
-  if (item.qty < 0) {
-      if (newQty > -1) { removeFromCart(index); return }
+  if (currentQty < 0) {
+      if (newQty > -1) { 
+        // En lugar de borrar, lo dejamos en 0 o 1 si prefiere, 
+        // pero para devoluciones negativas, el límite es 0
+        item.qty = 0
+        return 
+      }
       item.qty = newQty
       return
   }
-  if (newQty < 1) { removeFromCart(index); return }
+
+  // Ya no borramos automáticamente si es < 1
+  if (newQty < 0) {
+    item.qty = 0
+    return
+  }
+  
   if (newQty > item.quantity) {
      showPosAlert(`Límite Alcanzado: Solo quedan ${item.quantity} pieza(s) en inventario.`, 'error')
+     item.qty = item.quantity
      return
   }
   item.qty = newQty
+}
+
+const validateManualQty = (index) => {
+  const item = cartItems.value[index]
+  
+  if (item.qty < 0) {
+    // Si es negativo (devolución), el límite es 0
+    return
+  }
+
+  // Si está vacío, lo permitimos (será 0 para el total)
+  if (item.qty === '' || item.qty === null || item.qty === undefined) {
+    return
+  }
+
+  // Validación de Stock
+  if (item.qty > item.quantity) {
+    showPosAlert(`Límite Alcanzado: Solo quedan ${item.quantity} pieza(s) en inventario.`, 'error')
+    item.qty = item.quantity
+  }
 }
 
 const clearCart = () => {
@@ -662,7 +839,6 @@ const onCheckout = async () => {
     setTimeout(() => {
         window.print()
         cartItems.value = []
-        lastTicket.value = null
         isLayaway.value = false
         customerName.value = ''
         layawayDeposit.value = 0
@@ -706,7 +882,7 @@ const handleLayawayPayment = async (ticket) => {
         
         setTimeout(() => {
             window.print()
-            lastTicket.value = null
+            // lastTicket.value = null (Mantenemos para evitar impresión en blanco)
             showPosAlert('Apartado liquidado con éxito.', 'success')
             barcodeInput.value?.focus()
         }, 300)
@@ -738,8 +914,28 @@ const handleLayawayPayment = async (ticket) => {
 .ticket-footer { text-align: center; margin-top: 4mm; font-size: 9px; }
 .qr-container { margin-top: 3mm; display: flex; justify-content: center; }
 @media print {
-  body * { visibility: hidden; }
-  #pos-print-area, #pos-print-area * { visibility: visible; }
-  #pos-print-area { position: absolute; left: 0; top: 0; width: 58mm; }
+  /* Ocultar todo lo que no sea el área de impresión */
+  body > * { display: none !important; }
+  #pos-print-area { 
+    display: block !important; 
+    position: absolute !important; 
+    left: 0 !important; 
+    top: 0 !important; 
+    width: 58mm !important; 
+    visibility: visible !important;
+    background: white !important;
+    color: black !important;
+  }
+  #pos-print-area * { 
+    visibility: visible !important;
+    color: black !important;
+    background: transparent !important;
+  }
+  
+  /* Reset page margins for ticket printer */
+  @page {
+    margin: 0;
+    size: 58mm auto;
+  }
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6 animate-in fade-in duration-500">
     <!-- Metric Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div 
         v-for="stat in stats" :key="stat.label" 
         class="flex flex-col gap-3 rounded-2xl p-6 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 transition-all hover:bg-slate-400/10"
@@ -16,34 +16,40 @@
         </div>
         
         <div class="space-y-1">
-          <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">{{ stat.label }}</h3>
-          <div class="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">
-            {{ stat.value }}
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">{{ stat.label }}</h3>
+            <!-- Tabs only for Income card -->
+            <div v-if="stat.breakdown" class="flex items-center gap-1 p-0.5 bg-slate-200/50 dark:bg-white/5 rounded-lg">
+              <button 
+                v-for="tab in ['general', 'caja', 'produccion']" :key="tab"
+                @click.stop="incomeTab = tab"
+                :class="[
+                  'px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-md transition-all',
+                  incomeTab === tab ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-400 opacity-50 hover:opacity-100'
+                ]"
+              >
+                {{ tab === 'produccion' ? 'Ped' : tab }}
+              </button>
+            </div>
           </div>
-          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest opacity-60">{{ stat.description }}</p>
+
+          <div class="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tighter transition-all duration-300">
+            {{ stat.breakdown ? stat.breakdown[incomeTab] : stat.value }}
+          </div>
+          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest opacity-60 transition-all duration-300">
+            {{ stat.descriptions ? stat.descriptions[incomeTab] : stat.description }}
+          </p>
         </div>
       </div>
     </div>
 
     <div class="grid grid-cols-12 gap-6">
       <!-- Chart Section -->
-      <div class="col-span-12 lg:col-span-8 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 p-6 rounded-2xl relative overflow-hidden">
+      <div class="col-span-12 lg:col-span-8 bg-slate-400/5 dark:bg-slate-400/5 border border-slate-400/10 dark:border-white/5 p-6 rounded-2xl relative">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-4">
           <div class="flex items-center gap-4">
-            <h3 
-              class="text-[11px] font-black uppercase tracking-widest cursor-pointer transition-colors"
-              :class="chartType === 'ingresos' ? 'text-primary' : 'text-slate-400 hover:text-slate-500'"
-              @click="chartType = 'ingresos'"
-            >
+            <h3 class="text-[11px] font-black uppercase tracking-widest text-primary">
               Flujo de Ingresos
-            </h3>
-            <span class="text-slate-200 dark:text-slate-800">|</span>
-            <h3 
-              class="text-[11px] font-black uppercase tracking-widest cursor-pointer transition-colors"
-              :class="chartType === 'pedidos' ? 'text-primary' : 'text-slate-400 hover:text-slate-500'"
-              @click="chartType = 'pedidos'"
-            >
-              Pedidos en curso
             </h3>
           </div>
           
@@ -62,10 +68,32 @@
             >
               Mes
             </button>
+            <button 
+              @click="chartPeriod = 'año'"
+              :class="chartPeriod === 'año' ? 'bg-white dark:bg-slate-800 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+              class="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
+            >
+              Año
+            </button>
           </div>
         </div>
 
-        <div class="h-64 w-full relative">
+        <div class="w-full relative group/chart aspect-[4/1]">
+          <!-- Tooltip -->
+          <div 
+            v-if="hoveredPoint" 
+            class="absolute z-[100] pointer-events-none bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 px-3 py-1.5 rounded-lg text-[10px] font-black shadow-2xl animate-in fade-in zoom-in duration-200"
+            :style="{ 
+              left: (hoveredPoint.x / 800 * 100) + '%', 
+              top: (hoveredPoint.y / 200 * 100) + '%', 
+              transform: 'translate(-50%, calc(-100% - 12px))' 
+            }"
+          >
+            ${{ formatCurrency(hoveredPoint.value) }}
+            <!-- Arrow -->
+            <div class="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 dark:bg-slate-100 rotate-45"></div>
+          </div>
+
           <svg class="w-full h-full overflow-visible" viewBox="0 0 800 200">
             <defs>
               <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
@@ -78,14 +106,31 @@
             <path :d="svgAreaPath" fill="url(#chartGradient)" class="transition-all duration-700"></path>
             <path :d="svgPath" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all duration-700"></path>
             
-            <circle v-for="(point, index) in chartPoints" :key="index" :cx="point.x" :cy="point.y" fill="#3b82f6" r="3.5" stroke="white" stroke-width="2"></circle>
+            <circle 
+              v-for="(point, index) in chartPoints" 
+              :key="index" 
+              :cx="point.x" 
+              :cy="point.y" 
+              fill="#3b82f6" 
+              :r="hoveredPoint?.index === index ? 6 : 3.5" 
+              :stroke="hoveredPoint?.index === index ? 'rgba(59, 130, 246, 0.4)' : 'white'" 
+              :stroke-width="hoveredPoint?.index === index ? 8 : 2"
+              class="transition-all duration-200 cursor-pointer"
+              @mouseenter="hoveredPoint = { ...point, index }"
+              @mouseleave="hoveredPoint = null"
+            ></circle>
           </svg>
         </div>
 
-        <!-- Labels move outside fixed height container -->
-        <div class="flex justify-between mt-3 -mx-2">
-          <div v-for="(label, idx) in chartData.labels" :key="idx" class="flex-1 text-center">
-            <span class="text-[10px] font-bold text-primary dark:text-blue-400 uppercase tracking-widest block">
+        <!-- Correctly aligned labels -->
+        <div class="relative h-6 mt-4 w-full">
+          <div 
+            v-for="(label, idx) in chartData.labels" 
+            :key="idx" 
+            class="absolute -translate-x-1/2 text-center"
+            :style="{ left: (idx * (800 / (chartData.labels.length - 1)) / 800 * 100) + '%' }"
+          >
+            <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block whitespace-nowrap">
               {{ label }}
             </span>
           </div>
@@ -177,7 +222,7 @@
         <div class="p-4 flex items-center justify-between gap-4 border-b border-slate-200/50 dark:border-white/5 mb-2">
           <div class="flex items-center gap-2 px-2">
             <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-            <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">Pedidos Activos</h3>
+            <h3 class="text-[11px] font-black uppercase tracking-widest text-slate-500">Pedidos Activos ({{ activeOrdersTotal }})</h3>
           </div>
           <NuxtLink to="/production" class="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">Ver Tablero</NuxtLink>
         </div>
@@ -193,7 +238,10 @@
                 <td class="px-4 py-4 text-xs font-bold text-slate-700 dark:text-slate-200">{{ order.customer }}</td>
                 <td class="px-4 py-4 font-black text-slate-800 dark:text-white text-xs">{{ order.total }}</td>
                 <td class="px-4 py-4 text-right">
-                  <div class="inline-flex text-[8px] font-black uppercase rounded-md px-2 py-0.5 tracking-wider bg-orange-500/10 text-orange-500">
+                  <div 
+                    :style="order.statusStyle"
+                    class="inline-flex items-center justify-center text-[8px] font-black uppercase rounded-md px-2.5 py-1 tracking-wider border transition-all min-w-[110px]"
+                  >
                     {{ order.status }}
                   </div>
                 </td>
@@ -219,7 +267,8 @@ import {
   ShoppingCartIcon,
   ArrowRightIcon,
   MoreHorizontalIcon,
-  TrendingUpIcon
+  TrendingUpIcon,
+  PackageIcon
 } from 'lucide-vue-next'
 
 const api = useApi()
@@ -227,35 +276,52 @@ const api = useApi()
 const iconMap = {
   RocketIcon,
   CheckCircleIcon,
-  CreditCardIcon
+  CreditCardIcon,
+  TrendingUpIcon,
+  PackageIcon
 }
 
 const stats = ref([
   { 
-    label: 'Órdenes Activas', 
+    label: 'Pedidos entregados', 
     value: '0', 
     trend: '-', 
-    description: 'En proceso de costura (Próximo)', 
-    icon: RocketIcon,
-    iconBg: 'bg-primary/10',
-    iconColor: 'text-primary',
-    bgDecoration: 'bg-primary'
+    description: 'Completados este mes', 
+    icon: PackageIcon,
+    iconBg: 'bg-indigo-500/10',
+    iconColor: 'text-indigo-500',
+    bgDecoration: 'bg-indigo-500'
   },
   { 
     label: 'Uniformes Vendidos', 
     value: '0', 
     trend: 'N/A', 
-    description: 'Total acumulado del mes', 
+    description: 'Ventas acumuladas (Caja)', 
     icon: CheckCircleIcon,
     iconBg: 'bg-emerald-500/10',
     iconColor: 'text-emerald-500',
     bgDecoration: 'bg-emerald-500'
   },
   { 
+    label: 'Tasa de Conversión', 
+    value: '0%', 
+    trend: 'N/A', 
+    description: 'Cotizaciones convertidas', 
+    icon: TrendingUpIcon,
+    iconBg: 'bg-amber-500/10',
+    iconColor: 'text-amber-500',
+    bgDecoration: 'bg-amber-500'
+  },
+  { 
     label: 'Ingresos Mensuales', 
     value: '$0.00', 
+    breakdown: {
+      general: '$0.00',
+      caja: '$0.00',
+      produccion: '$0.00'
+    },
     trend: 'N/A', 
-    description: 'Ventas facturadas en caja', 
+    description: 'Total (Caja + Pedidos)', 
     icon: CreditCardIcon,
     iconBg: 'bg-indigo-500/10',
     iconColor: 'text-indigo-500',
@@ -269,9 +335,19 @@ const currentAlerts = computed(() => inventoryAlerts.value[activeInventoryTab.va
 
 const recentTickets = ref([])
 const activeProductionOrders = ref([])
+const activeOrdersTotal = ref(0)
+const incomeTab = ref('general')
 const chartType = ref('ingresos')
 const chartPeriod = ref('semana')
 const chartData = ref({ series: [0, 0, 0, 0, 0, 0, 0], labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] })
+const hoveredPoint = ref(null)
+
+const formatCurrency = (val) => {
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(val)
+}
 
 const chartPoints = computed(() => {
     const series = chartData.value.series
@@ -283,7 +359,8 @@ const chartPoints = computed(() => {
     return series.map((val, i) => {
         return {
             x: i * step,
-            y: h - (val / max * h) + 10 
+            y: h - (val / max * h) + 10,
+            value: val
         }
     })
 })
@@ -330,6 +407,7 @@ const fetchDashboardData = async () => {
             inventoryAlerts.value = response.data.inventoryAlerts
             recentTickets.value = response.data.recentTickets
             activeProductionOrders.value = response.data.recentOrders
+            activeOrdersTotal.value = response.data.meta?.activeOrdersCount || 0
             if (response.data.chartData) {
                 chartData.value = response.data.chartData
             }
