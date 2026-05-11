@@ -64,81 +64,88 @@
           </button>
         </div>
 
-        <div class="bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-visible">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-                <th class="px-4 py-3">{{ form.type === 'uniform' ? 'Producto / Concepto' : 'Descripción del Bordado' }}</th>
-                <th v-if="form.type === 'uniform'" class="px-4 py-3 w-48">Color</th>
-                <th v-if="form.type === 'uniform'" class="px-4 py-3 w-20 text-center">Talla</th>
-                <th class="px-4 py-3 w-20 text-center">Cant.</th>
-                <th class="px-4 py-3 w-28 text-right">P. Unit</th>
-                <th class="px-4 py-3 w-10"></th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-              <tr v-for="(item, idx) in form.items" :key="idx" class="group transition-colors hover:bg-slate-100/50 dark:hover:bg-white/[0.02]">
-                <td class="px-2 py-2">
+        <div class="grid grid-cols-1 gap-4">
+          <div v-for="(item, idx) in form.items" :key="idx" class="relative group bg-white dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/10 p-5 transition-all hover:shadow-xl hover:shadow-primary/5">
+            <!-- First Row: Product and Color -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+              <div class="md:col-span-12 flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Producto / Concepto</label>
+                <input 
+                  v-model="item.product_name" 
+                  :placeholder="form.type === 'uniform' ? 'Ej. Playera Polo' : 'Ej. Bordado espalda chamarra'"
+                  class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-200"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Second Row: Size, Quantity, Price -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-slate-100 dark:border-white/5 items-center">
+              <div v-if="form.type === 'uniform'" class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Talla</label>
+                <input 
+                  v-model="item.size" 
+                  placeholder="Ej. 10 o M"
+                  class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm text-center font-bold text-slate-700 dark:text-slate-300"
+                />
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Cantidad</label>
+                <input 
+                  v-model.number="item.quantity" 
+                  type="number" 
+                  class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm text-center font-black text-slate-900 dark:text-white"
+                  min="1"
+                  required
+                />
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">P. Unitario</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
                   <input 
-                    v-model="item.product_name" 
-                    :placeholder="form.type === 'uniform' ? 'Ej. Playera Polo' : 'Ej. Bordado espalda chamarra'"
-                    class="w-full bg-transparent border-none outline-none px-2 py-1.5 text-sm font-semibold text-slate-800 dark:text-slate-200"
-                    required
-                  />
-                  <!-- Extras simplified in Order -->
-                  <div v-if="form.type === 'uniform'" class="px-2 pb-1">
-                     <button type="button" @click="toggleExtras(idx)" class="text-[9px] font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-1">
-                        <Settings2Icon class="w-3 h-3" /> {{ item.extras?.length ? `${item.extras.length} Extras` : 'Añadir Extras' }}
-                     </button>
-                  </div>
-                </td>
-                <td v-if="form.type === 'uniform'" class="px-2 py-2">
-                  <Select 
-                    v-model="item.color_name" 
-                    :options="catalogs.colors" 
-                    placeholder="Color" 
-                    compact 
-                    creatable
-                    menu-width="w-64"
-                    @update:modelValue="(val) => onColorChange(idx, val)"
-                  />
-                </td>
-                <td v-if="form.type === 'uniform'" class="px-2 py-2">
-                  <input 
-                    v-model="item.size" 
-                    placeholder="Talla"
-                    class="w-full bg-transparent border-none outline-none px-2 py-1.5 text-sm text-center font-medium text-slate-700 dark:text-slate-300"
-                  />
-                </td>
-                <td class="px-2 py-2">
-                  <input 
-                    v-model.number="item.quantity" 
+                    v-model.number="item.unit_price" 
                     type="number" 
-                    class="w-full bg-transparent border-none outline-none px-2 py-1.5 text-sm text-center font-bold text-slate-900 dark:text-white"
-                    min="1"
+                    step="0.01"
+                    class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-2 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 text-right"
                     required
                   />
-                </td>
-                <td class="px-2 py-2">
-                  <div class="flex items-center justify-end gap-1">
-                    <span class="text-slate-400 text-xs">$</span>
-                    <input 
-                      v-model.number="item.unit_price" 
-                      type="number" 
-                      step="0.01"
-                      class="w-20 bg-transparent border-none outline-none py-1.5 text-sm text-right font-bold text-slate-900 dark:text-white"
-                      required
-                    />
-                  </div>
-                </td>
-                <td class="px-2 py-2 text-center">
-                  <button v-if="form.items.length > 1" type="button" @click="removeItem(idx)" class="p-1 text-slate-400 hover:text-red-500 transition-colors">
-                    <TrashIcon class="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Extras</label>
+                <button type="button" @click="toggleExtras(idx)" class="h-10 flex items-center justify-center gap-2 bg-slate-50 dark:bg-white/5 border-2 border-transparent hover:border-primary/30 transition-all rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400">
+                  <span v-if="item.extras?.length" class="text-primary font-black">+{{ item.extras.length }} Conceptos</span>
+                  <span v-else>Añadir</span>
+                  <Settings2Icon class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Third Row: Observations -->
+            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+              <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Notas especiales del ítem</label>
+              <textarea 
+                v-model="item.observations"
+                rows="2"
+                placeholder="Detalles específicos para producción o bordado..."
+                class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+              ></textarea>
+            </div>
+
+            <!-- Delete Button (Absolute) -->
+            <button 
+              v-if="form.items.length > 1" 
+              type="button" 
+              @click="removeItem(idx)" 
+              class="absolute -top-2 -right-2 w-7 h-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full shadow-lg text-slate-400 hover:text-red-500 hover:scale-110 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 z-10"
+            >
+              <TrashIcon class="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -208,7 +215,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { PlusIcon, TrashIcon } from 'lucide-vue-next'
+import { PlusIcon, TrashIcon, ShirtIcon, PaletteIcon, Settings2Icon } from 'lucide-vue-next'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
 import Select from '~/components/Select.vue'
@@ -234,12 +241,11 @@ interface OrderExtra {
 
 interface OrderItem {
   product_name: string
-  color_name: string | number
-  hex_code: string
   size: string
   quantity: number
   unit_price: number
   extras: OrderExtra[]
+  observations: string
 }
 
 const form = reactive({
@@ -249,7 +255,7 @@ const form = reactive({
   advance_payment: 0,
   notes: '',
   items: [
-    { product_name: '', color_name: '', hex_code: '', size: '', quantity: 1, unit_price: 0, extras: [] }
+    { product_name: '', size: '', quantity: 1, unit_price: 0, extras: [], observations: '' }
   ] as OrderItem[]
 })
 
@@ -295,19 +301,14 @@ const handleCreateClient = async (name: string) => {
 }
 
 const addItem = () => {
-  form.items.push({ product_name: '', color_name: '', hex_code: '', size: '', quantity: 1, unit_price: 0, extras: [] })
+  form.items.push({ product_name: '', size: '', quantity: 1, unit_price: 0, extras: [], observations: '' })
 }
 
 const removeItem = (idx: number) => {
   form.items.splice(idx, 1)
 }
 
-const onColorChange = (idx: number, val: any) => {
-  const selectedColor = catalogs.colors.find((c: any) => c.value === val || c.label === val)
-  if (selectedColor && form.items[idx]) {
-    form.items[idx].hex_code = (selectedColor as any).hex || ''
-  }
-}
+
 
 const close = () => {
   emit('update:show', false)
@@ -321,18 +322,16 @@ const onSubmit = async () => {
     saving.value = true
     
     const sanitizedItems = form.items.map(item => {
-      const isNewColor = typeof item.color_name === 'string' && isNaN(Number(item.color_name))
-      
       return {
         product_name: item.product_name,
-        color_id: !isNewColor ? Number(item.color_name) : null,
-        color_name: isNewColor ? item.color_name : null,
-        hex_code: item.hex_code || null,
+        color_id: null,
+        color_name: null,
+        hex_code: null,
         size: item.size || null,
         quantity: Number(item.quantity) || 0,
         unit_price: Number(item.unit_price) || 0,
         extras: item.extras || [],
-        observations: null
+        observations: item.observations || ''
       }
     })
 
@@ -365,7 +364,7 @@ const resetForm = () => {
   form.delivery_date = ''
   form.advance_payment = 0
   form.notes = ''
-  form.items = [{ product_name: '', color_name: '', hex_code: '', size: '', quantity: 1, unit_price: 0, extras: [] }]
+  form.items = [{ product_name: '', size: '', quantity: 1, unit_price: 0, extras: [], observations: '' }]
 }
 
 watch(() => props.show, (val) => {

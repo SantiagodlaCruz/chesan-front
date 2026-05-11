@@ -1,12 +1,23 @@
 <template>
   <BaseModal
     :show="show"
-    :title="'Detalle de pedido ' + card?.orderId"
+    :title="'Detalle de Pedido #' + (card?.order?.order_code || card?.orderId)"
     subtitle="Información detallada de la orden de producción."
     size="3xl"
     @update:show="close"
   >
     <div v-if="card" class="space-y-8">
+      <!-- Accion Superior Sutil -->
+      <div v-if="card.status !== 'Entregados'" class="flex justify-end items-center -mb-4">
+        <button 
+          @click="emit('delete', card)"
+          class="flex items-center gap-2 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 border border-red-100 dark:border-red-500/30 rounded-xl transition-all shadow-sm"
+        >
+          <TrashIcon class="w-3.5 h-3.5" />
+          Eliminar Pedido
+        </button>
+      </div>
+
       <!-- Info Superior -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -24,39 +35,44 @@
         </div>
       </div>
 
-      <!-- Tabla de Ítems -->
-      <div class="space-y-3">
+      <!-- Tarjetas de Ítems -->
+      <div class="space-y-4">
         <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Productos a Fabricar</h3>
-        <div class="bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-                <th class="px-4 py-3">Producto</th>
-                <th class="px-4 py-3">Color</th>
-                <th class="px-4 py-3 text-center">Talla</th>
-                <th class="px-4 py-3 text-center">Cantidad</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-              <tr v-for="item in card.order?.items" :key="item.id" class="text-sm">
-                <td class="px-4 py-3 font-bold text-slate-800 dark:text-slate-200">{{ item.product_name }}</td>
-                <td class="px-4 py-3">
-                  <div class="flex items-center gap-2">
-                    <span 
-                      v-if="item.color?.hex_code" 
-                      class="w-3 h-3 rounded-full border border-black/10" 
-                      :style="{ backgroundColor: item.color.hex_code }"
-                    ></span>
-                    <span class="font-medium text-slate-600 dark:text-slate-400">{{ item.color?.name || 'N/A' }}</span>
-                  </div>
-                </td>
-                <td class="px-4 py-3 text-center font-bold text-slate-700 dark:text-slate-300">{{ item.size || '-' }}</td>
-                <td class="px-4 py-3 text-center">
-                  <span class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg font-black">{{ item.quantity }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="grid grid-cols-1 gap-4">
+          <div v-for="item in card.order?.items" :key="item.id" class="bg-white dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/10 p-5 shadow-sm transition-all hover:shadow-md">
+            <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+              <div class="flex-1 min-w-[200px]">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Producto / Concepto</p>
+                <p class="text-base font-black text-slate-800 dark:text-white leading-tight">{{ item.product_name }}</p>
+              </div>
+            </div>
+
+            <!-- Details Line: Size, Quantity, Price -->
+            <div class="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-white/5">
+              <div class="flex flex-col">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Talla</p>
+                <p class="text-sm font-black text-primary">{{ item.size || 'N/A' }}</p>
+              </div>
+              <div class="flex flex-col text-center">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Cantidad</p>
+                <p class="text-sm font-black text-slate-900 dark:text-white">{{ item.quantity }} pzas</p>
+              </div>
+              <div class="flex flex-col text-right">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Precio Unit.</p>
+                <p class="text-sm font-bold text-slate-600 dark:text-slate-400">${{ Number(item.unit_price).toFixed(2) }}</p>
+              </div>
+            </div>
+
+            <!-- Observations Line -->
+            <div v-if="item.observations" class="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+              <p class="text-[9px] font-black text-primary uppercase tracking-widest mb-1.5">Instrucciones específicas</p>
+              <div class="bg-primary/5 border border-primary/10 rounded-xl p-3">
+                <p class="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                  "{{ item.observations }}"
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -69,7 +85,7 @@
       </div>
 
       <!-- Acciones del Modal -->
-      <div class="flex justify-end pt-4">
+      <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-white/5">
         <BaseButton variant="secondary" @click="close">Cerrar detalle</BaseButton>
       </div>
     </div>
@@ -79,13 +95,14 @@
 <script setup lang="ts">
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
+import { TrashIcon } from 'lucide-vue-next'
 
 defineProps<{
   show: boolean
   card: any
 }>()
 
-const emit = defineEmits(['update:show'])
+const emit = defineEmits(['update:show', 'delete'])
 
 const close = () => {
   emit('update:show', false)

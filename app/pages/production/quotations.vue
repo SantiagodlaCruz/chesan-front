@@ -18,7 +18,7 @@
         </button>
         <button
           v-else
-          @click="showCatalogModal = true"
+          @click="openNewCatalogPrice"
           class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20"
         >
           <PlusIcon class="w-5 h-5" />
@@ -127,10 +127,10 @@
                   <td class="px-6 py-4 font-bold text-right text-primary">{{ formatMoney(q.total_amount) }}</td>
                   <td class="px-6 py-4 text-center">
                     <span 
-                      class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border"
+                      class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border whitespace-nowrap inline-flex items-center justify-center min-w-[100px]"
                       :class="statusClasses[q.status]"
                     >
-                      {{ q.status }}
+                      {{ q.status === 'order_created' ? 'Pedido Creado' : q.status }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-right">
@@ -186,8 +186,21 @@
       <div v-if="activeTab === 'catalog'" class="space-y-6">
         <div v-for="product in catalog" :key="product.id" class="bg-white dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark overflow-hidden shadow-sm">
           <div class="p-4 bg-slate-50 dark:bg-white/5 border-b border-border-light dark:border-border-dark flex justify-between items-center">
-            <h3 class="font-black text-slate-800 dark:text-white uppercase tracking-tight">{{ product.name }}</h3>
-            <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">BASE: ${{ product.base_price }}</span>
+            <div class="flex flex-col gap-0.5">
+              <h3 class="font-black text-slate-800 dark:text-white uppercase tracking-tight">{{ product.name }}</h3>
+              <div class="flex items-center gap-2">
+                <span class="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-widest">MIN MAYOREO: {{ product.wholesale_min_quantity || 25 }} PCS</span>
+                <span class="text-[9px] bg-slate-500/10 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">BASE: ${{ product.base_price }}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="editProduct(product)" class="p-1.5 hover:bg-yellow-500/10 rounded-xl transition-all group/btn" title="Editar Producto">
+                <EditIcon class="w-4 h-4 text-[#eab308] group-hover/btn:scale-110 transition-transform" />
+              </button>
+              <button @click="deleteProduct(product.id)" class="p-1.5 hover:bg-red-500/10 rounded-xl transition-all group/btn" title="Eliminar Producto">
+                <TrashIcon class="w-4 h-4 text-accent-red group-hover/btn:scale-110 transition-transform" />
+              </button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left">
@@ -196,7 +209,7 @@
                   <th class="px-6 py-3">Material / Descripción</th>
                   <th class="px-6 py-3">Rango de tallas</th>
                   <th class="px-6 py-3 text-right">Menudeo</th>
-                  <th class="px-6 py-3 text-right text-primary">Mayoreo (>=25)</th>
+                  <th class="px-6 py-3 text-right text-primary">Mayoreo (>= {{ product.wholesale_min_quantity || 25 }})</th>
                   <th class="px-6 py-3 w-10"></th>
                 </tr>
               </thead>
@@ -216,8 +229,8 @@
 
                 <template v-else>
                   <tr v-for="price in product.prices" :key="price.id" class="text-sm">
-                    <td class="px-6 py-3 font-semibold">{{ price.material }}</td>
-                    <td class="px-6 py-3">{{ price.size_range }}</td>
+                    <td class="px-6 py-3 font-semibold dark:text-slate-200">{{ price.material }}</td>
+                    <td class="px-6 py-3 dark:text-slate-400">{{ price.size_range }}</td>
                     <td class="px-6 py-3 text-right font-medium text-slate-600 dark:text-slate-400">{{ formatMoney(price.retail_price) }}</td>
                     <td class="px-6 py-3 text-right font-black text-primary">{{ formatMoney(price.wholesale_price) }}</td>
                     <td class="px-6 py-3">
@@ -253,13 +266,31 @@
     <CatalogPriceModal
       v-model:show="showCatalogModal"
       :products="catalog"
+      :item="selectedCatalogPrice"
       @saved="fetchCatalog"
+    />
+
+    <ProductCatalogModal
+      v-model:show="showProductModal"
+      :item="selectedProduct"
+      @saved="fetchCatalog"
+    />
+
+    <ConvertQuotationModal
+      v-model:show="showConvertModal"
+      :quotation="quotationToConvert"
+      :loading="converting"
+      @confirm="handleConvertConfirm"
     />
 
     <ConfirmModal
       v-model:show="showDeleteConfirm"
-      title="Eliminar Cotización"
-      :message="'¿Estás seguro de que deseas eliminar permanentemente esta cotización?\n\nEsta acción no se puede deshacer.'"
+      :title="activeTab === 'quotations' ? 'Eliminar Cotización' : (itemToDeleteType === 'product' ? 'Eliminar Producto' : 'Eliminar Variación')"
+      :message="activeTab === 'quotations' 
+        ? '¿Estás seguro de que deseas eliminar permanentemente esta cotización?\n\nEsta acción no se puede deshacer.'
+        : (itemToDeleteType === 'product' 
+          ? '¿Estás seguro de que deseas eliminar este producto y TODAS sus variantes de precio?\n\nEsta acción no se puede deshacer.'
+          : '¿Estás seguro de que deseas eliminar permanentemente esta variación de precio del catálogo?\n\nEsta acción no se puede deshacer.')"
       confirm-text="Eliminar Definitivamente"
       confirm-variant="danger"
       :loading="deleting"
@@ -287,6 +318,8 @@ import {
 } from 'lucide-vue-next'
 import QuotationModal from '~/components/quotations/QuotationModal.vue'
 import CatalogPriceModal from '~/components/quotations/CatalogPriceModal.vue'
+import ProductCatalogModal from '~/components/quotations/ProductCatalogModal.vue'
+import ConvertQuotationModal from '~/components/quotations/ConvertQuotationModal.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import Select from '~/components/Select.vue'
 import { useToast } from '~/stores/toast'
@@ -300,6 +333,10 @@ const toast = useToast()
 const activeTab = ref('quotations')
 const showQuotationModal = ref(false)
 const showCatalogModal = ref(false)
+const showProductModal = ref(false)
+const showConvertModal = ref(false)
+const converting = ref(false)
+const quotationToConvert = ref(null)
 
 const tabs = [
   { id: 'quotations', label: 'Cotizaciones', icon: ClipboardListIcon },
@@ -322,21 +359,30 @@ const loadingCatalog = ref(false)
 const statusClasses = {
   pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
   accepted: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-  rejected: 'bg-red-500/10 text-red-600 border-red-500/20'
+  rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
+  order_created: 'bg-blue-500/10 text-blue-600 border-blue-500/20'
 }
 
 const selectedQuotationId = ref(null)
+const selectedCatalogPrice = ref(null)
+const selectedProduct = ref(null)
 const isReadOnly = ref(false)
 
 // Delete handling
 const showDeleteConfirm = ref(false)
 const itemToDelete = ref(null)
+const itemToDeleteType = ref('quotation') // 'quotation', 'product', 'price'
 const deleting = ref(false)
 
 const openNewQuotation = () => {
   selectedQuotationId.value = null
   isReadOnly.value = false
   showQuotationModal.value = true
+}
+
+const openNewCatalogPrice = () => {
+  selectedCatalogPrice.value = null
+  showCatalogModal.value = true
 }
 
 const editQuotation = (id) => {
@@ -407,17 +453,27 @@ const updateStatus = async (quotation, status) => {
   }
 }
 
-const convertToOrder = async (quotation) => {
+const convertToOrder = (quotation) => {
+  quotationToConvert.value = quotation
+  showConvertModal.value = true
+}
+
+const handleConvertConfirm = async (data) => {
   try {
-    await api.post(`/api/quotations/${quotation.id}/convert`)
+    converting.value = true
+    await api.post(`/api/quotations/${quotationToConvert.value.id}/convert`, data)
     toast.success('Pedido generado correctamente')
+    showConvertModal.value = false
     fetchQuotations()
   } catch (err) {
     toast.error(err.data?.message || 'Error al convertir a pedido')
+  } finally {
+    converting.value = false
   }
 }
 const deleteQuotation = (id) => {
   itemToDelete.value = id
+  itemToDeleteType.value = 'quotation'
   showDeleteConfirm.value = true
 }
 
@@ -426,9 +482,14 @@ const onConfirmDelete = async () => {
   
   deleting.value = true
   try {
-    const endpoint = activeTab.value === 'quotations' 
-      ? `/api/quotations/${itemToDelete.value}`
-      : `/api/catalog-prices/${itemToDelete.value}`
+    let endpoint = ''
+    if (activeTab.value === 'quotations') {
+      endpoint = `/api/quotations/${itemToDelete.value}`
+    } else {
+      endpoint = itemToDeleteType.value === 'product' 
+        ? `/api/product-catalogs/${itemToDelete.value}`
+        : `/api/catalog-prices/${itemToDelete.value}`
+    }
 
     await api.delete(endpoint)
     toast.success('Eliminado correctamente')
@@ -459,14 +520,24 @@ const getItemDisplayName = (item) => {
 }
 
 const editCatalogPrice = (price) => {
-  // Logic to open CatalogPriceModal with data
-  // Since we only have 'showCatalogModal', maybe we need to pass the item to it
-  // I'll check CatalogPriceModal.vue later if needed
+  selectedCatalogPrice.value = price
   showCatalogModal.value = true
+}
+
+const editProduct = (product) => {
+  selectedProduct.value = product
+  showProductModal.value = true
+}
+
+const deleteProduct = (id) => {
+  itemToDelete.value = id
+  itemToDeleteType.value = 'product'
+  showDeleteConfirm.value = true
 }
 
 const deleteCatalogPrice = (id) => {
   itemToDelete.value = id
+  itemToDeleteType.value = 'price'
   showDeleteConfirm.value = true
 }
 

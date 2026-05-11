@@ -10,7 +10,16 @@
   >
     <!-- Header: Code + Urgency -->
     <div class="flex justify-between items-center mb-2.5">
-      <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md tracking-wide">#ORD-{{ card.order?.order_code }}</span>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md tracking-wide">#ORD-{{ card.order?.order_code }}</span>
+        <button 
+          v-if="card.status !== 'Entregados'"
+          @click.stop="$emit('delete', card)" 
+          class="p-1 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          <TrashIcon class="w-3 h-3" />
+        </button>
+      </div>
       <div v-if="card.status === 'Entregados'" class="flex items-center gap-1 text-[9px] font-black uppercase text-slate-400">
         <CheckIcon class="w-3 h-3" /> Entregado
       </div>
@@ -58,11 +67,16 @@
 
     <div v-if="card.status === 'Entregados'" class="mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
       <button 
-        @click.stop="$emit('print', card)"
-        class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2"
+        @click.stop="onPrintClick(card)"
+        :disabled="isPrinting"
+        class="w-full py-2.5 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg shadow-slate-900/10 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        <PrinterIcon class="w-3.5 h-3.5" />
-        Imprimir Recibo
+        <component 
+          :is="isPrinting ? 'Loader2Icon' : 'PrinterIcon'" 
+          class="w-3.5 h-3.5"
+          :class="{ 'animate-spin': isPrinting }"
+        />
+        {{ isPrinting ? 'Preparando...' : 'Imprimir Recibo' }}
       </button>
     </div>
 
@@ -92,14 +106,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { CalendarIcon, ClockIcon, CheckCircleIcon, CheckIcon, PrinterIcon } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { CalendarIcon, ClockIcon, CheckCircleIcon, CheckIcon, PrinterIcon, TrashIcon, Loader2Icon } from 'lucide-vue-next'
 
 const props = defineProps({
   card: { type: Object, required: true }
 })
 
-const emit = defineEmits(['drag-start', 'drag-end', 'deliver', 'print'])
+const emit = defineEmits(['drag-start', 'drag-end', 'deliver', 'print', 'delete'])
 
 const urgencyClass = computed(() => {
   const u = props.card.urgency?.toLowerCase()
@@ -114,6 +128,17 @@ const daysClass = computed(() => {
   if (d <= 5) return 'text-amber-500 bg-amber-500/10'
   return 'text-slate-500 bg-slate-100 dark:bg-white/5'
 })
+
+const isPrinting = ref(false)
+
+const onPrintClick = (card) => {
+  isPrinting.value = true
+  emit('print', card)
+  // Simulamos el tiempo de preparación para dar feedback visual
+  setTimeout(() => {
+    isPrinting.value = false
+  }, 3000)
+}
 
 const onDragStart = (e) => {
   e.dataTransfer.effectAllowed = 'move'
