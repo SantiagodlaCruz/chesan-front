@@ -190,7 +190,6 @@
               <h3 class="font-black text-slate-800 dark:text-white uppercase tracking-tight">{{ product.name }}</h3>
               <div class="flex items-center gap-2">
                 <span class="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-widest">MIN MAYOREO: {{ product.wholesale_min_quantity || 25 }} PCS</span>
-                <span class="text-[9px] bg-slate-500/10 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">BASE: ${{ product.base_price }}</span>
               </div>
             </div>
             <div class="flex items-center gap-2">
