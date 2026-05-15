@@ -49,36 +49,74 @@
           <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1">{{ field.label }}</label>
           
           <!-- Color Picker Custom Field -->
-          <div v-if="field.type === 'color'" class="flex items-center gap-3 bg-slate-50 dark:bg-[#1e293b] p-2 rounded-xl border-2 border-transparent focus-within:border-primary transition-all">
-             <div 
-                class="w-10 h-10 rounded-lg border border-slate-200 dark:border-white/10 relative overflow-hidden transition-transform hover:scale-105 cursor-pointer shadow-sm shadow-black/10"
-                :style="{ backgroundColor: form[field.key] || '#ffffff' }"
-             >
-                <input 
-                  type="color" 
-                  v-model="form[field.key]" 
-                  class="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0" 
-                />
-             </div>
-             <div class="flex-1 flex flex-col">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">CÓDIGO HEX</span>
-                <input
-                  v-model="form[field.key]"
-                  type="text"
-                  class="bg-transparent border-none outline-none text-sm font-mono font-bold uppercase tracking-widest text-slate-900 dark:text-slate-100 p-0 h-auto"
-                  placeholder="#FFFFFF"
-                />
+          <div v-if="field.type === 'color'" class="flex flex-col gap-1.5">
+             <div class="flex items-center gap-3 bg-slate-50 dark:bg-[#1e293b] p-2 rounded-xl border-2 transition-all" :class="errors[field.key] ? 'border-red-500/50' : 'border-transparent focus-within:border-primary'">
+               <div 
+                  class="w-10 h-10 rounded-lg border border-slate-200 dark:border-white/10 relative overflow-hidden transition-transform hover:scale-105 cursor-pointer shadow-sm shadow-black/10"
+                  :style="{ backgroundColor: form[field.key] || '#ffffff' }"
+               >
+                  <input 
+                    type="color" 
+                    v-model="form[field.key]" 
+                    class="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0" 
+                    @input="setFieldValue(field.key, form[field.key])"
+                  />
+               </div>
+               <div class="flex-1 flex flex-col">
+                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">CÓDIGO HEX</span>
+                  <input
+                    v-model="form[field.key]"
+                    type="text"
+                    class="bg-transparent border-none outline-none text-sm font-mono font-bold uppercase tracking-widest text-slate-900 dark:text-slate-100 p-0 h-auto"
+                    placeholder="#FFFFFF"
+                    @input="setFieldValue(field.key, form[field.key])"
+                  />
+               </div>
              </div>
           </div>
 
-          <input
-            v-else
-            v-model="form[field.key]"
-            :type="field.type"
-            :placeholder="field.placeholder"
-            :required="field.required"
-            class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2.5 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
-          />
+          <div v-else-if="field.type === 'tel'" class="relative group">
+            <input
+              v-model="form[field.key]"
+              type="text"
+              :placeholder="field.placeholder || '10 dígitos (solo números)'"
+              class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 transition-all outline-none pl-4 pr-10 py-2.5 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
+              :class="errors[field.key] ? 'border-red-500/50 ring-4 ring-red-500/10' : 'border-transparent focus:border-primary'"
+              @input="form[field.key] = $event.target.value.replace(/[^0-9]/g, '').slice(0, 10); setFieldValue(field.key, form[field.key])"
+            />
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <CheckCircleIcon v-if="!errors[field.key] && form[field.key]" class="w-4 h-4 text-green-500 animate-in zoom-in-50" />
+              <AlertCircleIcon v-if="errors[field.key]" class="w-4 h-4 text-red-500 animate-in zoom-in-50" />
+            </div>
+          </div>
+
+          <div v-else class="relative group">
+            <input
+              v-model="form[field.key]"
+              :type="field.type"
+              :placeholder="field.placeholder"
+              class="w-full bg-slate-50 dark:bg-[#1e293b] border-2 transition-all outline-none pl-4 pr-10 py-2.5 rounded-xl text-sm font-medium placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
+              :class="errors[field.key] ? 'border-red-500/50 ring-4 ring-red-500/10' : 'border-transparent focus:border-primary'"
+              @input="setFieldValue(field.key, form[field.key])"
+            />
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <CheckCircleIcon v-if="!errors[field.key] && form[field.key]" class="w-4 h-4 text-green-500 animate-in zoom-in-50" />
+              <AlertCircleIcon v-if="errors[field.key]" class="w-4 h-4 text-red-500 animate-in zoom-in-50" />
+            </div>
+          </div>
+          
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="transform -translate-y-2 opacity-0"
+            enter-to-class="transform translate-y-0 opacity-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="transform translate-y-0 opacity-100"
+            leave-to-class="transform -translate-y-2 opacity-0"
+          >
+            <p v-if="errors[field.key]" class="text-[10px] font-bold text-red-500 dark:text-red-400 ml-1 uppercase tracking-wider mt-1">
+              {{ errors[field.key] }}
+            </p>
+          </Transition>
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-4">
@@ -106,8 +144,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { PencilIcon, Trash2Icon, PlusIcon, SearchIcon } from 'lucide-vue-next'
+import { ref, reactive, onMounted, watch } from 'vue'
+import { PencilIcon, Trash2Icon, PlusIcon, SearchIcon, CheckCircleIcon, AlertCircleIcon } from 'lucide-vue-next'
+import { useForm } from 'vee-validate'
+import * as yup from 'yup'
 import CatalogTable from '~/components/catalogs/CatalogTable.vue'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import { useToast } from '~/stores/toast'
@@ -135,6 +175,35 @@ const form = reactive({})
 const searchQuery = ref('')
 
 const api = useApi()
+
+// Dynamic Validation Schema
+const validationSchema = computed(() => {
+  const schema = {}
+  props.fields.forEach(field => {
+    let validator = yup.string()
+    
+    if (field.required) {
+      validator = validator.required(`El campo ${field.label.toLowerCase()} es obligatorio`)
+    } else {
+      validator = validator.nullable()
+    }
+    
+    if (field.type === 'email') {
+      validator = validator.email('Debe ser un email válido')
+    }
+    
+    if (field.type === 'tel') {
+      validator = validator.test('len', 'El teléfono debe tener exactamente 10 dígitos', val => !val || val.length === 10)
+    }
+    
+    schema[field.key] = validator
+  })
+  return yup.object(schema)
+})
+
+const { handleSubmit, errors, resetForm, setFieldValue, setValues } = useForm({
+  validationSchema
+})
 
 const fetchData = async (page = 1) => {
   loading.value = true
@@ -213,13 +282,20 @@ const handlePerPageChange = (newSize) => {
 
 const openModal = (item = null) => {
   selectedItem.value = item
+  resetForm() // Reset validation errors
+  
+  const initial = {}
   props.fields.forEach(f => {
-    form[f.key] = item ? item[f.key] : ''
+    const val = item ? item[f.key] : ''
+    form[f.key] = val
+    initial[f.key] = val
   })
+  
+  setValues(initial)
   showModal.value = true
 }
 
-const save = async () => {
+const save = handleSubmit(async (values) => {
   const catalogs = useCatalogs()
 
   try {
@@ -236,12 +312,13 @@ const save = async () => {
 
     showModal.value = false
     fetchData()
+    toast.success(selectedItem.value ? 'Registro actualizado correctamente' : 'Registro creado correctamente')
   } catch (err) {
     const msg = err?.data?.message || err?.message || 'Error al guardar el registro'
     toast.error(msg)
     console.error('Error saving catalog item', err)
   }
-}
+})
 
 const showDeleteConfirm = ref(false)
 const itemToDelete = ref(null)

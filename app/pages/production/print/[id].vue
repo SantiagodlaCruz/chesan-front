@@ -54,7 +54,7 @@
       </div>
 
       <!-- Table Section -->
-      <div class="min-h-[350px]">
+      <div class="mb-8">
         <table class="w-full border-collapse">
           <thead>
             <tr class="border-b-2 border-black text-[10px] font-bold uppercase text-left">
@@ -92,53 +92,61 @@
         </table>
       </div>
 
-      <!-- Footer Section -->
-      <div class="mt-10 flex justify-between border-t border-slate-200 pt-6">
-        <div class="w-1/2 space-y-6">
-          <div class="flex flex-col gap-1">
-            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">FECHA PROMESA DE ENTREGA:</span>
-            <div class="text-sm font-black border-b border-slate-100 w-64 pb-1">
-              {{ new Date(order.delivery_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) }}
+      <!-- Footer, Totals and Signatures wrapped to avoid page break inside -->
+      <div class="break-inside-avoid">
+        <!-- Footer Section -->
+        <div class="flex justify-between border-t border-slate-200 pt-6">
+          <div class="w-1/2 space-y-6">
+            <div class="flex flex-col gap-1">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">FECHA PROMESA DE ENTREGA:</span>
+              <div class="text-sm font-black border-b border-slate-100 w-64 pb-1">
+                {{ new Date(order.delivery_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) }}
+              </div>
+            </div>
+            
+            <div v-if="order.notes" class="max-w-md">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">OBSERVACIONES GENERALES:</span>
+              <p class="text-[10px] text-slate-500 leading-relaxed">{{ order.notes }}</p>
             </div>
           </div>
-          
-          <div v-if="order.notes" class="max-w-md">
-            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">OBSERVACIONES GENERALES:</span>
-            <p class="text-[10px] text-slate-500 leading-relaxed">{{ order.notes }}</p>
+
+          <div class="w-1/3 space-y-2">
+            <div class="flex justify-between text-xs py-1 text-slate-400">
+              <span class="font-bold uppercase text-[10px]">TOTAL PEDIDO:</span>
+              <span class="font-bold">${{ Number(order.total_amount).toFixed(2) }}</span>
+            </div>
+            <div v-if="order.advance_payment > 0" class="flex justify-between text-xs py-1 text-emerald-600">
+              <span class="font-bold uppercase text-[10px]">ANTICIPO PAGADO:</span>
+              <span class="font-bold">-${{ Number(order.advance_payment).toFixed(2) }}</span>
+            </div>
+            <div class="flex flex-col pt-4 border-t-2 border-black">
+              <div class="flex justify-between text-lg">
+                <span class="font-bold uppercase tracking-tighter">RESTANTE $:</span>
+                <span class="font-black text-2xl">${{ Number(order.total_amount - (order.advance_payment || 0)).toFixed(2) }}</span>
+              </div>
+              <div v-if="Number(order.total_amount - (order.advance_payment || 0)) <= 0.01 || order.kanban_card?.column?.name === 'Entregados'" class="flex justify-end mt-4 text-emerald-600">
+                <span class="font-black text-2xl tracking-widest border-2 border-emerald-600 px-4 py-1 rounded-lg transform -rotate-2 bg-white">LIQUIDADO</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="w-1/3 space-y-2">
-          <div class="flex justify-between text-xs py-1 text-slate-400">
-            <span class="font-bold uppercase text-[10px]">TOTAL PEDIDO:</span>
-            <span class="font-bold">${{ Number(order.total_amount).toFixed(2) }}</span>
+        <!-- Signatures -->
+        <div class="mt-16 flex justify-around text-center">
+          <div class="w-48 border-t border-black pt-2">
+            <p class="text-[9px] font-bold uppercase text-slate-400">Firma de Conformidad</p>
           </div>
-          <div v-if="order.advance_payment > 0" class="flex justify-between text-xs py-1 text-emerald-600">
-            <span class="font-bold uppercase text-[10px]">ANTICIPO PAGADO:</span>
-            <span class="font-bold">-${{ Number(order.advance_payment).toFixed(2) }}</span>
-          </div>
-          <div class="flex justify-between text-lg py-4 border-t-2 border-black">
-            <span class="font-bold uppercase tracking-tighter">RESTANTE $:</span>
-            <span class="font-black text-2xl">${{ Number(order.total_amount - (order.advance_payment || 0)).toFixed(2) }}</span>
+          <div class="w-48 border-t border-black pt-2">
+            <p class="text-[9px] font-bold uppercase text-slate-400">Entregó (Chesan)</p>
           </div>
         </div>
-      </div>
 
-      <!-- Signatures -->
-      <div class="mt-20 flex justify-around text-center">
-        <div class="w-48 border-t border-black pt-2">
-          <p class="text-[9px] font-bold uppercase text-slate-400">Firma de Conformidad</p>
+        <!-- Small print -->
+        <div class="mt-8 text-center">
+          <p class="text-[8px] text-slate-400 uppercase tracking-widest font-medium">
+            Gracias por su preferencia. No se aceptan cambios ni devoluciones en prendas personalizadas o bordadas.
+          </p>
         </div>
-        <div class="w-48 border-t border-black pt-2">
-          <p class="text-[9px] font-bold uppercase text-slate-400">Entregó (Chesan)</p>
-        </div>
-      </div>
-
-      <!-- Small print -->
-      <div class="mt-16 text-center">
-        <p class="text-[8px] text-slate-400 uppercase tracking-widest font-medium">
-          Gracias por su preferencia. No se aceptan cambios ni devoluciones en prendas personalizadas o bordadas.
-        </p>
       </div>
     </div>
 

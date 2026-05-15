@@ -46,38 +46,9 @@
               searchable 
               :disabled="readonly" 
               creatable 
+              @create="handleCreateColor"
             />
           </div>
-
-          <!-- Quick Add Color Palette -->
-          <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="transform -translate-y-4 opacity-0"
-            enter-to-class="transform translate-y-0 opacity-100"
-          >
-            <div v-if="isNewColor && !readonly" class="bg-primary/[0.03] dark:bg-primary/[0.02] p-4 rounded-2xl border border-primary/10 flex items-center gap-4">
-              <div class="flex-1">
-                <p class="text-[10px] font-black uppercase text-primary mb-1 tracking-wider">Nuevo Color Detectado: <span class="text-slate-900 dark:text-white">{{ colorId }}</span></p>
-                <p class="text-[11px] text-slate-500 leading-relaxed">Este color no existe. Elige un tono para guardarlo en tu catálogo permanentemente.</p>
-              </div>
-              <div class="flex items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
-                <div 
-                  class="w-10 h-10 rounded-lg border-2 border-slate-100 dark:border-white/5 relative overflow-hidden transition-transform hover:scale-105"
-                  :style="{ backgroundColor: newColorHex }"
-                >
-                  <input 
-                    type="color" 
-                    v-model="newColorHex" 
-                    class="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0" 
-                  />
-                </div>
-                <div class="flex flex-col">
-                  <span class="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">HEX</span>
-                  <span class="text-xs font-mono font-black text-slate-700 dark:text-slate-200 uppercase">{{ newColorHex }}</span>
-                </div>
-              </div>
-            </div>
-          </Transition>
         </div>
       </div>
 
@@ -188,7 +159,7 @@ const { value: unitPrice } = useField<number | undefined>('unit_price')
 const { value: quantity } = useField<number | undefined>('quantity')
 const { value: minThreshold } = useField<number | undefined>('min_threshold')
 
-const isNewColor = computed(() => typeof colorId.value === 'string' && colorId.value.length > 0)
+
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
@@ -211,6 +182,18 @@ watch(() => props.show, (newVal) => {
   }
 })
 
+const handleCreateColor = async (name: string) => {
+  try {
+    const res = await api.post('/api/colors', { name })
+    colorId.value = res.data.id
+    // Recargar catálogo de colores en el store global
+    useCatalogs().fetchAll()
+    toast.success('Nuevo color agregado al catálogo')
+  } catch (err: any) {
+    toast.error('Error al crear color: ' + (err.data?.message || err.message))
+  }
+}
+
 const close = () => {
   if (saving.value) return
   emit('update:show', false)
@@ -224,20 +207,6 @@ const onSubmit = handleSubmit(async (values) => {
     saving.value = true
 
     let finalColorId = values.color_id
-    if (isNewColor.value) {
-      try {
-        const colorRes = await api.post('/api/colors', { 
-            name: values.color_id, 
-            hex_code: newColorHex.value 
-        })
-        finalColorId = colorRes.data.id
-        useCatalogs().fetchAll()
-      } catch (err: any) {
-        toast.error('Error al crear el nuevo color: ' + (err.data?.message || err.message))
-        saving.value = false
-        return
-      }
-    }
 
     const payload: any = {
       name: values.name,

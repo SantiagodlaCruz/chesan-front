@@ -24,6 +24,7 @@
           v-model="copies"
           name="copies"
           label="Cantidad a Imprimir"
+          :min="1"
         />
         
         <div class="grid grid-cols-2 gap-3 pb-2 pt-1 border-t border-slate-100 dark:border-white/5">
@@ -63,15 +64,26 @@
   </BaseModal>
 
   <!-- Printable Area (Hidden from screen view) -->
+  <!-- Printable Area (Hidden from screen view) -->
   <Teleport to="body">
-    <div id="print-area-wrapper" class="hidden print:block" v-if="show && item?.barcode" :style="printDimensionsStyle">
+    <div id="print-area-wrapper" v-if="show && item?.barcode" class="print-only-wrapper" :style="printDimensionsStyle">
+      <!-- Estilo dinámico para forzar el tamaño de la etiqueta en el driver -->
+      <component :is="'style'">
+        @media print {
+          @page {
+            size: {{ labelWidth }}cm {{ labelHeight }}cm;
+            margin: 0 !important;
+          }
+        }
+      </component>
+
       <div class="print-container">
         <!-- Loop through copies -->
         <div v-for="n in (copies > 0 ? copies : 1)" :key="n" class="print-label">
           <div class="label-content">
+            <svg :id="'print-barcode-' + n" class="barcode-svg"></svg>
             <p class="label-title">{{ itemName }}</p>
             <p v-if="itemDetails" class="label-subtitle">{{ itemDetails }}</p>
-            <svg :id="'print-barcode-' + n" class="barcode-svg"></svg>
             <p v-if="price" class="label-price">${{ price }}</p>
           </div>
         </div>
@@ -100,6 +112,7 @@ const barcodeElement = ref<HTMLElement | null>(null)
 const copies = ref(1)
 const labelWidth = ref(5.1)
 const labelHeight = ref(2.5)
+const isPrinting = ref(false)
 
 const printDimensionsStyle = computed(() => ({
   '--label-width': `${labelWidth.value}cm`,
@@ -139,6 +152,7 @@ watch(() => props.show, async (newVal) => {
     copies.value = 1
     labelWidth.value = 5.1
     labelHeight.value = 2.5
+    isPrinting.value = false
     await nextTick()
     renderMainBarcode()
   }
@@ -160,7 +174,8 @@ const renderMainBarcode = () => {
 }
 
 const printLabels = async () => {
-  if (!props.item?.barcode) return
+  if (!props.item?.barcode || isPrinting.value) return
+  isPrinting.value = true
 
   // Render barcodes for print view
   await nextTick() // Ensure print elements are rendered by Vue
@@ -180,7 +195,11 @@ const printLabels = async () => {
     }
   }
 
-  window.print()
+  // Esperar a que el navegador dibuje los SVGs antes de abrir la ventana de impresión
+  setTimeout(() => {
+    window.print()
+    isPrinting.value = false
+  }, 500)
 }
 
 const close = () => {
@@ -190,56 +209,62 @@ const close = () => {
 
 <style>
 /* Estilos solo para cuando se manda a imprimir */
+/* Ocultar el contenedor de impresión en la pantalla normal */
+.print-only-wrapper {
+  display: none;
+}
+
 @media print {
-  /* Ocultar TODO lo demás del body */
-  body > *:not(#print-area-wrapper) {
+  /* Ocultar la aplicación principal de forma segura */
+  #__nuxt, #__layout, #app {
     display: none !important;
   }
   
   @page {
-    margin: 0; /* OBLIGATORIO en 0 para impresoras térmicas de rollo */
+    margin: 0 !important;
   }
 
-  body {
-    background: white; /* Important for barcode contrast */
-  }
-
-  #print-area-wrapper {
-    display: block !important;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 2mm; /* Pequeño margen interno de seguridad */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
     background: white;
+    overflow: hidden;
+  }
+
+  .print-only-wrapper {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: var(--label-width) !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .print-container {
-    display: flex;
-    flex-wrap: wrap; /* Permitir que las etiquetas fluyan en una hoja A4 normal */
-    gap: 15px; /* Espaciado entre etiquetas */
-    justify-content: flex-start;
-    align-items: flex-start;
+    display: block;
     width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   .print-label {
-    width: var(--label-width, 5.5cm);
-    height: var(--label-height, 3cm);
-    padding: 5px;
+    width: var(--label-width);
+    height: var(--label-height);
+    padding: 0.5mm;
     box-sizing: border-box;
-    page-break-inside: avoid; /* Evitar que se corte a la mitad de la hoja */
+    page-break-after: always;
+    page-break-inside: avoid;
+    break-after: page;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: white;
-    color: black;
     overflow: hidden;
-    /* Un borde muy sutil para saber dónde recortar si imprimen en hoja normal */
-    border: 1px dashed #cccccc; 
-    border-radius: 4px;
+    background: white;
+    color: black !important;
   }
 
   .label-content {
@@ -249,38 +274,42 @@ const close = () => {
     justify-content: center;
     width: 100%;
     height: 100%;
-  }
-
-  .label-title {
-    font-size: 10px;
-    font-weight: 800;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    margin: 0 0 2px 0;
-  }
-
-  .label-subtitle {
-    font-size: 8px;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #333333;
-    white-space: nowrap;
-    margin: 0;
-  }
-
-  .label-price {
-    font-size: 11px;
-    font-weight: 900;
-    font-family: monospace;
-    margin: 2px 0 0 0;
+    text-align: center;
+    color: black !important;
   }
 
   .barcode-svg {
-    max-width: 100%;
-    max-height: 14mm; /* Espacio para que quepa bien el código negro intenso */
-    margin-top: 2px;
+    max-height: 14mm;
+    margin: 0 0 0.5mm 0;
+    display: block;
+  }
+
+  .label-title {
+    font-size: 7pt;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5pt;
+    text-transform: uppercase;
+    width: 100%;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+  }
+
+  .label-subtitle {
+    font-size: 5pt;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 0.5pt;
+  }
+
+  .label-price {
+    font-size: 8pt;
+    font-weight: 900;
+    margin-top: 0;
   }
 }
 </style>

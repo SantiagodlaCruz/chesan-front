@@ -75,7 +75,8 @@ const props = defineProps({
   label: { type: String, default: '' },
   placeholder: { type: String, default: '' },
   required: { type: Boolean, default: false },
-  disabled: { type: Boolean, default: false }
+  disabled: { type: Boolean, default: false },
+  error: { type: String, default: '' }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -94,7 +95,7 @@ const inputType = computed(() => {
 
 // If no name is provided, use standard v-model behavior
 // If name is provided, integrate with vee-validate
-const { value, errorMessage, meta } = props.name 
+const field = props.name 
   ? useField(() => props.name, undefined, {
       initialValue: props.modelValue,
       syncVModel: true
@@ -107,6 +108,10 @@ const { value, errorMessage, meta } = props.name
       errorMessage: ref(''),
       meta: reactive({ valid: false })
     }
+
+const value = field.value
+const meta = field.meta
+const errorMessage = computed(() => props.error || field.errorMessage.value)
 </script>
 
 
