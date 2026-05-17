@@ -89,12 +89,22 @@
         </div>
       </template>
 
-      <template #cell-sale_price="{ value }">
-        <span class="font-bold text-slate-900 dark:text-white">{{ formatMoney(value) }}</span>
+      <template #cell-sale_price="{ item, value }">
+        <div v-if="(item.discount_percentage || 0) > 0 || (item.discount_amount || 0) > 0" class="text-right">
+          <span class="text-[10px] text-slate-400 line-through block">{{ formatMoney(value) }}</span>
+          <span class="font-black text-sm text-red-600 dark:text-red-400 block">{{ formatMoney(item.discount_type === 'amount' ? Math.max(0, value - (item.discount_amount || 0)) : value * (1 - ((item.discount_percentage || 0) / 100))) }}</span>
+          <span v-if="item.discount_type === 'amount'" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30 mt-0.5">
+            -${{ parseFloat(String(item.discount_amount || 0)).toFixed(2) }} Dto.
+          </span>
+          <span v-else class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30 mt-0.5">
+            -{{ Math.round(item.discount_percentage || 0) }}% Dto.
+          </span>
+        </div>
+        <span v-else class="font-bold text-slate-900 dark:text-white block text-right">{{ formatMoney(value) }}</span>
       </template>
 
-      <template #cell-quantity="{ value }">
-        <div class="flex items-center justify-center">
+      <template #cell-quantity="{ value, item }">
+        <div class="flex flex-col items-center justify-center gap-1">
           <span 
             class="text-xs font-black px-2.5 py-1 rounded-lg border transition-all duration-300"
             :class="[
@@ -107,8 +117,13 @@
                 : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
             ]"
           >
-            {{ value || 0 }}
+            {{ value || 0 }} {{ (item.reserved_quantity || 0) > 0 ? 'Totales' : '' }}
           </span>
+          <div v-if="(item.reserved_quantity || 0) > 0" class="flex flex-col items-center mt-0.5">
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
+              {{ item.reserved_quantity }} en Apartado
+            </span>
+          </div>
         </div>
       </template>
     </DataTable>
@@ -319,4 +334,8 @@ const onConfirmDelete = async () => {
 const onSaveProduct = () => {
   fetchData()
 }
+
+defineExpose({
+  fetchData
+})
 </script>

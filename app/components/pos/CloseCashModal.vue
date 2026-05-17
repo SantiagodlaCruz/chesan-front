@@ -16,20 +16,24 @@
         <!-- Main Form -->
         <div v-if="!showConfirm" key="form" class="space-y-8">
           <!-- Totals Grid -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-200 dark:border-white/5">
+              <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Fondo Inicial</p>
+              <p class="text-xl font-black text-slate-800 dark:text-white">{{ formatMoney(summary.opening_balance) }}</p>
+            </div>
             <div class="bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-200 dark:border-white/5">
               <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Ventas Efectivo</p>
               <p class="text-xl font-black text-slate-800 dark:text-white">{{ formatMoney(summary.cash_sales) }}</p>
             </div>
-            <div class="bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-200 dark:border-white/5">
-              <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Fondo Inicial</p>
-              <p class="text-xl font-black text-slate-800 dark:text-white">{{ formatMoney(summary.opening_balance) }}</p>
+            <div class="bg-green-50 dark:bg-green-500/5 p-5 rounded-2xl border border-green-200 dark:border-green-500/10">
+              <p class="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest mb-1">Ingresos Extras</p>
+              <p class="text-xl font-black text-green-600 dark:text-green-400">{{ formatMoney(summary.inflows) }}</p>
             </div>
             <div class="bg-red-50 dark:bg-red-500/5 p-5 rounded-2xl border border-red-200 dark:border-red-500/10">
               <p class="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1">Salidas / Gastos</p>
               <p class="text-xl font-black text-red-600 dark:text-red-400">{{ formatMoney(summary.outflows) }}</p>
             </div>
-            <div class="bg-primary/5 p-5 rounded-2xl border border-primary/20">
+            <div class="md:col-span-2 bg-primary/5 p-5 rounded-2xl border border-primary/20">
               <p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Efectivo Esperado</p>
               <p class="text-2xl font-black text-primary">{{ formatMoney(summary.expected_cash) }}</p>
             </div>
@@ -170,7 +174,7 @@ const fetchSummary = async () => {
   try {
     const response = await api.get('/api/cash-register/summary')
     summary.value = response.summary
-    if (realCash.value === null) realCash.value = summary.value.expected_cash
+    realCash.value = summary.value.expected_cash
   } catch (error) {
     console.error('Error fetching summary:', error)
   } finally {
@@ -180,6 +184,7 @@ const fetchSummary = async () => {
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
+    realCash.value = null
     fetchSummary()
     notes.value = ''
     showConfirm.value = false
