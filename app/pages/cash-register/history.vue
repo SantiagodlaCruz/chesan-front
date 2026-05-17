@@ -126,30 +126,42 @@
     <BaseModal
       :show="!!selectedSession"
       title="Detalle de Corte"
-      size="xl"
+      size="2xl"
       @update:show="selectedSession = null"
     >
       <template #subtitle v-if="selectedSession">
-        Cerrado el {{ formatDate(selectedSession.closing_time) }} a las {{ formatTime(selectedSession.closing_time) }}
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Cerrado el {{ formatDate(selectedSession.closing_time) }} a las {{ formatTime(selectedSession.closing_time) }}
+        </p>
       </template>
 
       <div v-if="selectedSession" class="space-y-8">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Efectivo</p>
-            <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_cash_sales) }}</p>
+        <div class="space-y-4">
+          <!-- Ventas -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+              <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Efectivo</p>
+              <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_cash_sales) }}</p>
+            </div>
+            <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+              <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Tarjeta</p>
+              <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_card_sales) }}</p>
+            </div>
+            <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+              <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Transferencias</p>
+              <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_transfer_sales) }}</p>
+            </div>
           </div>
-          <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Tarjeta</p>
-            <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_card_sales) }}</p>
-          </div>
-          <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Transferencias</p>
-            <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_transfer_sales) }}</p>
-          </div>
-          <div class="bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 p-4 rounded-2xl border border-red-100 dark:border-red-500/20">
-            <p class="text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">Salidas (Gastos)</p>
-            <p class="text-lg font-black">{{ formatMoney(selectedSession.total_outflows) }}</p>
+          <!-- Movimientos -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400 p-4 rounded-2xl border border-green-100 dark:border-green-500/20">
+              <p class="text-[9px] font-black opacity-80 uppercase tracking-widest mb-1">Ingresos Extras</p>
+              <p class="text-lg font-black">{{ formatMoney(selectedSession.total_inflows) }}</p>
+            </div>
+            <div class="bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 p-4 rounded-2xl border border-red-100 dark:border-red-500/20">
+              <p class="text-[9px] font-black opacity-80 uppercase tracking-widest mb-1">Salidas (Gastos)</p>
+              <p class="text-lg font-black">{{ formatMoney(selectedSession.total_outflows) }}</p>
+            </div>
           </div>
         </div>
 
@@ -162,8 +174,16 @@
                  <span class="font-semibold text-slate-700 dark:text-slate-200">{{ formatMoney(selectedSession.opening_balance) }}</span>
                </div>
                <div class="flex justify-between text-sm">
-                 <span class="text-slate-500">Efectivo Esperado:</span>
-                 <span class="font-semibold text-slate-700 dark:text-slate-200">{{ formatMoney(selectedSession.expected_cash) }}</span>
+                 <span class="text-slate-500">Ingresos Extras:</span>
+                 <span class="font-semibold text-green-600 dark:text-green-400">+{{ formatMoney(selectedSession.total_inflows) }}</span>
+               </div>
+               <div class="flex justify-between text-sm">
+                 <span class="text-slate-500">Salidas / Gastos:</span>
+                 <span class="font-semibold text-red-600 dark:text-red-400">-{{ formatMoney(selectedSession.total_outflows) }}</span>
+               </div>
+               <div class="flex justify-between text-sm border-t border-slate-100 dark:border-white/5 pt-2">
+                 <span class="text-slate-500 font-bold">Efectivo Esperado:</span>
+                 <span class="font-bold text-slate-800 dark:text-slate-100">{{ formatMoney(selectedSession.expected_cash) }}</span>
                </div>
                <div class="flex justify-between text-sm pt-2 border-t border-dashed border-slate-200 dark:border-white/10">
                  <span class="text-slate-900 dark:text-white font-black">EFECTIVO REAL:</span>

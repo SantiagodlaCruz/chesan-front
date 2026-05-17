@@ -88,9 +88,9 @@
             Venta actual — {{ cartItems.length }} {{ cartItems.length === 1 ? 'Artículo' : 'Artículos' }}
           </h3>
           <div class="flex items-center gap-3">
-            <button @click="showCashMovementModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-1">
-              <ArrowDownIcon class="w-3 h-3" />
-              Gasto/Salida
+            <button @click="showCashMovementModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1">
+              <ArrowRightLeftIcon class="w-3 h-3" />
+              Ingreso / Salida
             </button>
             <button @click="showCloseCashModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-white border border-slate-900 hover:bg-slate-700 transition-all flex items-center gap-1">
               <FlagIcon class="w-3 h-3" />
@@ -702,7 +702,8 @@ const onBarcodeSubmit = async () => {
     if (productsArray && productsArray.length > 0) {
       let product = productsArray.find(p => p.barcode === query) || productsArray[0]
       
-      if (product.quantity <= 0) {
+      const dispQty = parseFloat(product.available_quantity ?? product.quantity) || 0
+      if (dispQty <= 0) {
          showPosAlert(`Inventario Totalmente Agotado: El producto "${product.name}" no tiene piezas disponibles para venta.`, 'error')
          return
       }
@@ -718,7 +719,7 @@ const onBarcodeSubmit = async () => {
         discount_type: product.discount_type || 'percentage',
         discount_percentage: parseFloat(product.discount_percentage) || 0,
         discount_amount: parseFloat(product.discount_amount) || 0,
-        quantity: parseFloat(product.quantity) || 0,
+        quantity: dispQty,
         image_url: product.image_url,
         qty: 1
       })

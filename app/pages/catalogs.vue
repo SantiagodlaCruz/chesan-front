@@ -46,6 +46,7 @@
           endpoint="/api/clients/institutions"
           :fields="[
             { key: 'name', label: 'Nombre de la Escuela', type: 'text', required: true, placeholder: 'Ej. Colegio Americano' },
+            { key: 'address', label: 'Dirección', type: 'text', placeholder: 'Av. Siempre Viva 123...' },
             { key: 'email', label: 'Email', type: 'email' },
             { key: 'phone', label: 'Teléfono', type: 'tel' }
           ]"

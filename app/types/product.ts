@@ -16,6 +16,8 @@ export interface StockProduct {
   production_price: number;
   sale_price: number;
   discount_percentage: number;
+  discount_amount?: number;
+  discount_type?: 'percentage' | 'amount';
   quantity: number;
   reserved_quantity: number;
   available_quantity: number;

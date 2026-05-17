@@ -12,8 +12,8 @@
     </div>
     <form v-else @submit.prevent="onSubmit" class="space-y-6">
       <!-- Client Section -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-5 pb-6 border-b border-dashed border-slate-200 dark:border-slate-800">
-        <div class="flex flex-col gap-1.5 md:col-span-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 pb-6 border-b border-dashed border-slate-200 dark:border-slate-800 items-end">
+        <div class="flex flex-col gap-1.5 md:col-span-3">
           <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Cliente</label>
           <Select 
             v-model="form.client_id" 
@@ -24,6 +24,24 @@
             creatable
             @create="handleCreateClient"
           />
+        </div>
+        
+        <div v-if="!readOnly" class="md:col-span-1 h-[52px] flex items-center justify-center bg-primary/5 dark:bg-primary/10 px-4 rounded-2xl border border-primary/10 hover:border-primary/20 transition-all group">
+          <label class="flex items-center gap-3 cursor-pointer select-none w-full justify-center">
+            <div class="relative flex items-center">
+              <input 
+                type="checkbox" 
+                v-model="form.force_wholesale" 
+                class="peer sr-only"
+              />
+              <div class="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-primary transition-all duration-300"></div>
+              <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-all duration-300 shadow-sm"></div>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-0.5">Mayoreo</span>
+              <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase leading-none">Todo</span>
+            </div>
+          </label>
         </div>
       </div>
 
@@ -196,10 +214,6 @@
 
       <!-- Actions -->
       <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-white/5">
-        <BaseButton v-if="id" type="button" variant="secondary" @click="printCurrent">
-          <PrinterIcon class="w-4 h-4 mr-2" />
-          Imprimir
-        </BaseButton>
         <BaseButton type="button" variant="secondary" @click="close">
           {{ readOnly ? 'Cerrar' : 'Cancelar' }}
         </BaseButton>
@@ -239,15 +253,43 @@
          <BaseButton v-else variant="secondary" block @click="showExtrasModal = false">Cerrar</BaseButton>
        </template>
     </BaseModal>
+
+    <!-- New Client Modal -->
+    <BaseModal v-model:show="showNewClientModal" title="Nuevo Cliente" subtitle="Complete los datos del cliente para su cotización." size="md">
+       <div class="space-y-5 py-2">
+         <BaseInput v-model="clientName" name="name" label="Nombre / Razón Social" required :error="clientErrors.name" />
+         <BaseInput v-model="clientAddress" name="address" label="Dirección" placeholder="Av. Siempre Viva 123..." :error="clientErrors.address" />
+         <BaseInput v-model="clientEmail" name="email" label="Email" type="email" placeholder="ejemplo@correo.com" :error="clientErrors.email" />
+         <BaseInput 
+           v-model="clientPhone" 
+           name="phone" 
+           label="Teléfono" 
+           type="text" 
+           placeholder="10 dígitos (solo números)" 
+           :error="clientErrors.phone"
+           @input="clientPhone = $event.target.value.replace(/[^0-9]/g, '').slice(0, 10)"
+         />
+       </div>
+       <template #footer>
+         <div class="flex gap-3">
+           <BaseButton variant="secondary" block @click="showNewClientModal = false">Cancelar</BaseButton>
+           <BaseButton variant="primary" block :loading="creatingClient" @click="onClientSubmit">Guardar Cliente</BaseButton>
+         </div>
+       </template>
+    </BaseModal>
   </BaseModal>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { PlusIcon, TrashIcon, Settings2Icon, PrinterIcon } from 'lucide-vue-next'
+import { PlusIcon, TrashIcon, Settings2Icon } from 'lucide-vue-next'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
 import Select from '~/components/Select.vue'
+import BaseInput from '~/components/BaseInput.vue'
+import { useForm, useField } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/yup'
+import * as yup from 'yup'
 import { useToast } from '~/stores/toast'
 import { useFormatter } from '~/composables/useFormatter'
 
@@ -280,6 +322,7 @@ const initialForm = {
   client_id: '',
   quotation_date: new Date().toISOString().split('T')[0],
   notes: '',
+  force_wholesale: false,
   items: [
     { 
       product_catalog_id: null,
@@ -303,6 +346,7 @@ const form = reactive(JSON.parse(JSON.stringify(initialForm)))
 const isEdit = computed(() => !!props.id)
 
 const totalAmount = computed(() => form.items.reduce((acc, item) => acc + item.subtotal, 0))
+const totalQuantity = computed(() => form.items.reduce((acc, item) => acc + Number(item.quantity || 0), 0))
 
 // Extras logic
 const showExtrasModal = ref(false)
@@ -322,6 +366,50 @@ const saveExtras = () => {
   calculateRow(currentItemIdx.value)
   showExtrasModal.value = false
 }
+
+// New Client Logic
+const showNewClientModal = ref(false)
+const creatingClient = ref(false)
+
+const clientSchema = toTypedSchema(
+  yup.object({
+    name: yup.string().required('El nombre es obligatorio'),
+    email: yup.string().email('Debe ser un email válido').nullable(),
+    phone: yup.string()
+      .test('len', 'El teléfono debe tener 10 dígitos', val => !val || val.length === 10)
+      .nullable(),
+    address: yup.string().nullable(),
+  })
+)
+
+const { handleSubmit: handleClientSubmit, errors: clientErrors, resetForm: resetClientForm } = useForm({
+  validationSchema: clientSchema
+})
+
+const { value: clientName } = useField('name')
+const { value: clientEmail } = useField('email')
+const { value: clientPhone } = useField('phone')
+const { value: clientAddress } = useField('address')
+
+
+const onClientSubmit = handleClientSubmit(async (values) => {
+  try {
+    creatingClient.value = true
+    // Default type to persona if not specified
+    const payload = { ...values, type: 'persona' }
+    const res = await api.post('/api/clients', payload)
+    const newClient = { value: res.data.id, label: res.data.name }
+    clients.value.push(newClient)
+    form.client_id = res.data.id
+    toast.success('Cliente creado y seleccionado')
+    showNewClientModal.value = false
+    resetClientForm()
+  } catch (err) {
+    toast.error('Error al crear cliente: ' + (err.data?.message || err.message))
+  } finally {
+    creatingClient.value = false
+  }
+})
 
 const productOptions = computed(() => {
   return [
@@ -473,7 +561,7 @@ const calculateRow = (idx) => {
   
   if (variant) {
     const minWholesale = prod?.wholesale_min_quantity || 25
-    item.is_wholesale = item.quantity >= minWholesale
+    item.is_wholesale = form.force_wholesale || totalQuantity.value >= minWholesale
     item.unit_price = item.is_wholesale ? Number(variant.wholesale_price) : Number(variant.retail_price)
   }
   
@@ -499,15 +587,10 @@ const addItem = () => {
 
 const removeItem = (idx) => form.items.splice(idx, 1)
 
-const handleCreateClient = async (name) => {
-  try {
-    const res = await api.post('/api/clients', { name })
-    clients.value.push({ value: res.data.id, label: res.data.name })
-    form.client_id = res.data.id
-    toast.success('Nuevo cliente registrado')
-  } catch (err) {
-    toast.error('Error al crear cliente')
-  }
+const handleCreateClient = (name) => {
+  resetClientForm()
+  clientName.value = name
+  showNewClientModal.value = true
 }
 
 const fetchQuotation = async (id) => {
@@ -517,6 +600,7 @@ const fetchQuotation = async (id) => {
     const q = res.data
     form.client_id = q.client_id
     form.notes = q.notes || ''
+    form.force_wholesale = !!q.force_wholesale
     form.items = q.items.map(item => {
       const extras_total = (item.extras || []).reduce((acc, e) => acc + Number(e.cost), 0)
       const variant = item.product_catalog_price || item.productCatalogPrice
@@ -568,26 +652,16 @@ const onSubmit = async () => {
 
 const close = () => emit('update:show', false)
 
-const printCurrent = () => {
-  if (!props.id) return
-  const iframe = document.createElement('iframe')
-  iframe.style.position = 'fixed'
-  iframe.style.right = '0'
-  iframe.style.bottom = '0'
-  iframe.style.width = '0'
-  iframe.style.height = '0'
-  iframe.style.border = '0'
-  iframe.src = `/production/print-quotation/${props.id}`
-  document.body.appendChild(iframe)
-  
-  setTimeout(() => {
-    if (document.body.contains(iframe)) {
-      document.body.removeChild(iframe)
-    }
-  }, 10000)
-}
 
 import { watch } from 'vue'
+
+watch(() => form.force_wholesale, () => {
+  form.items.forEach((_, idx) => calculateRow(idx))
+})
+
+watch(() => totalQuantity.value, () => {
+  form.items.forEach((_, idx) => calculateRow(idx))
+})
 watch(() => props.show, (val) => {
   if (val) {
     // Reset form if opening for new creation
