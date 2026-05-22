@@ -11,7 +11,7 @@
     <!-- Header: Code + Urgency -->
     <div class="flex justify-between items-center mb-2.5">
       <div class="flex items-center gap-2">
-        <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md tracking-wide">#ORD-{{ card.order?.order_code }}</span>
+        <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md tracking-wide">ORD-{{ card.order?.order_code }}</span>
         <button 
           v-if="card.status !== 'Entregados' && card.status !== 'Pasado a Inventario'"
           @click.stop="$emit('delete', card)" 

@@ -96,7 +96,7 @@
         <div v-if="selectedCard" class="bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-100 dark:border-white/5 space-y-4">
           <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-3">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Folio:</span>
-            <span class="text-sm font-black text-slate-900 dark:text-white">#{{ selectedCard.order?.order_code }}</span>
+            <span class="text-sm font-black text-slate-900 dark:text-white">{{ selectedCard.order?.order_code }}</span>
           </div>
           <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-3">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cliente:</span>
@@ -352,8 +352,7 @@ const onDropCard = async (e, columnId, dropIndex) => {
   }
 
   try {
-    await productionStore.moveCard(Number(cardId), columnId, newPosition)
-    await productionStore.fetchBoard()
+    await productionStore.moveCardOptimistically(Number(cardId), columnId, newPosition, dropIndex)
   } catch (err) {
     const errorMsg = err.response?.data?.message || 'Error al mover la tarjeta'
     toast.error(errorMsg)

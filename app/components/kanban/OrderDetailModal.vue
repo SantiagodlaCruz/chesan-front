@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :show="show"
-    :title="'Detalle de Pedido #' + (card?.order?.order_code || card?.orderId)"
+    :title="'Detalle de Pedido ' + (card?.order?.order_code || card?.orderId)"
     subtitle="Información detallada de la orden de producción."
     size="3xl"
     @update:show="close"
@@ -50,7 +50,12 @@
           <div v-for="item in card.order?.items" :key="item.id" class="bg-white dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/10 p-5 shadow-sm transition-all hover:shadow-md">
             <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
               <div class="flex-1 min-w-[200px]">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Producto / Concepto</p>
+                <div class="flex items-center justify-between">
+                  <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Producto / Concepto</p>
+                  <span v-if="item.stock_product_id" class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-md text-[9px] font-black uppercase tracking-wider">
+                    Vinculado a Inventario
+                  </span>
+                </div>
                 <p class="text-base font-black text-slate-800 dark:text-white leading-tight">{{ item.product_name }}</p>
               </div>
             </div>

@@ -193,7 +193,8 @@ import {
   ShieldIcon,
   SettingsIcon,
   ClipboardListIcon,
-  TicketIcon
+  TicketIcon,
+  ListIcon
 } from 'lucide-vue-next'
 import ChangePasswordModal from '~/components/ChangePasswordModal.vue'
 import UserProfileModal from '~/components/UserProfileModal.vue'
@@ -226,6 +227,7 @@ const navItems = [
   { label: 'Productos', path: '/inventory/products', icon: BoxIcon, permission: 'inventario.ver' },
   { label: 'Materia Prima', path: '/inventory/raw-materials', icon: PackageIcon, permission: 'materia_prima.ver' },
   { label: 'Cotizaciones', path: '/production/quotations', icon: ClipboardListIcon, permission: 'produccion.ver' },
+  { label: 'Pedidos', path: '/production/orders', icon: ListIcon, permission: 'produccion.ver' },
   { label: 'Producción', path: '/production', icon: FactoryIcon, permission: 'produccion.ver' },
   { label: 'Punto de venta', path: '/point-of-sale', icon: ShoppingCartIcon, permission: 'punto_de_venta.ver' },
   { label: 'Historial Tickets', path: '/tickets', icon: TicketIcon, role: 'admin|super_admin' },
