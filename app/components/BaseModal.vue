@@ -18,7 +18,7 @@
         <!-- Modal Content -->
         <div 
           :class="[
-            'relative bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-xl w-full rounded-2xl shadow-2xl border border-border-light dark:border-[#1e293b] overflow-visible flex flex-col max-h-[90vh] dark:shadow-blue-900/10 transition-all duration-300',
+            'relative bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-xl w-full rounded-2xl shadow-2xl border border-border-light dark:border-[#1e293b] overflow-hidden flex flex-col max-h-[90vh] dark:shadow-blue-900/10 transition-all duration-300',
             sizeClass
           ]"
         >
@@ -36,7 +36,7 @@
           </div>
 
           <!-- Body -->
-          <div class="p-8 overflow-visible custom-scrollbar flex-1">
+          <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
             <slot />
           </div>
 

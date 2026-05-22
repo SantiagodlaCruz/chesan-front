@@ -644,6 +644,17 @@ const totalDiscountAmount = computed(() => rawSubtotal.value - total.value)
 const { formatMoney } = useFormatter()
 
 const paymentMethodName = computed(() => {
+  if (lastTicket.value) {
+    const method = lastTicket.value.ticket_type === 'layaway' && lastTicket.value.balance === 0
+      ? (lastTicket.value.liquidation_payment_method || 'cash')
+      : (lastTicket.value.payment_method || paymentMethod.value)
+
+    if (method === 'cash') return 'Efectivo'
+    if (method === 'card') return 'Tarjeta'
+    if (method === 'transfer') return 'Transferencia'
+    return method
+  }
+
   if (paymentMethod.value === 'cash') return 'Efectivo'
   if (paymentMethod.value === 'card') return 'Tarjeta'
   if (paymentMethod.value === 'transfer') return 'Transferencia'
@@ -875,10 +886,12 @@ const onCheckout = async () => {
   }
 }
 
-const handleLayawayPayment = async (ticket) => {
+const handleLayawayPayment = async ({ ticket, paymentMethod }) => {
     loadingLayaway.value = true
     try {
-        const response = await api.post(`/api/tickets/${ticket.id}/complete-layaway`)
+        const response = await api.post(`/api/tickets/${ticket.id}/complete-layaway`, {
+            payment_method: paymentMethod
+        })
         showPayLayawayModal.value = false
         
         const mappedItems = response.data.items.map(detail => ({
