@@ -23,6 +23,7 @@
           <input
             v-model.number="openingBalance"
             type="number"
+            v-numeric.decimal
             step="0.01"
             min="0"
             class="block w-full pl-8 pr-4 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xl font-black text-slate-800 dark:text-white outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400"

@@ -26,6 +26,7 @@
           <input
             v-model.number="amount"
             type="number"
+            v-numeric.decimal
             step="0.01"
             class="block w-full pl-8 pr-4 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xl font-black text-slate-800 dark:text-white outline-none focus:border-primary transition-all"
             placeholder="0.00"

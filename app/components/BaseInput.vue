@@ -1,12 +1,12 @@
 <template>
-  <div class="space-y-1.5 w-full">
-    <label v-if="label" class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">
+  <div class="space-y-1.5 w-full group/input">
+    <label v-if="label" class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors duration-300 group-focus-within/input:text-primary dark:group-focus-within/input:text-primary">
       {{ label }}
     </label>
     
     <div class="relative group">
       <!-- Icon Slot -->
-      <div v-if="$slots.icon" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors duration-300">
+      <div v-if="$slots.icon" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-primary transition-colors duration-300">
         <slot name="icon" />
       </div>
 
@@ -16,7 +16,9 @@
         :placeholder="placeholder"
         :required="required"
         :disabled="disabled"
-        class="w-full bg-white dark:bg-[#1e293b] border-2 rounded-2xl py-3 text-sm font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-all duration-300 shadow-sm"
+        @keydown="handleKeydown"
+        @input="handleInput"
+        class="w-full bg-white dark:bg-[#1e293b] border-2 rounded-2xl py-3 text-sm font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-all duration-300 shadow-sm group-focus-within/input:bg-slate-50/50 dark:group-focus-within/input:bg-[#0f172a] group-focus-within/input:shadow-md group-focus-within/input:shadow-primary/10"
         :class="[
           $slots.icon ? 'pl-11 pr-12' : 'pl-4 pr-12',
           errorMessage 
@@ -37,11 +39,11 @@
       </button>
 
       <!-- Validation Feedback Icons -->
-      <div v-if="errorMessage || meta.valid" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-        <div v-if="meta.valid && value" class="text-green-500 animate-in zoom-in-50">
+      <div v-if="errorMessage || meta.valid" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+        <div v-if="meta.valid && value" class="text-green-500 animate-in zoom-in-50 duration-200">
           <CheckCircleIcon class="w-4 h-4" />
         </div>
-        <div v-else-if="errorMessage" class="text-red-500 animate-in zoom-in-50">
+        <div v-else-if="errorMessage" class="text-red-500 animate-in zoom-in-50 duration-200">
           <AlertCircleIcon class="w-4 h-4" />
         </div>
       </div>
@@ -67,6 +69,7 @@
 import { useField } from 'vee-validate'
 import { computed, ref, reactive } from 'vue'
 import { CheckCircleIcon, AlertCircleIcon, EyeIcon, EyeOffIcon } from 'lucide-vue-next'
+import { useNumericInput } from '~/composables/useNumericInput'
 
 const props = defineProps({
   name: { type: String, default: undefined },
@@ -93,6 +96,30 @@ const inputType = computed(() => {
   return props.type
 })
 
+const { onNumericKeydown, cleanNumericValue } = useNumericInput()
+
+const handleKeydown = (e) => {
+  if (props.type === 'number') {
+    onNumericKeydown(e, { allowDecimal: true, allowNegative: true })
+  } else if (props.type === 'tel') {
+    onNumericKeydown(e, { isPhone: true })
+  }
+}
+
+const handleInput = (e) => {
+  if (props.type === 'number') {
+    const cleaned = cleanNumericValue(e.target.value, { allowDecimal: true })
+    if (e.target.value !== cleaned) {
+      value.value = cleaned
+    }
+  } else if (props.type === 'tel') {
+    const cleaned = cleanNumericValue(e.target.value, { isPhone: true })
+    if (e.target.value !== cleaned) {
+      value.value = cleaned
+    }
+  }
+}
+
 // If no name is provided, use standard v-model behavior
 // If name is provided, integrate with vee-validate
 const field = props.name 
@@ -113,5 +140,3 @@ const value = field.value
 const meta = field.meta
 const errorMessage = computed(() => props.error || field.errorMessage.value)
 </script>
-
-

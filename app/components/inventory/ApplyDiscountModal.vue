@@ -88,6 +88,7 @@
                    <input
                      v-model.number="discountAmount"
                      type="number"
+                     v-numeric.decimal
                      min="0"
                      :max="scannedProduct.sale_price"
                      step="1"

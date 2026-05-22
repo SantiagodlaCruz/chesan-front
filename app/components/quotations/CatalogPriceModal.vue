@@ -46,6 +46,7 @@
             <input 
               v-model.number="form.retail_price" 
               type="number" step="0.01"
+              v-numeric.decimal
               class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-2 rounded-xl text-sm font-bold dark:text-slate-100"
               required
             />
@@ -58,6 +59,7 @@
             <input 
               v-model.number="form.wholesale_price" 
               type="number" step="0.01"
+              v-numeric.decimal
               class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-2 rounded-xl text-sm font-black text-primary"
               required
             />

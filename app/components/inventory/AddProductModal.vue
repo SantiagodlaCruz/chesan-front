@@ -101,13 +101,13 @@
                 <td class="px-2 py-2">
                   <div class="relative">
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                    <input v-model="v.production_price" class="w-full bg-transparent border-b-2 border-transparent focus:border-primary transition-all outline-none pl-3 pr-2 py-1.5 font-medium text-slate-900 dark:text-slate-100 disabled:opacity-70" type="number" step="0.01" :disabled="readonly" />
+                    <input v-model="v.production_price" class="w-full bg-transparent border-b-2 border-transparent focus:border-primary transition-all outline-none pl-3 pr-2 py-1.5 font-medium text-slate-900 dark:text-slate-100 disabled:opacity-70" type="number" v-numeric.decimal step="0.01" :disabled="readonly" />
                   </div>
                 </td>
                 <td class="px-2 py-2">
                   <div class="relative">
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                    <input v-model="v.sale_price" class="w-full bg-transparent border-b-2 border-transparent focus:border-primary transition-all outline-none pl-3 pr-2 py-1.5 font-medium text-slate-900 dark:text-slate-100 disabled:opacity-70" type="number" step="0.01" :disabled="readonly" />
+                    <input v-model="v.sale_price" class="w-full bg-transparent border-b-2 border-transparent focus:border-primary transition-all outline-none pl-3 pr-2 py-1.5 font-medium text-slate-900 dark:text-slate-100 disabled:opacity-70" type="number" v-numeric.decimal step="0.01" :disabled="readonly" />
                   </div>
                 </td>
                 <td class="px-2 py-2 text-center">
@@ -323,10 +323,10 @@ const onSubmit = handleSubmit(async (values) => {
       payload.id = props.itemToEdit.id
       // For single product update, we don't send variants array, just the fields
       if (variants.length > 0) {
-        payload.size_id = variants[0].size_id
-        payload.production_price = variants[0].production_price
-        payload.sale_price = variants[0].sale_price
-        payload.quantity = variants[0].quantity
+        payload.size_id = variants[0]?.size_id
+        payload.production_price = variants[0]?.production_price
+        payload.sale_price = variants[0]?.sale_price
+        payload.quantity = variants[0]?.quantity
       }
     } else {
       payload.variants = [...variants]

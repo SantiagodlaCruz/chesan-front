@@ -1,35 +1,55 @@
 <template>
   <BaseModal
     :show="show"
-    title="Nuevo pedido de producción"
-    subtitle="Registre los detalles del cliente y los productos a fabricar."
+    :title="orderToEdit ? 'Editar pedido interno' : 'Nuevo pedido de producción'"
+    :subtitle="orderToEdit ? 'Modifique los detalles del pedido interno.' : 'Registre los detalles del cliente y los productos a fabricar.'"
     size="4xl"
     @update:show="close"
   >
     <form @submit.prevent="onSubmit" class="space-y-6">
-      <!-- Selector de Tipo -->
-      <div class="flex gap-1.5 p-1 bg-slate-100 dark:bg-white/5 rounded-xl w-fit border border-slate-200 dark:border-white/10">
-        <button 
-          type="button"
-          @click="form.type = 'uniform'"
-          :class="form.type === 'uniform' ? 'bg-white dark:bg-white/10 shadow-sm text-primary font-bold' : 'text-slate-500 font-medium'"
-          class="px-4 py-1.5 rounded-lg text-xs transition-all flex items-center gap-2"
-        >
-          <ShirtIcon class="w-3.5 h-3.5" /> Uniformes
-        </button>
-        <button 
-          type="button"
-          @click="form.type = 'embroidery'"
-          :class="form.type === 'embroidery' ? 'bg-white dark:bg-white/10 shadow-sm text-primary font-bold' : 'text-slate-500 font-medium'"
-          class="px-4 py-1.5 rounded-lg text-xs transition-all flex items-center gap-2"
-        >
-          <PaletteIcon class="w-3.5 h-3.5" /> Solo Bordado
-        </button>
+      <!-- Selector de Tipo y Pedido Interno -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex gap-1.5 p-1 bg-slate-100 dark:bg-white/5 rounded-xl w-fit border border-slate-200 dark:border-white/10">
+          <button 
+            type="button"
+            @click="form.type = 'uniform'"
+            :class="form.type === 'uniform' ? 'bg-white dark:bg-white/10 shadow-sm text-primary font-bold' : 'text-slate-500 font-medium'"
+            class="px-4 py-1.5 rounded-lg text-xs transition-all flex items-center gap-2"
+          >
+            <ShirtIcon class="w-3.5 h-3.5" /> Uniformes
+          </button>
+          <button 
+            type="button"
+            @click="form.type = 'embroidery'"
+            :class="form.type === 'embroidery' ? 'bg-white dark:bg-white/10 shadow-sm text-primary font-bold' : 'text-slate-500 font-medium'"
+            class="px-4 py-1.5 rounded-lg text-xs transition-all flex items-center gap-2"
+          >
+            <PaletteIcon class="w-3.5 h-3.5" /> Solo Bordado
+          </button>
+        </div>
+
+        <div class="h-[44px] flex items-center justify-center bg-primary/5 dark:bg-primary/10 px-4 rounded-xl border border-primary/10 hover:border-primary/20 transition-all group">
+          <label class="flex items-center gap-3 cursor-pointer select-none w-full justify-center">
+            <div class="relative flex items-center">
+              <input 
+                type="checkbox" 
+                v-model="form.is_internal" 
+                class="peer sr-only"
+              />
+              <div class="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-primary transition-all duration-300"></div>
+              <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-all duration-300 shadow-sm"></div>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-0.5">Pedido</span>
+              <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase leading-none">Interno</span>
+            </div>
+          </label>
+        </div>
       </div>
 
       <!-- Info General -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5 pb-6 border-b border-dashed border-slate-200 dark:border-slate-800">
-        <div class="flex flex-col gap-1.5 md:col-span-2">
+        <div v-if="!form.is_internal" class="flex flex-col gap-1.5 md:col-span-2">
           <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Cliente</label>
           <Select 
             v-model="form.client_id" 
@@ -41,7 +61,7 @@
             :loading="catalogs.loading"
           />
         </div>
-        <div class="flex flex-col gap-1.5">
+        <div class="flex flex-col gap-1.5" :class="form.is_internal ? 'md:col-span-3' : 'md:col-span-1'">
           <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Fecha de entrega</label>
           <input 
             v-model="form.delivery_date" 
@@ -95,6 +115,7 @@
                 <input 
                   v-model.number="item.quantity" 
                   type="number" 
+                  v-numeric
                   class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm text-center font-black text-slate-900 dark:text-white"
                   min="1"
                   required
@@ -108,6 +129,7 @@
                   <input 
                     v-model.number="item.unit_price" 
                     type="number" 
+                    v-numeric.decimal
                     step="0.01"
                     class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-2 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 text-right"
                     required
@@ -168,13 +190,14 @@
             <span class="font-bold text-slate-500">Subtotal</span>
             <span class="font-bold text-slate-900 dark:text-white">${{ subtotal.toFixed(2) }}</span>
           </div>
-          <div class="flex justify-between items-center gap-4">
+          <div v-if="!form.is_internal" class="flex justify-between items-center gap-4">
             <span class="text-sm font-bold text-slate-500 whitespace-nowrap">Anticipo</span>
             <div class="relative flex-1 max-w-[120px]">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
               <input 
                 v-model.number="form.advance_payment" 
                 type="number" 
+                v-numeric.decimal
                 class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg pl-6 pr-3 py-1.5 text-sm font-black text-emerald-600 dark:text-emerald-400 outline-none focus:border-emerald-500"
               />
             </div>
@@ -191,8 +214,8 @@
         <BaseButton type="button" variant="secondary" @click="close" :disabled="saving">
           Cancelar
         </BaseButton>
-        <BaseButton type="submit" variant="primary" :loading="saving" loading-text="Generando Pedido...">
-          Confirmar y enviar a producción
+        <BaseButton type="submit" variant="primary" :loading="saving" :loading-text="orderToEdit ? 'Guardando cambios...' : 'Generando Pedido...'">
+          {{ orderToEdit ? 'Guardar cambios' : 'Confirmar y enviar a producción' }}
         </BaseButton>
       </div>
 
@@ -201,7 +224,7 @@
          <div class="space-y-4 py-2">
             <div v-for="(ex, ei) in currentExtras" :key="ei" class="flex gap-2">
                <input v-model="ex.description" placeholder="Logo extra" class="flex-1 bg-slate-100 dark:bg-white/5 border-none outline-none px-2 py-1 text-xs rounded" />
-               <input v-model.number="ex.cost" type="number" class="w-16 bg-slate-100 dark:bg-white/5 border-none outline-none px-2 py-1 text-xs text-right" />
+               <input v-model.number="ex.cost" type="number" v-numeric.decimal class="w-16 bg-slate-100 dark:bg-white/5 border-none outline-none px-2 py-1 text-xs text-right" />
             </div>
             <button type="button" @click="currentExtras.push({description: '', cost: 0})" class="text-[10px] text-primary">+ Añadir concepto</button>
          </div>
@@ -225,6 +248,7 @@ import { useToast } from '~/stores/toast'
 
 const props = defineProps<{
   show: boolean
+  orderToEdit?: any
 }>()
 
 const emit = defineEmits(['update:show', 'saved'])
@@ -251,6 +275,7 @@ interface OrderItem {
 const form = reactive({
   client_id: '',
   type: 'uniform',
+  is_internal: false,
   delivery_date: '',
   advance_payment: 0,
   notes: '',
@@ -315,7 +340,7 @@ const close = () => {
 }
 
 const onSubmit = async () => {
-  if (!form.client_id) return toast.error('Seleccione un cliente')
+  if (!form.is_internal && !form.client_id) return toast.error('Seleccione un cliente')
   if (form.items.some(i => !i.product_name)) return toast.error('Complete el nombre de los productos')
 
   try {
@@ -336,17 +361,23 @@ const onSubmit = async () => {
     })
 
     const payload = {
-      client_id: form.client_id,
+      client_id: form.is_internal ? null : form.client_id,
+      is_internal: form.is_internal,
       type: form.type,
       delivery_date: form.delivery_date,
-      advance_payment: Number(form.advance_payment) || 0,
+      advance_payment: form.is_internal ? 0 : (Number(form.advance_payment) || 0),
       notes: form.notes || null,
       total_amount: subtotal.value,
       items: sanitizedItems
     }
 
-    await productionStore.createOrder(payload)
-    toast.success('Pedido creado y enviado a producción')
+    if (props.orderToEdit) {
+      await productionStore.updateOrder(props.orderToEdit.id, payload)
+      toast.success('Pedido interno actualizado correctamente')
+    } else {
+      await productionStore.createOrder(payload)
+      toast.success('Pedido creado y enviado a producción')
+    }
     resetForm()
     emit('saved')
     close()
@@ -361,6 +392,7 @@ const onSubmit = async () => {
 const resetForm = () => {
   form.client_id = ''
   form.type = 'uniform'
+  form.is_internal = false
   form.delivery_date = ''
   form.advance_payment = 0
   form.notes = ''
@@ -370,6 +402,31 @@ const resetForm = () => {
 watch(() => props.show, (val) => {
   if (val) {
     catalogs.fetchAll()
+    if (props.orderToEdit) {
+      form.client_id = props.orderToEdit.client_id || ''
+      form.type = props.orderToEdit.type || 'uniform'
+      form.is_internal = !!props.orderToEdit.is_internal
+      form.delivery_date = props.orderToEdit.delivery_date ? props.orderToEdit.delivery_date.split('T')[0] : ''
+      form.advance_payment = Number(props.orderToEdit.advance_payment) || 0
+      form.notes = props.orderToEdit.notes || ''
+      form.items = (props.orderToEdit.items || []).map((item: any) => ({
+        product_name: item.product_name,
+        size: item.size || '',
+        quantity: Number(item.quantity) || 1,
+        unit_price: Number(item.unit_price) || 0,
+        extras: item.extras || [],
+        observations: item.observations || ''
+      }))
+    } else {
+      resetForm()
+    }
+  }
+})
+
+watch(() => form.is_internal, (val) => {
+  if (val) {
+    form.client_id = ''
+    form.advance_payment = 0
   }
 })
 </script>
