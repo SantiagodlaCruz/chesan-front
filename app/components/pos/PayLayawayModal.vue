@@ -56,8 +56,48 @@
          </div>
       </div>
 
+      <!-- Método de Pago de Liquidación -->
+      <div class="border-t border-slate-100 dark:border-white/5 pt-5">
+         <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-3">Método de pago de liquidación</h3>
+         <div class="grid grid-cols-3 gap-3">
+           <button
+             type="button"
+             @click="liquidationPaymentMethod = 'cash'"
+             class="relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300"
+             :class="liquidationPaymentMethod === 'cash'
+               ? 'bg-primary border-primary text-white shadow-[0_0_25px_#3b82f6aa] dark:shadow-[0_0_30px_#3b82f6cc] scale-[1.03] z-10'
+               : 'bg-panel-light dark:bg-background-dark border-border-light dark:border-border-dark text-slate-400 hover:border-primary/30 shadow-sm dark:shadow-none'"
+           >
+             <BanknoteIcon class="w-5 h-5 mb-2" />
+             <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-center">Efectivo</span>
+           </button>
+           <button
+             type="button"
+             @click="liquidationPaymentMethod = 'card'"
+             class="relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300"
+             :class="liquidationPaymentMethod === 'card'
+               ? 'bg-primary border-primary text-white shadow-[0_0_25px_#3b82f6aa] dark:shadow-[0_0_30px_#3b82f6cc] scale-[1.03] z-10'
+               : 'bg-panel-light dark:bg-background-dark border-border-light dark:border-border-dark text-slate-400 hover:border-primary/30 shadow-sm dark:shadow-none'"
+           >
+             <CreditCardIcon class="w-5 h-5 mb-2" />
+             <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-center">Tarjeta</span>
+           </button>
+           <button
+             type="button"
+             @click="liquidationPaymentMethod = 'transfer'"
+             class="relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300"
+             :class="liquidationPaymentMethod === 'transfer'
+               ? 'bg-primary border-primary text-white shadow-[0_0_25px_#3b82f6aa] dark:shadow-[0_0_30px_#3b82f6cc] scale-[1.03] z-10'
+               : 'bg-panel-light dark:bg-background-dark border-border-light dark:border-border-dark text-slate-400 hover:border-primary/30 shadow-sm dark:shadow-none'"
+           >
+             <ArrowRightLeftIcon class="w-5 h-5 mb-2" />
+             <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-center">Transf.</span>
+           </button>
+         </div>
+      </div>
+
       <!-- Actions -->
-      <div class="pt-2 flex flex-col gap-3 border-t border-slate-100 dark:border-white/5 pt-5">
+      <div class="flex flex-col gap-3 border-t border-slate-100 dark:border-white/5 pt-5">
          <button 
              @click="confirmPayment" 
              :disabled="loading"
@@ -76,8 +116,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { ShirtIcon, BanknoteIcon } from 'lucide-vue-next'
+import { ref, watch } from 'vue'
+import { ShirtIcon, BanknoteIcon, CreditCardIcon, ArrowRightLeftIcon } from 'lucide-vue-next'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
 import { useFormatter } from '~/composables/useFormatter'
@@ -92,8 +132,16 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show', 'confirm'])
 
+const liquidationPaymentMethod = ref('cash')
+
+watch(() => props.show, (newVal) => {
+  if (newVal) {
+    liquidationPaymentMethod.value = 'cash'
+  }
+})
+
 const confirmPayment = () => {
-    emit('confirm', props.ticket)
+    emit('confirm', { ticket: props.ticket, paymentMethod: liquidationPaymentMethod.value })
 }
 
 const close = () => {
