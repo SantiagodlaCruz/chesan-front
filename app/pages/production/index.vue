@@ -40,6 +40,7 @@
               @deliver="handleDeliver"
               @print="handlePrint"
               @delete="confirmDelete"
+              @inventory="handleInventory"
             />
           </div>
         </template>
@@ -48,6 +49,7 @@
 
     <AddOrderModal 
       v-model:show="showAddModal" 
+      :order-to-edit="orderToEdit"
       @saved="onOrderSaved"
     />
 
@@ -55,12 +57,24 @@
       v-model:show="showDetailModal"
       :card="selectedCard"
       @delete="confirmDelete"
+      @edit="handleEditOrder"
     />
 
     <DeliverOrderModal
       v-model:show="showDeliverModal"
       :card="selectedCard"
       @confirm="processDelivery"
+    />
+
+    <ConfirmModal
+      v-model:show="showInventoryConfirm"
+      title="Confirmar Ingreso a Inventario"
+      message="¿Desea ingresar los productos de este pedido interno al inventario?&#10;Esta acción registrará la entrada de stock y no es reversible."
+      confirm-text="Sí, Ingresar"
+      cancel-text="Cancelar"
+      confirm-variant="success"
+      :loading="processingInventory"
+      @confirm="confirmInventory"
     />
 
     <BaseModal
@@ -111,7 +125,7 @@
 </template>
 
 <script setup>
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import { FilterIcon, PlusIcon, TrashIcon } from 'lucide-vue-next'
 import KanbanColumn from '~/components/kanban/KanbanColumn.vue'
 import KanbanCard from '~/components/kanban/KanbanCard.vue'
@@ -127,16 +141,84 @@ const productionStore = useProductionStore()
 const toast = useToast()
 const showAddModal = ref(false)
 const showDetailModal = ref(false)
+const orderToEdit = ref(null)
 const showDeliverModal = ref(false)
 const showDeleteConfirm = ref(false)
+const showInventoryConfirm = ref(false)
 const selectedCard = ref(null)
+const inventoryCard = ref(null)
+const inventoryTargetColumnId = ref(null)
+const inventoryTargetPosition = ref(1000)
+const processingInventory = ref(false)
 
 const columns = computed(() => productionStore.board?.columns || [])
+
+const handleInventory = (card) => {
+  if (!card.order?.is_internal) {
+    toast.error('Los pedidos de clientes no se pueden pasar a inventario.')
+    return
+  }
+  if (card.status !== 'Control de Calidad') {
+    toast.error('Solo se pueden ingresar a inventario pedidos que estén en "Control de Calidad".')
+    return
+  }
+  const targetCol = columns.value.find(c => c.title === 'Pasado a Inventario')
+  if (!targetCol) {
+    toast.error('No se encontró la columna "Pasado a Inventario"')
+    return
+  }
+  
+  inventoryCard.value = card
+  inventoryTargetColumnId.value = targetCol.id
+  
+  const columnCards = targetCol.cards || []
+  inventoryTargetPosition.value = columnCards.length > 0 
+    ? columnCards[columnCards.length - 1].position + 1000 
+    : 1000
+    
+  showInventoryConfirm.value = true
+}
+
+const confirmInventory = async () => {
+  if (!inventoryCard.value) return
+  try {
+    processingInventory.value = true
+    await productionStore.moveCard(
+      inventoryCard.value.id,
+      inventoryTargetColumnId.value,
+      inventoryTargetPosition.value
+    )
+    showInventoryConfirm.value = false
+    await productionStore.fetchBoard()
+    toast.success('Productos ingresados al inventario correctamente')
+  } catch (err) {
+    console.error('Error entering stock:', err)
+    const errorMsg = err.response?.data?.message || 'Error al ingresar los productos al inventario'
+    toast.error(errorMsg)
+  } finally {
+    processingInventory.value = false
+    inventoryCard.value = null
+  }
+}
 
 const openDetail = (card) => {
   selectedCard.value = card
   showDetailModal.value = true
 }
+
+const handleEditOrder = (card) => {
+  if (card.order) {
+    orderToEdit.value = card.order
+    showDetailModal.value = false
+    showAddModal.value = true
+  }
+}
+
+watch(showAddModal, (val) => {
+  if (!val) {
+    orderToEdit.value = null
+  }
+})
 
 const handleDeliver = (card) => {
   selectedCard.value = card
@@ -210,10 +292,33 @@ const onDropCard = async (e, columnId, dropIndex) => {
   const column = columns.value.find(c => c.id === columnId)
   if (!column) return
 
-  // BLOQUEO: No se permite arrastrar a la columna de Entregados a menos que esté listo
+  const card = productionStore.board.columns.flatMap(c => c.cards).find(c => c.id == cardId)
+  if (!card) return
+
+  const isInternal = !!card.order?.is_internal
+
+  // Reglas de validación para pedidos internos vs normales
+  if (isInternal) {
+    if (column.title === 'Listo para Entrega' || column.title === 'Entregados') {
+      toast.error('Los pedidos internos no pasan por "Listo para Entrega" ni "Entregados".')
+      return
+    }
+    if (column.title === 'Pasado a Inventario') {
+      if (card.status !== 'Control de Calidad') {
+        toast.error('Los pedidos internos solo pueden pasar a inventario desde la columna "Control de Calidad".')
+        return
+      }
+    }
+  } else {
+    if (column.title === 'Pasado a Inventario') {
+      toast.error('Los pedidos de clientes no se pueden pasar a inventario directamente.')
+      return
+    }
+  }
+
+  // BLOQUEO: No se permite arrastrar a la columna de Entregados a menos que esté listo (para no internos)
   if (column.title === 'Entregados') {
-    const card = productionStore.board.columns.flatMap(c => c.cards).find(c => c.id == cardId)
-    if (card && card.status !== 'Listo para Entrega') {
+    if (card.status !== 'Listo para Entrega') {
       toast.error('Solo puedes entregar pedidos que ya estén en la columna "Listo para Entrega".')
       return
     }
@@ -237,11 +342,21 @@ const onDropCard = async (e, columnId, dropIndex) => {
     }
   }
 
+  // Si se suelta en "Pasado a Inventario" (y ya sabemos que es interno por las validaciones anteriores)
+  if (column.title === 'Pasado a Inventario') {
+    inventoryCard.value = card
+    inventoryTargetColumnId.value = columnId
+    inventoryTargetPosition.value = newPosition
+    showInventoryConfirm.value = true
+    return
+  }
+
   try {
     await productionStore.moveCard(Number(cardId), columnId, newPosition)
     await productionStore.fetchBoard()
   } catch (err) {
-    alert('Error al mover la tarjeta')
+    const errorMsg = err.response?.data?.message || 'Error al mover la tarjeta'
+    toast.error(errorMsg)
   }
 }
 

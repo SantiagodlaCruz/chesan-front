@@ -1,13 +1,13 @@
 <template>
-  <div class="relative w-full" ref="container">
-    <label v-if="label" class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 mb-1.5 transition-colors">
+  <div class="relative w-full overflow-visible group/select" ref="container">
+    <label v-if="label" class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 mb-1.5 transition-colors duration-300 group-focus-within/select:text-primary dark:group-focus-within/select:text-primary">
       {{ label }}
     </label>
     <!-- Trigger Button -->
     <button 
       type="button"
       :class="[
-        'w-full flex items-center justify-between bg-white dark:bg-[#1e293b] border-2 shadow-sm transition-all focus:outline-none',
+        'w-full flex items-center justify-between bg-white dark:bg-[#1e293b] border-2 shadow-sm transition-all duration-300 focus:outline-none group-focus-within/select:bg-slate-50/50 dark:group-focus-within/select:bg-[#0f172a] group-focus-within/select:shadow-md group-focus-within/select:shadow-primary/10',
         compact ? 'px-3 py-2 rounded-xl' : 'px-4 py-3 rounded-2xl',
         error ? 'border-red-500/50 ring-4 ring-red-500/10' : 'border-slate-200/60 dark:border-transparent hover:border-slate-300 dark:hover:border-white/10',
         disabled ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/40' : (error ? '' : 'focus:border-primary/50 focus:ring-4 focus:ring-primary/10')
@@ -49,7 +49,7 @@
       <div 
         v-if="isOpen" 
         :class="[
-          'absolute z-[70] bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col focus:outline-none overflow-hidden',
+          'absolute z-[9999] bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col focus:outline-none overflow-hidden',
           menuWidth ? menuWidth : (
             compact 
               ? (direction === 'down' ? 'mt-2 w-56 rounded-lg left-0 top-full' : 'bottom-full mb-2 w-24 rounded-lg right-0') 

@@ -33,6 +33,7 @@
               <input
                 v-model.number="openingBalance"
                 type="number"
+                v-numeric.decimal
                 step="0.01"
                 min="0"
                 class="block w-full pl-8 pr-4 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xl font-black text-slate-800 dark:text-white outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400"
@@ -100,6 +101,10 @@
             <button @click="showExchangeModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all flex items-center gap-1">
               <RotateCcwIcon class="w-3 h-3" />
               Procesar cambio
+            </button>
+            <button @click="showSearchLayawayModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1">
+              <SearchIcon class="w-3 h-3" />
+              Buscar apartado
             </button>
             <button @click="clearCart" class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1.5">
               <Trash2Icon class="w-3.5 h-3.5" />
@@ -180,6 +185,7 @@
                       </button>
                       <input
                         type="number"
+                        v-numeric.negative
                         v-model.number="item.qty"
                         @change="validateManualQty(index)"
                         class="w-10 h-7 bg-slate-50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-lg text-center text-xs font-black text-slate-800 dark:text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -256,7 +262,7 @@
           </div>
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1.5 ml-1">Anticipo ($) *</label>
-            <input v-model.number="layawayDeposit" type="number" min="0" :max="Math.abs(total)" placeholder="0.00" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
+            <input v-model.number="layawayDeposit" type="number" v-numeric.decimal min="0" :max="Math.abs(total)" placeholder="0.00" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
           </div>
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1.5 ml-1">Fecha de liquidación *</label>
@@ -390,6 +396,11 @@
      @confirm="handleLayawayPayment"
   />
 
+  <SearchLayawayModal
+     v-model:show="showSearchLayawayModal"
+     @select="handleSelectLayaway"
+  />
+
   <CloseCashModal
      v-model:show="showCloseCashModal"
      @closed="onCashClosed"
@@ -411,7 +422,6 @@
           <p class="company-info" v-else>Venta de Mostrador</p>
           <p class="company-info">Fecha: {{ new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) }}</p>
           <p class="company-info ticket-number">Ticket #{{ lastTicket.ticket_number || 'S/N' }}</p>
-          <p class="company-info">Atendió: {{ user?.name || lastTicket.user?.name || 'Administrador' }}</p>
           <p v-if="lastTicket.ticket_type === 'layaway'" class="company-info">Cliente: {{ lastTicket.customer_name }}</p>
           <p v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0" class="company-info">Fecha límite: {{ lastTicket.due_date }}</p>
         </div>
@@ -509,10 +519,12 @@ import {
   RotateCcwIcon,
   FlagIcon,
   ArrowDownIcon,
+  SearchIcon,
 } from 'lucide-vue-next'
 import QrcodeVue from 'qrcode.vue'
 import ExchangeTicketModal from '~/components/pos/ExchangeTicketModal.vue'
 import PayLayawayModal from '~/components/pos/PayLayawayModal.vue'
+import SearchLayawayModal from '~/components/pos/SearchLayawayModal.vue'
 import CloseCashModal from '~/components/pos/CloseCashModal.vue'
 import CashMovementModal from '~/components/pos/CashMovementModal.vue'
 
@@ -539,6 +551,13 @@ const loadingOpenCash = ref(false)
 const showPayLayawayModal = ref(false)
 const scannedLayawayTicket = ref(null)
 const loadingLayaway = ref(false)
+
+// Estado Búsqueda de Apartado
+const showSearchLayawayModal = ref(false)
+const handleSelectLayaway = (ticket) => {
+  scannedLayawayTicket.value = ticket
+  showPayLayawayModal.value = true
+}
 
 const { logout: authLogout } = useAuth()
 const logout = async () => {

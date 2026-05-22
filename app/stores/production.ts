@@ -45,12 +45,24 @@ export const useProductionStore = defineStore('production', () => {
     }
   }
 
+  async function updateOrder(id: number, orderData: any) {
+    try {
+      const response = await api.put(`/api/orders/${id}`, orderData)
+      await fetchBoard() // Refrescar para ver la tarjeta actualizada
+      return response.data
+    } catch (err: any) {
+      console.error('Error updating order', err)
+      throw err
+    }
+  }
+
   return {
     board,
     loading,
     error,
     fetchBoard,
     moveCard,
-    createOrder
+    createOrder,
+    updateOrder
   }
 })

@@ -114,6 +114,7 @@
                   <input 
                     v-model.number="item.quantity" 
                     type="number" 
+                    v-numeric
                     :disabled="readOnly"
                     class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm font-black text-slate-900 dark:text-white"
                     min="1"
@@ -129,6 +130,7 @@
                   <input 
                     v-model.number="item.unit_price" 
                     type="number" 
+                    v-numeric.decimal
                     step="0.01"
                     :disabled="readOnly"
                     class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-2 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300"
@@ -237,6 +239,7 @@
               v-model.number="extra.cost" 
               :disabled="readOnly" 
               type="number" 
+              v-numeric.decimal
               step="0.01" 
               class="w-24 bg-slate-50 dark:bg-white/5 border-none outline-none px-3 py-2 rounded-lg text-sm text-right font-bold text-slate-800 dark:text-slate-200" 
             />

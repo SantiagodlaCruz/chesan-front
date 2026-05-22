@@ -17,7 +17,19 @@
       <div class="relative z-10 w-full max-w-lg p-12">
         <!-- Logo + Title -->
         <div class="mb-14">
-          <div class="flex items-center gap-4 mb-2">
+          <div v-if="logoUrl" class="flex items-center justify-center w-full overflow-hidden mb-6">
+            <div 
+              class="flex items-center justify-center transition-all duration-300 overflow-hidden"
+              :class="[
+                logoBgColor === 'transparent' ? '' : 'rounded-2xl p-4 shadow-sm border',
+                'max-w-xs w-full'
+              ]"
+              :style="logoContainerStyle"
+            >
+              <img :src="logoUrl" alt="Logo" class="max-h-24 max-w-full object-contain mx-auto" />
+            </div>
+          </div>
+          <div v-else class="flex items-center gap-4 mb-2">
             <div class="size-14 bg-primary rounded-xl flex items-center justify-center shadow-xl shadow-primary/20 shrink-0">
               <ShirtIcon class="text-white size-8" stroke-width="2.5" />
             </div>
@@ -85,11 +97,27 @@
       <div class="w-full max-w-md">
 
         <!-- Mobile logo -->
-        <div class="mb-8 lg:hidden flex items-center gap-3">
-          <div class="size-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
-            <ShirtIcon class="text-white size-5" stroke-width="2.5" />
+        <div class="mb-8 lg:hidden flex items-center justify-center w-full">
+          <div v-if="logoUrl" class="flex items-center justify-center w-full overflow-hidden">
+            <div 
+              class="flex items-center justify-center transition-all duration-300 overflow-hidden"
+              :class="[
+                logoBgColor === 'transparent' ? '' : 'rounded-xl p-2 shadow-sm border',
+                'max-w-xs w-full'
+              ]"
+              :style="logoContainerStyle"
+            >
+              <img :src="logoUrl" alt="Logo" class="max-h-14 max-w-xs object-contain mx-auto" />
+            </div>
           </div>
-          <span class="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">CheSan</span>
+          <template v-else>
+            <div class="flex items-center gap-3">
+              <div class="size-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
+                <ShirtIcon class="text-white size-5" stroke-width="2.5" />
+              </div>
+              <span class="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">CheSan</span>
+            </div>
+          </template>
         </div>
 
         <!-- ======================= -->
@@ -266,11 +294,24 @@ import {
 } from 'lucide-vue-next'
 
 import { loginSchema, recoverySchema } from '~/utils/auth.validation'
+import { useSettings } from '~/composables/useSettings'
 
 definePageMeta({ layout: 'auth' })
 
 const { login } = useAuth()
+const colorMode = useColorMode()
+const { logoUrl, logoBg, logoBgColor } = useSettings()
 const api = useApi()
+
+const logoContainerStyle = computed(() => {
+  if (!logoBgColor.value || logoBgColor.value === 'transparent') {
+    return {}
+  }
+  return {
+    backgroundColor: logoBgColor.value,
+    borderColor: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+  }
+})
 
 const isSubmitting = ref(false)
 const showPassword = ref(false)

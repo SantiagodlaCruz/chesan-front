@@ -35,6 +35,7 @@
             <input 
               v-model.number="form.advance_payment" 
               type="number" 
+              v-numeric.decimal
               step="0.01"
               min="0"
               class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-emerald-500 transition-all outline-none pl-8 pr-4 py-3 rounded-xl text-lg font-black text-emerald-600 dark:text-emerald-400"

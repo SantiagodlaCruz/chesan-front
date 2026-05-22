@@ -1,6 +1,6 @@
 <template>
-  <div class="space-y-1.5 w-full">
-    <label v-if="label" class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">
+  <div class="space-y-1.5 w-full group/input">
+    <label v-if="label" class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors duration-300 group-focus-within/input:text-primary dark:group-focus-within/input:text-primary">
       {{ label }}
     </label>
 
@@ -9,7 +9,7 @@
         type="button"
         @click="decrement"
         :disabled="disabled || internalValue <= min"
-        class="rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:text-primary flex items-center justify-center text-slate-400 transition-all disabled:opacity-20 disabled:cursor-not-allowed bg-white dark:bg-slate-900 shadow-sm active:scale-90"
+        class="rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:text-primary hover:shadow-md hover:shadow-primary/5 flex items-center justify-center text-slate-400 transition-all disabled:opacity-20 disabled:cursor-not-allowed bg-white dark:bg-slate-900 shadow-sm active:scale-90"
         :class="compact ? 'w-7 h-7' : 'w-9 h-9'"
       >
         <MinusIcon :class="compact ? 'w-3 h-3' : 'w-4 h-4'" />
@@ -20,7 +20,9 @@
           v-model.number="internalValue"
           type="number"
           :disabled="disabled"
-          class="w-full text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl py-2 text-sm font-black text-slate-800 dark:text-slate-100 outline-none transition-all duration-300 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 appearance-none shadow-sm"
+          @keydown="handleKeydown"
+          @input="handleInput"
+          class="w-full text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl py-2 text-sm font-black text-slate-800 dark:text-slate-100 outline-none transition-all duration-300 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 appearance-none shadow-sm focus:bg-slate-50/50 dark:focus:bg-[#0f172a]"
           :class="compact ? 'py-1 px-1' : 'py-2'"
           @blur="onBlur"
         />
@@ -30,7 +32,7 @@
         type="button"
         @click="increment"
         :disabled="disabled || (max !== undefined && internalValue >= max)"
-        class="rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:text-primary flex items-center justify-center text-slate-400 transition-all disabled:opacity-20 disabled:cursor-not-allowed bg-white dark:bg-slate-900 shadow-sm active:scale-90"
+        class="rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:text-primary hover:shadow-md hover:shadow-primary/5 flex items-center justify-center text-slate-400 transition-all disabled:opacity-20 disabled:cursor-not-allowed bg-white dark:bg-slate-900 shadow-sm active:scale-90"
         :class="compact ? 'w-7 h-7' : 'w-9 h-9'"
       >
         <PlusIcon :class="compact ? 'w-3 h-3' : 'w-4 h-4'" />
@@ -54,6 +56,7 @@
 import { computed, ref } from 'vue'
 import { PlusIcon, MinusIcon } from 'lucide-vue-next'
 import { useField } from 'vee-validate'
+import { useNumericInput } from '~/composables/useNumericInput'
 
 const props = defineProps<{
   name?: string
@@ -70,6 +73,21 @@ const emit = defineEmits(['update:modelValue'])
 
 const step = props.step ?? 1
 const min = props.min ?? 0
+
+const { onNumericKeydown, cleanNumericValue } = useNumericInput()
+
+const handleKeydown = (e: KeyboardEvent) => {
+  onNumericKeydown(e, { allowDecimal: false, allowNegative: false })
+}
+
+const handleInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const cleaned = cleanNumericValue(target.value, { allowDecimal: false })
+  if (target.value !== cleaned) {
+    target.value = cleaned
+    internalValue.value = Number(cleaned) || 0
+  }
+}
 
 // Integrate with vee-validate if name is provided
 const field = props.name
