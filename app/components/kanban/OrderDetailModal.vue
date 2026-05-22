@@ -8,7 +8,15 @@
   >
     <div v-if="card" class="space-y-8">
       <!-- Accion Superior Sutil -->
-      <div v-if="card.status !== 'Entregados'" class="flex justify-end items-center -mb-4">
+      <div v-if="card.status !== 'Entregados'" class="flex justify-end items-center -mb-4 gap-2">
+        <button 
+          v-if="card.order?.is_internal && card.status !== 'Pasado a Inventario'"
+          @click="emit('edit', card)"
+          class="flex items-center gap-2 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 hover:bg-primary/10 border border-primary/10 rounded-xl transition-all shadow-sm"
+        >
+          <PencilIcon class="w-3.5 h-3.5" />
+          Editar Pedido
+        </button>
         <button 
           @click="emit('delete', card)"
           class="flex items-center gap-2 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 border border-red-100 dark:border-red-500/30 rounded-xl transition-all shadow-sm"
@@ -95,14 +103,14 @@
 <script setup lang="ts">
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
-import { TrashIcon } from 'lucide-vue-next'
+import { TrashIcon, PencilIcon } from 'lucide-vue-next'
 
 defineProps<{
   show: boolean
   card: any
 }>()
 
-const emit = defineEmits(['update:show', 'delete'])
+const emit = defineEmits(['update:show', 'delete', 'edit'])
 
 const close = () => {
   emit('update:show', false)

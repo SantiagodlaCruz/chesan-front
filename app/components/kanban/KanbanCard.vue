@@ -1,11 +1,11 @@
 <template>
   <div
-    :draggable="card.status !== 'Entregados'"
+    :draggable="card.status !== 'Entregados' && card.status !== 'Pasado a Inventario'"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
     class="kanban-card bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/5 p-4 rounded-xl transition-all select-none group"
     :class="[
-      card.status === 'Entregados' ? 'opacity-70 grayscale-[0.5] cursor-default border-dashed' : 'cursor-grab cursor-pointer active:cursor-grabbing hover:border-primary/40 hover:shadow-md hover:shadow-primary/5'
+      (card.status === 'Entregados' || card.status === 'Pasado a Inventario') ? 'opacity-70 grayscale-[0.5] cursor-default border-dashed' : 'cursor-grab cursor-pointer active:cursor-grabbing hover:border-primary/40 hover:shadow-md hover:shadow-primary/5'
     ]"
   >
     <!-- Header: Code + Urgency -->
@@ -13,7 +13,7 @@
       <div class="flex items-center gap-2">
         <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md tracking-wide">#ORD-{{ card.order?.order_code }}</span>
         <button 
-          v-if="card.status !== 'Entregados'"
+          v-if="card.status !== 'Entregados' && card.status !== 'Pasado a Inventario'"
           @click.stop="$emit('delete', card)" 
           class="p-1 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
         >
@@ -22,6 +22,9 @@
       </div>
       <div v-if="card.status === 'Entregados'" class="flex items-center gap-1 text-[9px] font-black uppercase text-slate-400">
         <CheckIcon class="w-3 h-3" /> Entregado
+      </div>
+      <div v-else-if="card.status === 'Pasado a Inventario'" class="flex items-center gap-1 text-[9px] font-black uppercase text-cyan-600 dark:text-cyan-400">
+        <ArchiveIcon class="w-3 h-3" /> En Inventario
       </div>
     </div>
 
@@ -65,6 +68,16 @@
       </button>
     </div>
 
+    <div v-if="card.status === 'Control de Calidad' && card.order?.is_internal" class="mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
+      <button 
+        @click.stop="$emit('inventory', card)"
+        class="w-full py-2 bg-cyan-500 hover:bg-cyan-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center gap-2"
+      >
+        <ArchiveIcon class="w-3.5 h-3.5" />
+        Ingresar a Inventario
+      </button>
+    </div>
+
     <div v-if="card.status === 'Entregados'" class="mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
       <button 
         @click.stop="onPrintClick(card)"
@@ -89,7 +102,7 @@
 
       <!-- Badge de Días Restantes con Semáforo y Alerta de Retraso -->
       <div 
-        v-if="card.status !== 'Entregados'"
+        v-if="card.status !== 'Entregados' && card.status !== 'Pasado a Inventario'"
         class="flex items-center gap-1 px-2.5 py-1 rounded-lg font-black text-[10px] uppercase tracking-wider transition-all"
         :class="[
           card.daysLeft < 0 ? 'bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse' :
@@ -107,13 +120,13 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { CalendarIcon, ClockIcon, CheckCircleIcon, CheckIcon, PrinterIcon, TrashIcon, Loader2Icon } from 'lucide-vue-next'
+import { CalendarIcon, ClockIcon, CheckCircleIcon, CheckIcon, PrinterIcon, TrashIcon, Loader2Icon, ArchiveIcon } from 'lucide-vue-next'
 
 const props = defineProps({
   card: { type: Object, required: true }
 })
 
-const emit = defineEmits(['drag-start', 'drag-end', 'deliver', 'print', 'delete'])
+const emit = defineEmits(['drag-start', 'drag-end', 'deliver', 'print', 'delete', 'inventory'])
 
 const urgencyClass = computed(() => {
   const u = props.card.urgency?.toLowerCase()

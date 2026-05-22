@@ -4,7 +4,7 @@ import type { User } from '~/types'
 
 export const useAuthStore = defineStore('auth', () => {
   const api = useApi()
-  const cookieMaxAge = 60 * 60 * 24 * 7 // 7 días
+  const cookieMaxAge = 60 * 60 * 24 // 24 horas
 
   // useCookie es síncrono y compatible con SSR en Nuxt
   const token = useCookie<string | null>('auth-token', {

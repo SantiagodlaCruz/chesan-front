@@ -14,17 +14,31 @@
       </button>
 
       <!-- Logo Section -->
-      <div class="p-6 flex items-center justify-between overflow-hidden">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
-            <ShirtIcon class="text-white w-5 h-5" stroke-width="2.5" />
+      <div class="p-6 flex items-center justify-center overflow-hidden">
+        <div class="flex items-center justify-center w-full">
+          <div v-if="logoUrl" class="w-full flex items-center justify-center overflow-hidden">
+            <div 
+              class="flex items-center justify-center transition-all duration-300 overflow-hidden"
+              :class="[
+                logoBgColor === 'transparent' ? '' : 'rounded-xl shadow-sm border',
+                isCollapsed ? 'w-10 h-10 shrink-0 p-1.5' : 'w-full py-1.5 px-3'
+              ]"
+              :style="logoContainerStyle"
+            >
+              <img :src="logoUrl" alt="Logo" class="object-contain mx-auto" :class="[isCollapsed ? 'max-h-10 max-w-10' : 'max-h-24 max-w-full']" />
+            </div>
           </div>
-          <h1 
-            class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white transition-all duration-500 overflow-hidden whitespace-nowrap"
-            :class="isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[100px] opacity-100'"
-          >
-            CheSan
-          </h1>
+          <div v-else class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
+              <ShirtIcon class="text-white w-5 h-5" stroke-width="2.5" />
+            </div>
+            <h1 
+              class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white transition-all duration-500 overflow-hidden whitespace-nowrap"
+              :class="isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[100px] opacity-100'"
+            >
+              CheSan
+            </h1>
+          </div>
         </div>
       </div>
 
@@ -106,6 +120,14 @@
                 <ShieldIcon class="w-4 h-4 text-slate-400 dark:text-slate-500" />
                 Cambiar Contraseña
               </button>
+              <button 
+                v-if="auth.hasRole('super_admin')"
+                @click="showProfileMenu = false; showSystemSettingsModal = true" 
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1e293b] hover:text-slate-900 dark:hover:text-white transition-colors text-left border-t border-border-light dark:border-border-dark mt-1 pt-2.5"
+              >
+                <SettingsIcon class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                Configuración
+              </button>
             </div>
           </Transition>
 
@@ -149,6 +171,7 @@
     <Teleport to="body">
       <ChangePasswordModal v-model="showPasswordModal" />
       <UserProfileModal v-model="showProfileModal" />
+      <SystemSettingsModal v-model="showSystemSettingsModal" />
       <Toast />
     </Teleport>
   </div>
@@ -174,14 +197,29 @@ import {
 } from 'lucide-vue-next'
 import ChangePasswordModal from '~/components/ChangePasswordModal.vue'
 import UserProfileModal from '~/components/UserProfileModal.vue'
+import SystemSettingsModal from '~/components/SystemSettingsModal.vue'
+import { useSettings } from '~/composables/useSettings'
 
 const auth = useAuth()
 const user = computed(() => auth.user)
+const colorMode = useColorMode()
+const { logoUrl, logoBg, logoBgColor } = useSettings()
 
 const isCollapsed = useState('sidebar-collapsed', () => false)
 const showProfileMenu = ref(false)
 const showPasswordModal = ref(false)
 const showProfileModal = ref(false)
+const showSystemSettingsModal = ref(false)
+
+const logoContainerStyle = computed(() => {
+  if (!logoBgColor.value || logoBgColor.value === 'transparent') {
+    return {}
+  }
+  return {
+    backgroundColor: logoBgColor.value,
+    borderColor: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+  }
+})
 
 const navItems = [
   { label: 'Inicio', path: '/', icon: LayoutDashboardIcon, permission: 'reportes.ver' },
