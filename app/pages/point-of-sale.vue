@@ -266,7 +266,7 @@
           </div>
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1.5 ml-1">Fecha de liquidación *</label>
-            <input v-model="layawayDueDate" type="date" :min="todayDate" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors" />
+            <input v-model="layawayDueDate" type="date" :min="todayDate" class="w-full bg-white dark:bg-card-dark border border-border-light dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors dark:[color-scheme:dark]" />
           </div>
         </div>
       </div>

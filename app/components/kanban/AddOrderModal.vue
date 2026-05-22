@@ -49,7 +49,7 @@
 
       <!-- Info General -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5 pb-6 border-b border-dashed border-slate-200 dark:border-slate-800">
-        <div v-if="!form.is_internal" class="flex flex-col gap-1.5 md:col-span-2">
+        <div class="flex flex-col gap-1.5 md:col-span-2">
           <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Cliente</label>
           <Select 
             v-model="form.client_id" 
@@ -61,12 +61,12 @@
             :loading="catalogs.loading"
           />
         </div>
-        <div class="flex flex-col gap-1.5" :class="form.is_internal ? 'md:col-span-3' : 'md:col-span-1'">
+        <div class="flex flex-col gap-1.5 md:col-span-1">
           <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors">Fecha de entrega</label>
           <input 
             v-model="form.delivery_date" 
             type="date" 
-            class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100"
+            class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 dark:[color-scheme:dark]"
             required
           />
         </div>
@@ -74,6 +74,43 @@
 
       <!-- Items del Pedido -->
       <div class="space-y-4">
+        <!-- Selector Maestro de Inventario (Solo Pedidos Internos) -->
+        <div v-if="form.is_internal" class="p-5 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/10 space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black uppercase tracking-wider text-primary">Buscar e importar de Inventario</h4>
+            <span class="text-[10px] text-slate-400 font-medium">Seleccione una prenda existente del inventario para vincularla al pedido</span>
+          </div>
+          <div class="flex flex-col md:flex-row gap-4 items-end">
+            <div class="flex-1 min-w-0">
+              <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Producto en stock</label>
+              <Select 
+                v-model="selectedStockProductId" 
+                :options="stockProductOptions" 
+                placeholder="Buscar por nombre, talla, cliente..." 
+                searchable
+                :loading="loadingStockProducts"
+              />
+            </div>
+            <div class="w-24 shrink-0">
+              <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Cantidad</label>
+              <input 
+                v-model.number="tempQuantity" 
+                type="number" 
+                min="1" 
+                class="w-full bg-white dark:bg-[#1e293b] border-2 border-slate-200/60 dark:border-transparent focus:border-primary/50 transition-all outline-none px-3 py-2.5 rounded-xl text-sm font-black text-center text-slate-800 dark:text-slate-200"
+              />
+            </div>
+            <button 
+              type="button" 
+              @click="addStockProductItem" 
+              :disabled="!selectedStockProductId"
+              class="h-[46px] px-6 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+            >
+              Agregar
+            </button>
+          </div>
+        </div>
+
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-black uppercase tracking-widest text-slate-400">
             {{ form.type === 'uniform' ? 'Productos del Pedido' : 'Detalles de Bordado' }}
@@ -88,13 +125,31 @@
           <div v-for="(item, idx) in form.items" :key="idx" class="relative group bg-white dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/10 p-5 transition-all hover:shadow-xl hover:shadow-primary/5">
             <!-- First Row: Product and Color -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-              <div class="md:col-span-12 flex flex-col gap-1.5">
-                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Producto / Concepto</label>
+              <div :class="[form.is_internal && !item.stock_product_id ? 'md:col-span-8' : 'md:col-span-12', 'flex flex-col gap-1.5']">
+                <div class="flex items-center justify-between">
+                  <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Producto / Concepto</label>
+                  <span v-if="item.stock_product_id" class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-md text-[9px] font-black uppercase tracking-wider">
+                    Vinculado a Inventario
+                  </span>
+                </div>
                 <input 
                   v-model="item.product_name" 
                   :placeholder="form.type === 'uniform' ? 'Ej. Playera Polo' : 'Ej. Bordado espalda chamarra'"
-                  class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-200"
+                  class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-200 disabled:opacity-75 disabled:cursor-not-allowed"
+                  :disabled="!!item.stock_product_id"
                   required
+                />
+              </div>
+              <div v-if="form.is_internal && !item.stock_product_id" class="md:col-span-4 flex flex-col gap-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoría</label>
+                <Select 
+                  v-model="item.category_id" 
+                  :options="catalogs.categories" 
+                  placeholder="Seleccionar..." 
+                  searchable 
+                  compact
+                  required
+                  menu-width="mt-2 w-80 md:w-[450px] rounded-lg right-0 top-full"
                 />
               </div>
             </div>
@@ -106,7 +161,8 @@
                 <input 
                   v-model="item.size" 
                   placeholder="Ej. 10 o M"
-                  class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm text-center font-bold text-slate-700 dark:text-slate-300"
+                  class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none px-4 py-2 rounded-xl text-sm text-center font-bold text-slate-700 dark:text-slate-300 disabled:opacity-75 disabled:cursor-not-allowed"
+                  :disabled="!!item.stock_product_id"
                 />
               </div>
 
@@ -131,7 +187,8 @@
                     type="number" 
                     v-numeric.decimal
                     step="0.01"
-                    class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-2 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 text-right"
+                    class="w-full bg-slate-50 dark:bg-white/5 border-2 border-transparent focus:border-primary transition-all outline-none pl-7 pr-4 py-2 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 text-right disabled:opacity-75 disabled:cursor-not-allowed"
+                    :disabled="!!item.stock_product_id"
                     required
                   />
                 </div>
@@ -270,6 +327,8 @@ interface OrderItem {
   unit_price: number
   extras: OrderExtra[]
   observations: string
+  stock_product_id?: number | null
+  category_id?: number | null
 }
 
 const form = reactive({
@@ -280,7 +339,7 @@ const form = reactive({
   advance_payment: 0,
   notes: '',
   items: [
-    { product_name: '', size: '', quantity: 1, unit_price: 0, extras: [], observations: '' }
+    { product_name: '', size: '', quantity: 1, unit_price: 0, extras: [], observations: '', stock_product_id: null, category_id: null }
   ] as OrderItem[]
 })
 
@@ -290,6 +349,70 @@ const subtotal = computed(() => {
     return acc + (item.quantity * (item.unit_price + extrasCost))
   }, 0)
 })
+
+// Variables para buscar prendas en el inventario
+const stockProducts = ref<any[]>([])
+const loadingStockProducts = ref(false)
+const selectedStockProductId = ref('')
+const tempQuantity = ref(1)
+
+const stockProductOptions = computed(() => {
+  return stockProducts.value.map((p: any) => {
+    const sizeStr = p.size?.name ? `Talla: ${p.size.name}` : 'Sin Talla'
+    const instStr = p.institution?.name ? `Cliente: ${p.institution.name}` : 'CheSan / General'
+    const priceStr = `$${Number(p.sale_price).toFixed(2)}`
+    const qtyStr = `Stock: ${p.quantity}`
+    return {
+      label: `${p.name} (${sizeStr}) | ${instStr} | ${priceStr} | ${qtyStr}`,
+      value: p.id
+    }
+  })
+})
+
+const fetchStockProducts = async () => {
+  if (loadingStockProducts.value) return
+  try {
+    loadingStockProducts.value = true
+    const api = useApi()
+    const res = await api.get('/api/stock-products', {
+      params: {
+        per_page: 500,
+        sort_by: 'name',
+        sort_direction: 'asc'
+      }
+    })
+    stockProducts.value = res.data?.data || res.data || []
+  } catch (err) {
+    console.error('Error fetching stock products:', err)
+  } finally {
+    loadingStockProducts.value = false
+  }
+}
+
+const addStockProductItem = () => {
+  const prod = stockProducts.value.find(p => p.id == selectedStockProductId.value)
+  if (!prod) return
+  
+  // Si solo hay un ítem vacío inicial, lo removemos
+  if (form.items.length === 1 && !form.items[0].product_name && !form.items[0].stock_product_id) {
+    form.items.splice(0, 1)
+  }
+
+  form.items.push({
+    product_name: prod.name,
+    size: prod.size?.name || '',
+    quantity: Number(tempQuantity.value) || 1,
+    unit_price: Number(prod.sale_price) || 0,
+    extras: [],
+    observations: '',
+    stock_product_id: prod.id,
+    category_id: prod.category_id || null
+  })
+
+  selectedStockProductId.value = ''
+  tempQuantity.value = 1
+  toast.success('Producto de inventario agregado al pedido')
+}
 
 // Extras logic
 const showExtrasModal = ref(false)
@@ -325,8 +448,22 @@ const handleCreateClient = async (name: string) => {
   }
 }
 
+const getDefaultCategoryId = () => {
+  const generalCat = catalogs.categories.find((c: any) => c.label.toLowerCase() === 'general')
+  return generalCat ? generalCat.value : null
+}
+
 const addItem = () => {
-  form.items.push({ product_name: '', size: '', quantity: 1, unit_price: 0, extras: [], observations: '' })
+  form.items.push({
+    product_name: '',
+    size: '',
+    quantity: 1,
+    unit_price: 0,
+    extras: [],
+    observations: '',
+    stock_product_id: null,
+    category_id: form.is_internal ? getDefaultCategoryId() : null
+  })
 }
 
 const removeItem = (idx: number) => {
@@ -356,12 +493,14 @@ const onSubmit = async () => {
         quantity: Number(item.quantity) || 0,
         unit_price: Number(item.unit_price) || 0,
         extras: item.extras || [],
-        observations: item.observations || ''
+        observations: item.observations || '',
+        stock_product_id: item.stock_product_id || null,
+        category_id: item.category_id || null
       }
     })
 
     const payload = {
-      client_id: form.is_internal ? null : form.client_id,
+      client_id: form.client_id || null,
       is_internal: form.is_internal,
       type: form.type,
       delivery_date: form.delivery_date,
@@ -396,7 +535,7 @@ const resetForm = () => {
   form.delivery_date = ''
   form.advance_payment = 0
   form.notes = ''
-  form.items = [{ product_name: '', size: '', quantity: 1, unit_price: 0, extras: [], observations: '' }]
+  form.items = [{ product_name: '', size: '', quantity: 1, unit_price: 0, extras: [], observations: '', stock_product_id: null, category_id: null }]
 }
 
 watch(() => props.show, (val) => {
@@ -415,8 +554,13 @@ watch(() => props.show, (val) => {
         quantity: Number(item.quantity) || 1,
         unit_price: Number(item.unit_price) || 0,
         extras: item.extras || [],
-        observations: item.observations || ''
+        observations: item.observations || '',
+        stock_product_id: item.stock_product_id || null,
+        category_id: item.category_id || null
       }))
+      if (form.is_internal) {
+        fetchStockProducts()
+      }
     } else {
       resetForm()
     }
@@ -425,8 +569,35 @@ watch(() => props.show, (val) => {
 
 watch(() => form.is_internal, (val) => {
   if (val) {
-    form.client_id = ''
     form.advance_payment = 0
+    fetchStockProducts()
+    const generalCat = catalogs.categories.find((c: any) => c.label.toLowerCase() === 'general')
+    if (generalCat) {
+      form.items.forEach(item => {
+        if (!item.stock_product_id && !item.category_id) {
+          item.category_id = generalCat.value
+        }
+      })
+    }
+  } else {
+    // Limpiar vinculaciones de inventario si cambia a pedido de cliente
+    form.items.forEach(item => {
+      item.stock_product_id = null
+      item.category_id = null
+    })
   }
 })
+
+watch(() => catalogs.categories, (cats) => {
+  if (cats && cats.length) {
+    const generalCat = cats.find((c: any) => c.label.toLowerCase() === 'general')
+    if (generalCat) {
+      form.items.forEach(item => {
+        if (form.is_internal && !item.stock_product_id && !item.category_id) {
+          item.category_id = generalCat.value
+        }
+      })
+    }
+  }
+}, { deep: true })
 </script>

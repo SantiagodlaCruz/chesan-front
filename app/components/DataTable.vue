@@ -8,11 +8,14 @@
               v-for="col in columns" 
               :key="col.key" 
               class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider transition-all whitespace-nowrap"
-              :class="{
-                'text-left': col.align === 'left' || !col.align,
-                'text-right': col.align === 'right',
-                'text-center': col.align === 'center'
-              }"
+              :class="[
+                {
+                  'text-left': col.align === 'left' || !col.align,
+                  'text-right': col.align === 'right',
+                  'text-center': col.align === 'center'
+                },
+                col.class || ''
+              ]"
             >
               {{ col.label }}
             </th>
@@ -51,11 +54,14 @@
                 v-for="col in columns" 
                 :key="col.key" 
                 class="px-4 py-2.5 text-sm transition-all"
-                :class="{
-                  'text-left': col.align === 'left' || !col.align,
-                  'text-right': col.align === 'right',
-                  'text-center': col.align === 'center'
-                }"
+                :class="[
+                  {
+                    'text-left': col.align === 'left' || !col.align,
+                    'text-right': col.align === 'right',
+                    'text-center': col.align === 'center'
+                  },
+                  col.class || ''
+                ]"
               >
                 <!-- Custom Slot for the column -->
                 <slot :name="`cell-${col.key}`" :item="item" :value="item[col.key]">
@@ -166,6 +172,7 @@ interface Column {
   key: string
   label: string
   align?: 'left' | 'right' | 'center'
+  class?: string
 }
 
 const props = defineProps<{

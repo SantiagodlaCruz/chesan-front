@@ -25,7 +25,7 @@
 
           <!-- Folio and Date -->
           <div class="space-y-1">
-            <p class="text-sm font-bold">ORDEN: <span class="text-primary">#{{ order.order_code }}</span></p>
+            <p class="text-sm font-bold">ORDEN: <span class="text-primary">{{ order.order_code }}</span></p>
             <p class="text-[10px] text-slate-500 uppercase">FECHA: {{ new Date(order.order_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) }}</p>
           </div>
         </div>
