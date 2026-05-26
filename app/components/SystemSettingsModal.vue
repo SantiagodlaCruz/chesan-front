@@ -25,8 +25,28 @@
           <p class="text-sm text-slate-500 dark:text-slate-400">Personaliza la identidad visual y logotipos de la plataforma.</p>
         </div>
 
+        <!-- Tabs Switcher -->
+        <div class="px-8 border-b border-border-light dark:border-border-dark flex gap-4 bg-slate-50/50 dark:bg-slate-900/10 shrink-0">
+          <button 
+            type="button"
+            @click="activeTab = 'login'"
+            class="py-3.5 text-sm font-semibold border-b-2 transition-all relative focus:outline-none"
+            :class="activeTab === 'login' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+          >
+            Logo de Login
+          </button>
+          <button 
+            type="button"
+            @click="activeTab = 'menu'"
+            class="py-3.5 text-sm font-semibold border-b-2 transition-all relative focus:outline-none"
+            :class="activeTab === 'menu' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+          >
+            Logo de Menú
+          </button>
+        </div>
+
         <!-- Content Area (Scrollable) -->
-        <div class="flex-1 overflow-y-auto px-8 pb-8 space-y-6 custom-scrollbar">
+        <div class="flex-1 overflow-y-auto px-8 pb-8 pt-6 space-y-6 custom-scrollbar">
           
           <!-- Banners -->
           <Transition
@@ -46,7 +66,9 @@
 
           <!-- Section: Logo Upload -->
           <div class="space-y-3">
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Logotipo de la Marca</label>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              {{ activeTab === 'login' ? 'Logotipo de Pantalla de Login' : 'Logotipo de Menú Lateral' }}
+            </label>
             
             <!-- Real-time Preview with local theme toggler -->
             <div class="border border-border-light dark:border-border-dark rounded-2xl overflow-hidden shadow-inner bg-slate-50 dark:bg-slate-950/20">
@@ -93,7 +115,7 @@
                 </div>
 
                 <div 
-                  v-if="selectedFile" 
+                  v-if="selectedFiles[activeTab]" 
                   class="absolute top-2 right-2 px-2.5 py-0.5 rounded-full bg-amber-500 text-[10px] font-bold text-white tracking-wide shadow"
                 >
                   Por subir
@@ -118,11 +140,11 @@
                 @click="fileInput.click()"
               >
                 <UploadIcon class="w-4 h-4" />
-                {{ selectedFile ? 'Cambiar Imagen' : 'Seleccionar Imagen' }}
+                {{ selectedFiles[activeTab] ? 'Cambiar Imagen' : 'Seleccionar Imagen' }}
               </BaseButton>
               
               <BaseButton 
-                v-if="logoUrl && !logoDeleted"
+                v-if="currentLogoUrl && !logosDeleted[activeTab]"
                 type="button" 
                 variant="danger" 
                 class="flex-1 text-xs py-2.5 flex items-center justify-center gap-1.5"
@@ -136,12 +158,12 @@
             <div class="flex items-center justify-between text-[10px] text-slate-500 px-1">
               <span>Formatos sugeridos: PNG, SVG (máx 2MB)</span>
               <button 
-                v-if="selectedFile || logoDeleted" 
+                v-if="selectedFiles[activeTab] || logosDeleted[activeTab]" 
                 type="button" 
                 @click="cancelSelectionOrDeletion"
                 class="text-accent-red hover:underline font-semibold"
               >
-                {{ selectedFile ? 'Descartar selección' : 'Restaurar logo original' }}
+                {{ selectedFiles[activeTab] ? 'Descartar selección' : 'Restaurar logo original' }}
               </button>
             </div>
           </div>
@@ -153,7 +175,7 @@
                 Fondo del Logotipo
               </label>
               <button 
-                v-if="logoUrl || selectedFile"
+                v-if="currentLogoUrl || selectedFiles[activeTab]"
                 type="button"
                 @click="triggerAutoAnalysis"
                 class="text-xs text-primary hover:text-primary-dark font-semibold flex items-center gap-1"
@@ -168,10 +190,10 @@
             <div class="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                @click="selectedBgType = 'transparent'"
+                @click="selectedBgTypes[activeTab] = 'transparent'"
                 class="flex flex-col items-center gap-2 p-3 rounded-xl border text-[12px] font-semibold transition-all duration-200"
                 :class="[
-                  selectedBgType === 'transparent' 
+                  selectedBgTypes[activeTab] === 'transparent' 
                     ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20' 
                     : 'border-border-light dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-400'
                 ]"
@@ -182,17 +204,17 @@
               
               <button
                 type="button"
-                @click="selectedBgType = 'color'"
+                @click="selectedBgTypes[activeTab] = 'color'"
                 class="flex flex-col items-center gap-2 p-3 rounded-xl border text-[12px] font-semibold transition-all duration-200"
                 :class="[
-                  selectedBgType === 'color' 
+                  selectedBgTypes[activeTab] === 'color' 
                     ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20' 
                     : 'border-border-light dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-400'
                 ]"
               >
                 <div class="w-full h-8 rounded border border-slate-200 dark:border-slate-800 overflow-hidden flex">
-                  <div class="w-1/2 h-full" :style="{ backgroundColor: customColors.light }"></div>
-                  <div class="w-1/2 h-full" :style="{ backgroundColor: customColors.dark }"></div>
+                  <div class="w-1/2 h-full" :style="{ backgroundColor: customColors[activeTab].light }"></div>
+                  <div class="w-1/2 h-full" :style="{ backgroundColor: customColors[activeTab].dark }"></div>
                 </div>
                 Color Personalizado
               </button>
@@ -208,7 +230,7 @@
               leave-to-class="opacity-0 -translate-y-2"
             >
               <div 
-                v-if="selectedBgType === 'color'" 
+                v-if="selectedBgTypes[activeTab] === 'color'" 
                 class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-border-light dark:border-border-dark space-y-4"
               >
                 <span class="block text-xs font-semibold text-slate-500 dark:text-slate-400">Ajusta los fondos para cada tema del sistema:</span>
@@ -221,13 +243,13 @@
                       <div class="relative w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden shrink-0 shadow-sm">
                         <input 
                           type="color" 
-                          v-model="customColors.light" 
+                          v-model="customColors[activeTab].light" 
                           class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150" 
                         />
                       </div>
                       <input 
                         type="text" 
-                        v-model="customColors.light" 
+                        v-model="customColors[activeTab].light" 
                         placeholder="#ffffff"
                         class="w-full text-xs font-mono uppercase bg-white dark:bg-card-dark border border-border-light dark:border-border-dark px-2.5 py-1.5 rounded-lg focus:border-primary outline-none text-slate-800 dark:text-slate-200"
                       />
@@ -241,13 +263,13 @@
                       <div class="relative w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden shrink-0 shadow-sm">
                         <input 
                           type="color" 
-                          v-model="customColors.dark" 
+                          v-model="customColors[activeTab].dark" 
                           class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150" 
                         />
                       </div>
                       <input 
                         type="text" 
-                        v-model="customColors.dark" 
+                        v-model="customColors[activeTab].dark" 
                         placeholder="#1e293b"
                         class="w-full text-xs font-mono uppercase bg-white dark:bg-card-dark border border-border-light dark:border-border-dark px-2.5 py-1.5 rounded-lg focus:border-primary outline-none text-slate-800 dark:text-slate-200"
                       />
@@ -328,8 +350,16 @@ const emit = defineEmits(['update:modelValue'])
 
 const api = useApi()
 const colorMode = useColorMode()
-const { logoUrl, logoBg, updateLogoBg, deleteLogo } = useSettings()
+const { 
+  loginLogoUrl, 
+  loginLogoBg, 
+  menuLogoUrl, 
+  menuLogoBg, 
+  updateLogoBg, 
+  deleteLogo 
+} = useSettings()
 
+const activeTab = ref('login') // 'login' or 'menu'
 const previewTheme = ref('light')
 const saveLoading = ref(false)
 const analysisLoading = ref(false)
@@ -337,26 +367,49 @@ const successMsg = ref('')
 const errorMsg = ref('')
 
 const fileInput = ref(null)
-const selectedFile = ref(null)
-const localPreviewUrl = ref(null)
-const logoDeleted = ref(false)
 const showDeleteConfirm = ref(false)
 
-const selectedBgType = ref('transparent')
+// Tab-specific states
+const selectedFiles = ref({
+  login: null,
+  menu: null
+})
+
+const localPreviewUrls = ref({
+  login: null,
+  menu: null
+})
+
+const logosDeleted = ref({
+  login: false,
+  menu: false
+})
+
+const selectedBgTypes = ref({
+  login: 'transparent',
+  menu: 'transparent'
+})
+
 const customColors = ref({
-  light: '#ffffff',
-  dark: '#1e293b'
+  login: { light: '#ffffff', dark: '#1e293b' },
+  menu: { light: '#ffffff', dark: '#1e293b' }
+})
+
+const currentLogoUrl = computed(() => {
+  return activeTab.value === 'login' ? loginLogoUrl.value : menuLogoUrl.value
 })
 
 const logoToShow = computed(() => {
-  if (localPreviewUrl.value) return localPreviewUrl.value
-  if (logoDeleted.value) return null
-  return logoUrl.value
+  const tab = activeTab.value
+  if (localPreviewUrls.value[tab]) return localPreviewUrls.value[tab]
+  if (logosDeleted.value[tab]) return null
+  return tab === 'login' ? loginLogoUrl.value : menuLogoUrl.value
 })
 
 // Dynamic background styling for preview box
 const previewContainerStyle = computed(() => {
-  if (selectedBgType.value === 'transparent') {
+  const tab = activeTab.value
+  if (selectedBgTypes.value[tab] === 'transparent') {
     return {
       width: '100%',
       height: '100%',
@@ -366,7 +419,7 @@ const previewContainerStyle = computed(() => {
     }
   }
   
-  const activeColor = previewTheme.value === 'dark' ? customColors.value.dark : customColors.value.light
+  const activeColor = previewTheme.value === 'dark' ? customColors.value[tab].dark : customColors.value[tab].light
   
   return {
     backgroundColor: activeColor,
@@ -387,37 +440,51 @@ const previewContainerStyle = computed(() => {
 const loadSettingsFromStore = () => {
   previewTheme.value = colorMode.value || 'light'
   
-  const bg = logoBg.value
-  if (!bg || bg === 'transparent') {
-    selectedBgType.value = 'transparent'
-    customColors.value = {
-      light: '#ffffff',
-      dark: '#1e293b'
-    }
-  } else if (bg.startsWith('{')) {
+  // Load Login settings
+  const loginBgVal = loginLogoBg.value
+  if (!loginBgVal || loginBgVal === 'transparent') {
+    selectedBgTypes.value.login = 'transparent'
+    customColors.value.login = { light: '#ffffff', dark: '#1e293b' }
+  } else if (loginBgVal.startsWith('{')) {
     try {
-      const parsed = JSON.parse(bg)
-      selectedBgType.value = 'color'
-      customColors.value = {
+      const parsed = JSON.parse(loginBgVal)
+      selectedBgTypes.value.login = 'color'
+      customColors.value.login = {
         light: parsed.light || '#ffffff',
         dark: parsed.dark || '#1e293b'
       }
     } catch (e) {
-      console.error('Error loading settings json:', e)
+      console.error('Error loading login settings json:', e)
     }
   } else {
-    // Legacy support
-    selectedBgType.value = 'color'
-    if (bg === 'light') {
-      customColors.value = { light: '#ffffff', dark: '#1e293b' }
-    } else if (bg === 'dark') {
-      customColors.value = { light: '#ffffff', dark: '#1e293b' }
-    } else {
-      // Raw hex
-      customColors.value = {
-        light: bg,
-        dark: '#1e293b'
+    selectedBgTypes.value.login = 'color'
+    customColors.value.login = {
+      light: loginBgVal,
+      dark: '#1e293b'
+    }
+  }
+
+  // Load Menu settings
+  const menuBgVal = menuLogoBg.value
+  if (!menuBgVal || menuBgVal === 'transparent') {
+    selectedBgTypes.value.menu = 'transparent'
+    customColors.value.menu = { light: '#ffffff', dark: '#1e293b' }
+  } else if (menuBgVal.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(menuBgVal)
+      selectedBgTypes.value.menu = 'color'
+      customColors.value.menu = {
+        light: parsed.light || '#ffffff',
+        dark: parsed.dark || '#1e293b'
       }
+    } catch (e) {
+      console.error('Error loading menu settings json:', e)
+    }
+  } else {
+    selectedBgTypes.value.menu = 'color'
+    customColors.value.menu = {
+      light: menuBgVal,
+      dark: '#1e293b'
     }
   }
 }
@@ -428,10 +495,18 @@ watch(() => props.modelValue, (newVal) => {
     loadSettingsFromStore()
     successMsg.value = ''
     errorMsg.value = ''
-    selectedFile.value = null
-    localPreviewUrl.value = null
-    logoDeleted.value = false
+    
+    selectedFiles.value = { login: null, menu: null }
+    logosDeleted.value = { login: false, menu: false }
     showDeleteConfirm.value = false
+    
+    if (localPreviewUrls.value.login) {
+      URL.revokeObjectURL(localPreviewUrls.value.login)
+    }
+    if (localPreviewUrls.value.menu) {
+      URL.revokeObjectURL(localPreviewUrls.value.menu)
+    }
+    localPreviewUrls.value = { login: null, menu: null }
   }
 })
 
@@ -442,13 +517,16 @@ onMounted(() => {
 const close = () => {
   if (!saveLoading.value) {
     emit('update:modelValue', false)
-    selectedFile.value = null
-    logoDeleted.value = false
+    selectedFiles.value = { login: null, menu: null }
+    logosDeleted.value = { login: false, menu: false }
     showDeleteConfirm.value = false
-    if (localPreviewUrl.value) {
-      URL.revokeObjectURL(localPreviewUrl.value)
-      localPreviewUrl.value = null
+    if (localPreviewUrls.value.login) {
+      URL.revokeObjectURL(localPreviewUrls.value.login)
     }
+    if (localPreviewUrls.value.menu) {
+      URL.revokeObjectURL(localPreviewUrls.value.menu)
+    }
+    localPreviewUrls.value = { login: null, menu: null }
   }
 }
 
@@ -578,21 +656,22 @@ const handleLogoChange = async (e) => {
   const files = e.target.files
   if (files && files.length > 0) {
     const file = files[0]
-    selectedFile.value = file
-    logoDeleted.value = false
+    const tab = activeTab.value
+    selectedFiles.value[tab] = file
+    logosDeleted.value[tab] = false
     
-    if (localPreviewUrl.value) {
-      URL.revokeObjectURL(localPreviewUrl.value)
+    if (localPreviewUrls.value[tab]) {
+      URL.revokeObjectURL(localPreviewUrls.value[tab])
     }
-    localPreviewUrl.value = URL.createObjectURL(file)
-    successMsg.value = 'Nueva imagen de logotipo seleccionada.'
+    localPreviewUrls.value[tab] = URL.createObjectURL(file)
+    successMsg.value = `Nueva imagen para el logotipo del ${tab === 'login' ? 'Login' : 'Menú'} seleccionada.`
     
     // Auto-analyze selected file
     try {
       analysisLoading.value = true
       const colors = await analyzeLogoColors(file)
-      customColors.value = colors
-      selectedBgType.value = 'color'
+      customColors.value[tab] = colors
+      selectedBgTypes.value[tab] = 'color'
       successMsg.value = 'Logotipo seleccionado y analizado. Se sugieren colores de fondo adaptativos.'
     } catch (e) {
       console.error('Error analyzing local file:', e)
@@ -603,7 +682,8 @@ const handleLogoChange = async (e) => {
 }
 
 const triggerAutoAnalysis = async () => {
-  const source = selectedFile.value || (logoDeleted.value ? null : logoUrl.value)
+  const tab = activeTab.value
+  const source = selectedFiles.value[tab] || (logosDeleted.value[tab] ? null : (tab === 'login' ? loginLogoUrl.value : menuLogoUrl.value))
   if (!source) return
 
   try {
@@ -612,8 +692,8 @@ const triggerAutoAnalysis = async () => {
     successMsg.value = ''
     
     const colors = await analyzeLogoColors(source)
-    customColors.value = colors
-    selectedBgType.value = 'color'
+    customColors.value[tab] = colors
+    selectedBgTypes.value[tab] = 'color'
     successMsg.value = 'Colores óptimos autogenerados e implementados con éxito en los selectores.'
   } catch (e) {
     console.error('Error in manual analysis:', e)
@@ -624,18 +704,19 @@ const triggerAutoAnalysis = async () => {
 }
 
 const cancelSelectionOrDeletion = () => {
-  if (selectedFile.value) {
-    selectedFile.value = null
-    if (localPreviewUrl.value) {
-      URL.revokeObjectURL(localPreviewUrl.value)
-      localPreviewUrl.value = null
+  const tab = activeTab.value
+  if (selectedFiles.value[tab]) {
+    selectedFiles.value[tab] = null
+    if (localPreviewUrls.value[tab]) {
+      URL.revokeObjectURL(localPreviewUrls.value[tab])
+      localPreviewUrls.value[tab] = null
     }
     if (fileInput.value) {
       fileInput.value.value = ''
     }
   }
-  if (logoDeleted.value) {
-    logoDeleted.value = false
+  if (logosDeleted.value[tab]) {
+    logosDeleted.value[tab] = false
     loadSettingsFromStore()
   }
 }
@@ -646,17 +727,18 @@ const markLogoAsDeleted = () => {
 
 const executeMarkLogoAsDeleted = () => {
   showDeleteConfirm.value = false
-  logoDeleted.value = true
-  selectedFile.value = null
-  if (localPreviewUrl.value) {
-    URL.revokeObjectURL(localPreviewUrl.value)
-    localPreviewUrl.value = null
+  const tab = activeTab.value
+  logosDeleted.value[tab] = true
+  selectedFiles.value[tab] = null
+  if (localPreviewUrls.value[tab]) {
+    URL.revokeObjectURL(localPreviewUrls.value[tab])
+    localPreviewUrls.value[tab] = null
   }
   if (fileInput.value) {
     fileInput.value.value = ''
   }
-  selectedBgType.value = 'transparent'
-  customColors.value = {
+  selectedBgTypes.value[tab] = 'transparent'
+  customColors.value[tab] = {
     light: '#ffffff',
     dark: '#1e293b'
   }
@@ -668,55 +750,61 @@ const saveSettings = async () => {
   successMsg.value = ''
 
   try {
-    let savedSuccessfully = false
-
-    if (logoDeleted.value) {
-      const ok = await deleteLogo()
-      if (!ok) {
-        throw new Error('No se pudo eliminar el logotipo del servidor.')
-      }
-      savedSuccessfully = true
-    } else {
-      if (selectedFile.value) {
-        const formData = new FormData()
-        formData.append('logo', selectedFile.value)
-        const res = await api.post('/api/settings/logo', formData)
-        logoUrl.value = res.data?.logo_url
-      }
-      
-      let logoBgSettingValue = 'transparent'
-      if (selectedBgType.value === 'color') {
-        const hexRegex = /^#([A-Fa-f0-9]{6})$/
-        if (!hexRegex.test(customColors.value.light) || !hexRegex.test(customColors.value.dark)) {
-          throw new Error('Los colores deben ser códigos hexadecimales de 6 dígitos válidos (ej. #FFFFFF).')
+    const tabs = ['login', 'menu']
+    for (const tab of tabs) {
+      if (logosDeleted.value[tab]) {
+        const ok = await deleteLogo(tab)
+        if (!ok) {
+          throw new Error(`No se pudo eliminar el logotipo de ${tab === 'login' ? 'Login' : 'Menú'} del servidor.`)
         }
-        logoBgSettingValue = JSON.stringify({
-          light: customColors.value.light.toLowerCase(),
-          dark: customColors.value.dark.toLowerCase()
-        })
-      }
+      } else {
+        if (selectedFiles.value[tab]) {
+          const formData = new FormData()
+          formData.append('logo', selectedFiles.value[tab])
+          formData.append('type', tab)
+          const res = await api.post('/api/settings/logo', formData)
+          if (tab === 'login') {
+            loginLogoUrl.value = res.data?.logo_url
+          } else {
+            menuLogoUrl.value = res.data?.logo_url
+          }
+        }
+        
+        let logoBgSettingValue = 'transparent'
+        if (selectedBgTypes.value[tab] === 'color') {
+          const hexRegex = /^#([A-Fa-f0-9]{6})$/
+          if (!hexRegex.test(customColors.value[tab].light) || !hexRegex.test(customColors.value[tab].dark)) {
+            throw new Error('Los colores deben ser códigos hexadecimales de 6 dígitos válidos (ej. #FFFFFF).')
+          }
+          logoBgSettingValue = JSON.stringify({
+            light: customColors.value[tab].light.toLowerCase(),
+            dark: customColors.value[tab].dark.toLowerCase()
+          })
+        }
 
-      const ok = await updateLogoBg(logoBgSettingValue)
-      if (!ok) {
-        throw new Error('No se pudo guardar el fondo del logotipo.')
+        const ok = await updateLogoBg(logoBgSettingValue, tab)
+        if (!ok) {
+          throw new Error(`No se pudo guardar el fondo del logotipo de ${tab === 'login' ? 'Login' : 'Menú'}.`)
+        }
       }
-      savedSuccessfully = true
     }
 
-    if (savedSuccessfully) {
-      successMsg.value = 'Configuración guardada exitosamente.'
-      
-      selectedFile.value = null
-      if (localPreviewUrl.value) {
-        URL.revokeObjectURL(localPreviewUrl.value)
-        localPreviewUrl.value = null
-      }
-      logoDeleted.value = false
-      
-      setTimeout(() => {
-        close()
-      }, 1500)
+    successMsg.value = 'Configuración guardada exitosamente.'
+    
+    selectedFiles.value = { login: null, menu: null }
+    if (localPreviewUrls.value.login) {
+      URL.revokeObjectURL(localPreviewUrls.value.login)
+      localPreviewUrls.value.login = null
     }
+    if (localPreviewUrls.value.menu) {
+      URL.revokeObjectURL(localPreviewUrls.value.menu)
+      localPreviewUrls.value.menu = null
+    }
+    logosDeleted.value = { login: false, menu: false }
+    
+    setTimeout(() => {
+      close()
+    }, 1500)
   } catch (e) {
     console.error('Error saving settings:', e)
     errorMsg.value = e.data?.message || e.message || 'Error al guardar la configuración.'

@@ -16,16 +16,16 @@
       <!-- Logo Section -->
       <div class="p-6 flex items-center justify-center overflow-hidden">
         <div class="flex items-center justify-center w-full">
-          <div v-if="logoUrl" class="w-full flex items-center justify-center overflow-hidden">
+          <div v-if="menuLogoUrl" class="w-full flex items-center justify-center overflow-hidden">
             <div 
               class="flex items-center justify-center transition-all duration-300 overflow-hidden"
               :class="[
-                logoBgColor === 'transparent' ? '' : 'rounded-xl shadow-sm border',
+                menuLogoBgColor === 'transparent' ? '' : 'rounded-xl shadow-sm border',
                 isCollapsed ? 'w-10 h-10 shrink-0 p-1.5' : 'w-full py-1.5 px-3'
               ]"
               :style="logoContainerStyle"
             >
-              <img :src="logoUrl" alt="Logo" class="object-contain mx-auto" :class="[isCollapsed ? 'max-h-10 max-w-10' : 'max-h-24 max-w-full']" />
+              <img :src="menuLogoUrl" alt="Logo" class="object-contain mx-auto" :class="[isCollapsed ? 'max-h-10 max-w-10' : 'max-h-24 max-w-full']" />
             </div>
           </div>
           <div v-else class="flex items-center gap-3">
@@ -204,7 +204,7 @@ import { useSettings } from '~/composables/useSettings'
 const auth = useAuth()
 const user = computed(() => auth.user)
 const colorMode = useColorMode()
-const { logoUrl, logoBg, logoBgColor } = useSettings()
+const { menuLogoUrl, menuLogoBg, menuLogoBgColor } = useSettings()
 
 const isCollapsed = useState('sidebar-collapsed', () => false)
 const showProfileMenu = ref(false)
@@ -213,11 +213,11 @@ const showProfileModal = ref(false)
 const showSystemSettingsModal = ref(false)
 
 const logoContainerStyle = computed(() => {
-  if (!logoBgColor.value || logoBgColor.value === 'transparent') {
+  if (!menuLogoBgColor.value || menuLogoBgColor.value === 'transparent') {
     return {}
   }
   return {
-    backgroundColor: logoBgColor.value,
+    backgroundColor: menuLogoBgColor.value,
     borderColor: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
   }
 })
