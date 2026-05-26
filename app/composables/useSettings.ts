@@ -3,12 +3,17 @@ import { ref, computed } from 'vue'
 const logoUrl = ref<string | null>(null)
 const logoBg = ref<string>('transparent')
 
+const loginLogoUrl = ref<string | null>(null)
+const loginLogoBg = ref<string>('transparent')
+
+const menuLogoUrl = ref<string | null>(null)
+const menuLogoBg = ref<string>('transparent')
+
 export const useSettings = () => {
   const api = useApi()
   const colorMode = useColorMode()
 
-  const logoBgColor = computed(() => {
-    const bg = logoBg.value
+  const parseBgColor = (bg: string) => {
     if (!bg || bg === 'transparent') {
       return 'transparent'
     }
@@ -27,22 +32,40 @@ export const useSettings = () => {
     if (bg === 'dark') return '#1e293b'
     
     return bg // Si es un color hexadecimal directo
-  })
+  }
+
+  const logoBgColor = computed(() => parseBgColor(logoBg.value))
+  const loginLogoBgColor = computed(() => parseBgColor(loginLogoBg.value))
+  const menuLogoBgColor = computed(() => parseBgColor(menuLogoBg.value))
 
   const fetchSettings = async () => {
     try {
       const response = await api.get('/api/settings/public')
       logoUrl.value = response.data?.logo_url || null
       logoBg.value = response.data?.logo_bg || 'transparent'
+
+      loginLogoUrl.value = response.data?.login_logo_url || null
+      loginLogoBg.value = response.data?.login_logo_bg || 'transparent'
+
+      menuLogoUrl.value = response.data?.menu_logo_url || null
+      menuLogoBg.value = response.data?.menu_logo_bg || 'transparent'
     } catch (e) {
       console.error('Error fetching system settings:', e)
     }
   }
 
-  const updateLogoBg = async (bg: string) => {
+  const updateLogoBg = async (bg: string, type?: 'login' | 'menu') => {
     try {
-      const response = await api.post('/api/settings/logo-bg', { logo_bg: bg })
-      logoBg.value = response.data?.logo_bg || 'transparent'
+      const response = await api.post('/api/settings/logo-bg', { logo_bg: bg, type })
+      const newBg = response.data?.logo_bg || 'transparent'
+      
+      if (type === 'login') {
+        loginLogoBg.value = newBg
+      } else if (type === 'menu') {
+        menuLogoBg.value = newBg
+      } else {
+        logoBg.value = newBg
+      }
       return true
     } catch (e) {
       console.error('Error updating logo background:', e)
@@ -50,11 +73,21 @@ export const useSettings = () => {
     }
   }
 
-  const deleteLogo = async () => {
+  const deleteLogo = async (type?: 'login' | 'menu') => {
     try {
-      const response = await api.delete('/api/settings/logo')
-      logoUrl.value = null
-      logoBg.value = response.data?.logo_bg || 'transparent'
+      const response = await api.delete('/api/settings/logo', { params: { type } })
+      const logoBgVal = response.data?.logo_bg || 'transparent'
+      
+      if (type === 'login') {
+        loginLogoUrl.value = null
+        loginLogoBg.value = logoBgVal
+      } else if (type === 'menu') {
+        menuLogoUrl.value = null
+        menuLogoBg.value = logoBgVal
+      } else {
+        logoUrl.value = null
+        logoBg.value = logoBgVal
+      }
       return true
     } catch (e) {
       console.error('Error deleting logo:', e)
@@ -66,6 +99,12 @@ export const useSettings = () => {
     logoUrl,
     logoBg,
     logoBgColor,
+    loginLogoUrl,
+    loginLogoBg,
+    loginLogoBgColor,
+    menuLogoUrl,
+    menuLogoBg,
+    menuLogoBgColor,
     fetchSettings,
     updateLogoBg,
     deleteLogo

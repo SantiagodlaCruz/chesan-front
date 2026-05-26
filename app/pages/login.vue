@@ -17,16 +17,16 @@
       <div class="relative z-10 w-full max-w-lg p-12">
         <!-- Logo + Title -->
         <div class="mb-14">
-          <div v-if="logoUrl" class="flex items-center justify-center w-full overflow-hidden mb-6">
+          <div v-if="loginLogoUrl" class="flex items-center justify-center w-full overflow-hidden mb-6">
             <div 
               class="flex items-center justify-center transition-all duration-300 overflow-hidden"
               :class="[
-                logoBgColor === 'transparent' ? '' : 'rounded-2xl p-4 shadow-sm border',
-                'max-w-xs w-full'
+                loginLogoBgColor === 'transparent' ? '' : 'rounded-2xl p-6 shadow-md border border-slate-100 dark:border-slate-800',
+                'max-w-md w-full'
               ]"
               :style="logoContainerStyle"
             >
-              <img :src="logoUrl" alt="Logo" class="max-h-24 max-w-full object-contain mx-auto" />
+              <img :src="loginLogoUrl" alt="Logo" class="max-h-40 max-w-full object-contain mx-auto" />
             </div>
           </div>
           <div v-else class="flex items-center gap-4 mb-2">
@@ -37,20 +37,17 @@
               CheSan
             </h1>
           </div>
-          <p class="text-xl text-slate-500 dark:text-slate-400 font-light tracking-tight ml-1">
-            Fábrica de <span class="text-primary font-semibold">Uniformes</span>
-          </p>
         </div>
 
         <!-- Feature list -->
-        <div class="space-y-6">
+        <div class="space-y-4">
           <div class="flex items-start gap-4">
             <div class="p-2.5 rounded-lg bg-primary/10 shrink-0">
               <FactoryIcon class="text-primary w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-base">Estatus de Producción</h3>
-              <p class="text-slate-500 text-sm mt-0.5">Monitoreo en tiempo real del estatus y manufactura de órdenes.</p>
+              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-sm">Estatus de Producción</h3>
+              <p class="text-slate-500 text-xs mt-0.5">Monitoreo en tiempo real del estatus y manufactura de órdenes.</p>
             </div>
           </div>
           <div class="flex items-start gap-4">
@@ -58,8 +55,8 @@
               <PackageIcon class="text-amber-500 w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-base">Inventario Reactivo</h3>
-              <p class="text-slate-500 text-sm mt-0.5">Manejo centralizado de stock, consumos y productos terminados.</p>
+              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-sm">Inventario Reactivo</h3>
+              <p class="text-slate-500 text-xs mt-0.5">Manejo centralizado de stock, consumos y productos terminados.</p>
             </div>
           </div>
           <div class="flex items-start gap-4">
@@ -67,8 +64,8 @@
               <ShoppingCartIcon class="text-purple-500 w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-base">Modulo Punto de Venta</h3>
-              <p class="text-slate-500 text-sm mt-0.5">Procesa transacciones inmediatamente sincronizadas al almacén.</p>
+              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-sm">Módulo Punto de Venta</h3>
+              <p class="text-slate-500 text-xs mt-0.5">Procesa transacciones inmediatamente sincronizadas al almacén.</p>
             </div>
           </div>
           <div class="flex items-start gap-4">
@@ -76,8 +73,26 @@
               <BarChart3Icon class="text-accent-green w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-base">Métricas Integrales</h3>
-              <p class="text-slate-500 text-sm mt-0.5">Análisis de rendimiento, desempeño de ventas e ingresos al instante.</p>
+              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-sm">Métricas Integrales</h3>
+              <p class="text-slate-500 text-xs mt-0.5">Análisis de rendimiento, desempeño de ventas e ingresos al instante.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="p-2.5 rounded-lg bg-blue-500/10 shrink-0">
+              <ClipboardListIcon class="text-blue-500 w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-sm">Gestión de Cotizaciones</h3>
+              <p class="text-slate-500 text-xs mt-0.5">Creación rápida de cotizaciones y presupuestos para clientes.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="p-2.5 rounded-lg bg-emerald-500/10 shrink-0">
+              <CoinsIcon class="text-emerald-500 w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-slate-800 dark:text-slate-100 font-bold text-sm">Control de Caja</h3>
+              <p class="text-slate-500 text-xs mt-0.5">Administración de cortes de caja diario y control de efectivo.</p>
             </div>
           </div>
         </div>
@@ -98,16 +113,16 @@
 
         <!-- Mobile logo -->
         <div class="mb-8 lg:hidden flex items-center justify-center w-full">
-          <div v-if="logoUrl" class="flex items-center justify-center w-full overflow-hidden">
+          <div v-if="loginLogoUrl" class="flex items-center justify-center w-full overflow-hidden">
             <div 
               class="flex items-center justify-center transition-all duration-300 overflow-hidden"
               :class="[
-                logoBgColor === 'transparent' ? '' : 'rounded-xl p-2 shadow-sm border',
+                loginLogoBgColor === 'transparent' ? '' : 'rounded-xl p-2 shadow-sm border',
                 'max-w-xs w-full'
               ]"
               :style="logoContainerStyle"
             >
-              <img :src="logoUrl" alt="Logo" class="max-h-14 max-w-xs object-contain mx-auto" />
+              <img :src="loginLogoUrl" alt="Logo" class="max-h-14 max-w-xs object-contain mx-auto" />
             </div>
           </div>
           <template v-else>
@@ -291,6 +306,8 @@ import {
   BarChart3Icon,
   ShirtIcon,
   ChevronLeftIcon,
+  ClipboardListIcon,
+  CoinsIcon
 } from 'lucide-vue-next'
 
 import { loginSchema, recoverySchema } from '~/utils/auth.validation'
@@ -300,15 +317,15 @@ definePageMeta({ layout: 'auth' })
 
 const { login } = useAuth()
 const colorMode = useColorMode()
-const { logoUrl, logoBg, logoBgColor } = useSettings()
+const { loginLogoUrl, loginLogoBg, loginLogoBgColor } = useSettings()
 const api = useApi()
 
 const logoContainerStyle = computed(() => {
-  if (!logoBgColor.value || logoBgColor.value === 'transparent') {
+  if (!loginLogoBgColor.value || loginLogoBgColor.value === 'transparent') {
     return {}
   }
   return {
-    backgroundColor: logoBgColor.value,
+    backgroundColor: loginLogoBgColor.value,
     borderColor: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
   }
 })
