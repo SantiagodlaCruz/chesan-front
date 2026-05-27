@@ -358,7 +358,7 @@
         </div>
 
         <button
-          @click="onCheckout"
+          @click="confirmCheckout"
           :disabled="cartItems.length === 0 || loading || (isLayaway && (!customerName || layawayDeposit < 0 || !layawayDueDate))"
           class="w-full py-5 bg-primary hover:bg-primary/90 text-white font-black text-base uppercase tracking-widest rounded-xl shadow-[0_0_40px_rgba(59,130,246,0.25)] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
         >
@@ -409,6 +409,16 @@
   <CashMovementModal
      v-model:show="showCashMovementModal"
      @success="onMovementRecorded"
+  />
+
+  <CheckoutModal
+     v-model:show="showCheckoutModal"
+     :total="total"
+     :is-layaway="isLayaway"
+     :layaway-deposit="layawayDeposit"
+     :payment-method="paymentMethod"
+     :loading="loading"
+     @confirm="onCheckout"
   />
 
   <!-- Printable Area for pos 58mm Ticket (Hidden from screen view) -->
@@ -527,6 +537,7 @@ import PayLayawayModal from '~/components/pos/PayLayawayModal.vue'
 import SearchLayawayModal from '~/components/pos/SearchLayawayModal.vue'
 import CloseCashModal from '~/components/pos/CloseCashModal.vue'
 import CashMovementModal from '~/components/pos/CashMovementModal.vue'
+import CheckoutModal from '~/components/pos/CheckoutModal.vue'
 
 const { user } = useAuth()
 const api = useApi()
@@ -540,6 +551,7 @@ const lastTicket = ref(null)
 const showExchangeModal = ref(false)
 const showCloseCashModal = ref(false)
 const showCashMovementModal = ref(false)
+const showCheckoutModal = ref(false)
 const activeSession = ref(null)
 const checkingStatus = ref(true)
 
@@ -840,6 +852,15 @@ const clearCart = () => {
   }
 }
 
+const confirmCheckout = () => {
+  if (cartItems.value.length === 0 || loading.value) return
+  if (isLayaway.value && (!customerName.value || layawayDeposit.value < 0 || !layawayDueDate.value)) {
+    showPosAlert('Por favor completa todos los campos del apartado requeridos.', 'error')
+    return
+  }
+  showCheckoutModal.value = true
+}
+
 const onCheckout = async () => {
   if (!cartItems.value.length) return
   loading.value = true
@@ -875,6 +896,7 @@ const onCheckout = async () => {
         layawayDeposit.value = 0
         layawayDueDate.value = ''
         loading.value = false
+        showCheckoutModal.value = false
         showPosAlert('¡Operación completada y ticket generado exitosamente!', 'success')
         barcodeInput.value?.focus()
     }, 300)
