@@ -97,6 +97,10 @@
               <FlagIcon class="w-3 h-3" />
               Corte de Caja
             </button>
+            <button @click="openCashDrawer" class="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-1">
+              <UnlockIcon class="w-3 h-3" />
+              Abrir caja
+            </button>
             <div class="w-px h-4 bg-border-light dark:bg-white/10 mx-1"></div>
             <button @click="showExchangeModal = true" class="text-[10px] font-bold px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all flex items-center gap-1">
               <RotateCcwIcon class="w-3 h-3" />
@@ -424,7 +428,15 @@
   <!-- Printable Area for pos 58mm Ticket (Hidden from screen view) -->
   <Teleport to="body">
     <div id="pos-print-area" class="hidden print:block" v-if="lastTicket">
-      <div class="pos-ticket">
+      <!-- Si es apertura de cajón -->
+      <div v-if="lastTicket.isDrawerKick" class="pos-ticket" style="text-align: center; padding: 1mm 0; max-height: 10mm; overflow: hidden;">
+        <p style="font-size: 8px; font-weight: bold; margin: 0; line-height: 1.1;">APERTURA DE CAJA</p>
+        <p style="font-size: 7px; margin: 0.5mm 0 0 0; line-height: 1;">
+          {{ new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) }}
+        </p>
+      </div>
+      <!-- Si es un ticket de venta normal -->
+      <div v-else class="pos-ticket">
         <div class="ticket-header">
           <h2 class="company-name">CHESAN UNIFORMES</h2>
           <p class="company-info" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0">COMPROBANTE DE APARTADO</p>
@@ -524,6 +536,7 @@ import {
   BanknoteIcon,
   ReceiptIcon,
   LockIcon,
+  UnlockIcon,
   ArrowRightLeftIcon,
   CalendarIcon,
   RotateCcwIcon,
@@ -852,6 +865,16 @@ const clearCart = () => {
   }
 }
 
+const openCashDrawer = () => {
+  const temp = lastTicket.value
+  lastTicket.value = { isDrawerKick: true }
+  
+  setTimeout(() => {
+    window.print()
+    lastTicket.value = temp
+  }, 250)
+}
+
 const confirmCheckout = () => {
   if (cartItems.value.length === 0 || loading.value) return
   if (isLayaway.value && (!customerName.value || layawayDeposit.value < 0 || !layawayDueDate.value)) {
@@ -950,46 +973,69 @@ const handleLayawayPayment = async ({ ticket, paymentMethod }) => {
 </script>
 
 <style>
-/* ... (Estilos iguales) ... */
-.pos-ticket { font-family: 'Courier New', Courier, monospace; width: 58mm; padding: 2mm; color: black; background: white; }
+.pos-ticket {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  width: 48mm; /* Ajustado a 48mm para el ancho real imprimible en impresoras de 58mm */
+  padding: 0.5mm 1mm;
+  box-sizing: border-box;
+  color: #000000 !important;
+  background: white;
+  font-weight: 600; /* Incrementado para dar más contraste en impresión térmica */
+}
 .ticket-header { text-align: center; margin-bottom: 4mm; }
-.company-name { font-size: 14px; font-weight: bold; margin: 0; }
-.company-info { font-size: 10px; margin: 1mm 0; }
-.ticket-number { font-weight: bold; font-size: 11px; }
-.ticket-divider { border-top: 1px dashed black; margin: 2mm 0; }
-.ticket-items { width: 100%; border-collapse: collapse; font-size: 10px; }
-.ticket-items th { text-align: left; border-bottom: 1px solid black; padding-bottom: 1mm; }
+.company-name { font-size: 14px; font-weight: 800; margin: 0; color: #000000 !important; }
+.company-info { font-size: 9.5px; margin: 1mm 0; color: #000000 !important; }
+.ticket-number { font-weight: 800; font-size: 11px; }
+.ticket-divider { border-top: 1.5px dashed #000000; margin: 2mm 0; }
+.ticket-items { width: 100%; border-collapse: collapse; font-size: 9.5px; color: #000000 !important; }
+.ticket-items th { text-align: left; border-bottom: 1.5px solid #000000; padding-bottom: 1mm; font-weight: 800; }
 .qty-col { width: 20%; }
 .desc-col { width: 50%; }
 .price-col { width: 30%; text-align: right; }
-.item-meta { font-size: 8px; color: #555; }
-.ticket-totals { margin-top: 2mm; }
-.total-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 0.5mm; }
-.font-bold { font-weight: bold; }
-.ticket-footer { text-align: center; margin-top: 4mm; font-size: 9px; }
+.item-meta { font-size: 8.5px; color: #000000 !important; font-weight: 500; }
+.ticket-totals { margin-top: 2mm; font-size: 9.5px; color: #000000 !important; }
+.total-row { display: flex; justify-content: space-between; margin-bottom: 0.5mm; }
+.font-bold { font-weight: 800; }
+.ticket-footer { text-align: center; margin-top: 4mm; font-size: 9px; color: #000000 !important; }
 .qr-container { margin-top: 3mm; display: flex; justify-content: center; }
+.qr-container canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
 @media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   /* Ocultar todo lo que no sea el área de impresión */
   body > * { display: none !important; }
   #pos-print-area { 
     display: block !important; 
     position: absolute !important; 
-    left: 0 !important; 
+    left: -1mm !important; /* Desplazado ligeramente a la izquierda para compensar margen físico */
     top: 0 !important; 
-    width: 58mm !important; 
+    width: 48mm !important; /* Ajustado al ancho real imprimible seguro de 48mm */
+    margin: 0 !important;
+    padding: 0 !important;
     visibility: visible !important;
     background: white !important;
-    color: black !important;
+    color: #000000 !important;
   }
   #pos-print-area * { 
     visibility: visible !important;
-    color: black !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
     background: transparent !important;
   }
   
   /* Reset page margins for ticket printer */
   @page {
-    margin: 0;
+    margin: 0 !important;
     size: 58mm auto;
   }
 }
