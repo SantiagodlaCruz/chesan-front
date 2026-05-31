@@ -190,7 +190,7 @@ const printLabels = async () => {
         displayValue: true,
         fontSize: 12,
         fontOptions: "bold",
-        margin: 5
+        margin: 2
       })
     }
   }
@@ -253,7 +253,7 @@ const close = () => {
   .print-label {
     width: var(--label-width);
     height: var(--label-height);
-    padding: 0.5mm;
+    padding: 1mm 3mm;
     box-sizing: border-box;
     page-break-after: always;
     page-break-inside: avoid;
@@ -279,7 +279,9 @@ const close = () => {
   }
 
   .barcode-svg {
-    max-height: 14mm;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 14mm !important;
     margin: 0 0 0.5mm 0;
     display: block;
   }
