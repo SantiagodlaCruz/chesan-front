@@ -632,6 +632,14 @@ const fetchQuotation = async (id) => {
 const onSubmit = async () => {
   if (!form.client_id) return toast.error('Seleccione un cliente')
   
+  // Validar que cada ítem tenga producto seleccionado o descripción manual
+  for (let i = 0; i < form.items.length; i++) {
+    const item = form.items[i]
+    if (!item.product_catalog_id && !item.custom_description?.trim()) {
+      return toast.error(`La línea ${i + 1} requiere un producto del catálogo o una descripción manual.`)
+    }
+  }
+  
   try {
     saving.value = true
     form.quotation_date = new Date().toISOString().split('T')[0]

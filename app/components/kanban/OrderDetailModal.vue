@@ -80,7 +80,7 @@
             <div v-if="item.observations" class="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
               <p class="text-[9px] font-black text-primary uppercase tracking-widest mb-1.5">Instrucciones específicas</p>
               <div class="bg-primary/5 border border-primary/10 rounded-xl p-3">
-                <p class="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                <p class="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed italic whitespace-pre-line">
                   "{{ item.observations }}"
                 </p>
               </div>
@@ -92,7 +92,7 @@
       <!-- Notas -->
       <div v-if="card.order?.notes" class="bg-amber-500/5 border border-amber-500/20 p-4 rounded-2xl">
         <p class="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider mb-2">Observaciones</p>
-        <p class="text-sm text-amber-800 dark:text-amber-200 leading-relaxed font-medium">
+        <p class="text-sm text-amber-800 dark:text-amber-200 leading-relaxed font-medium whitespace-pre-line">
           {{ card.order.notes }}
         </p>
       </div>
