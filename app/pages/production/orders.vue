@@ -219,6 +219,7 @@
     <OrderListDetailModal
       v-model:show="showDetailModal"
       :order="selectedOrder"
+      @updated="fetchData"
     />
 
     <!-- Iframe oculto para impresión directa -->
@@ -283,7 +284,7 @@ const opcionesProduccion = computed(() => {
   const cols = productionStore.board?.columns || []
   return [
     { label: 'Todas', value: '' },
-    ...cols.map(c => ({ label: c.title, value: c.title }))
+    ...cols.map((c: any) => ({ label: c.title, value: c.title }))
   ]
 })
 

@@ -10,6 +10,9 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   observations: string | null;
+  color?: { name: string; hex_code: string | null } | null;
+  total?: number;
+  extras?: { description: string; cost: number }[];
 }
 
 export interface Order {
@@ -22,4 +25,10 @@ export interface Order {
   notes: string | null;
   items: OrderItem[];
   created_at: string;
+  order_code?: string;
+  is_internal?: boolean;
+  production_status?: string | null;
+  is_liquidated?: boolean;
+  remaining_amount?: number;
+  order_date?: string;
 }

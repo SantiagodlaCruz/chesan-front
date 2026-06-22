@@ -89,12 +89,44 @@
         </div>
       </div>
 
-      <!-- Notas -->
-      <div v-if="card.order?.notes" class="bg-amber-500/5 border border-amber-500/20 p-4 rounded-2xl">
-        <p class="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider mb-2">Observaciones</p>
-        <p class="text-sm text-amber-800 dark:text-amber-200 leading-relaxed font-medium whitespace-pre-line">
-          {{ card.order.notes }}
-        </p>
+      <!-- Notas / Observaciones Generales -->
+      <div v-if="card.order" class="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
+        <div class="flex justify-between items-center mb-2">
+          <p class="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">Observaciones Generales</p>
+          <button 
+            v-if="!isEditingNotes" 
+            @click="startEditingNotes"
+            class="text-[10px] font-black uppercase text-primary hover:underline flex items-center gap-1"
+          >
+            <PencilIcon class="w-3.5 h-3.5" />
+            Editar
+          </button>
+        </div>
+
+        <div v-if="isEditingNotes" class="space-y-3">
+          <textarea
+            v-model="localNotes"
+            rows="3"
+            class="w-full bg-white dark:bg-card-dark border border-slate-300 dark:border-slate-700 focus:border-primary outline-none p-3 rounded-xl text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+            placeholder="Escriba las observaciones generales de la orden..."
+          ></textarea>
+          <div class="flex justify-end gap-2">
+            <BaseButton size="sm" variant="secondary" :disabled="savingNotes" @click="cancelEditingNotes">
+              Cancelar
+            </BaseButton>
+            <BaseButton size="sm" variant="primary" :loading="savingNotes" @click="saveNotes">
+              Guardar
+            </BaseButton>
+          </div>
+        </div>
+        <div v-else>
+          <p v-if="card.order.notes" class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-line">
+            {{ card.order.notes }}
+          </p>
+          <p v-else class="text-xs text-slate-400 italic">
+            Sin observaciones registradas. Haga clic en Editar para agregar.
+          </p>
+        </div>
       </div>
 
       <!-- Acciones del Modal -->
@@ -106,16 +138,75 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
 import { TrashIcon, PencilIcon } from 'lucide-vue-next'
+import { useApi } from '~/composables/useApi'
+import { useToast } from '~/stores/toast'
 
-defineProps<{
+const props = defineProps<{
   show: boolean
   card: any
 }>()
 
-const emit = defineEmits(['update:show', 'delete', 'edit'])
+const emit = defineEmits(['update:show', 'delete', 'edit', 'updated'])
+
+const api = useApi()
+const toast = useToast()
+
+const isEditingNotes = ref(false)
+const localNotes = ref('')
+const savingNotes = ref(false)
+
+watch(() => props.show, (newVal) => {
+  if (newVal && props.card?.order) {
+    localNotes.value = props.card.order.notes || ''
+    isEditingNotes.value = false
+  }
+}, { immediate: true })
+
+watch(() => props.card, (newCard) => {
+  if (newCard?.order) {
+    localNotes.value = newCard.order.notes || ''
+    isEditingNotes.value = false
+  }
+})
+
+const startEditingNotes = () => {
+  localNotes.value = props.card?.order?.notes || ''
+  isEditingNotes.value = true
+}
+
+const cancelEditingNotes = () => {
+  isEditingNotes.value = false
+  localNotes.value = props.card?.order?.notes || ''
+}
+
+const saveNotes = async () => {
+  if (!props.card?.order?.id) return
+  
+  savingNotes.value = true
+  try {
+    await api.patch(`/api/orders/${props.card.order.id}/notes`, {
+      notes: localNotes.value
+    })
+    
+    if (props.card.order) {
+      props.card.order.notes = localNotes.value
+    }
+    
+    toast.success('Observaciones del pedido actualizadas correctamente')
+    isEditingNotes.value = false
+    emit('updated')
+  } catch (err: any) {
+    console.error('Error al guardar observaciones:', err)
+    const msg = err.data?.message || 'Error al guardar las observaciones'
+    toast.error(msg)
+  } finally {
+    savingNotes.value = false
+  }
+}
 
 const close = () => {
   emit('update:show', false)

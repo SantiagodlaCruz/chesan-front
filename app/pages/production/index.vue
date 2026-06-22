@@ -58,6 +58,7 @@
       :card="selectedCard"
       @delete="confirmDelete"
       @edit="handleEditOrder"
+      @updated="productionStore.fetchBoard"
     />
 
     <DeliverOrderModal
