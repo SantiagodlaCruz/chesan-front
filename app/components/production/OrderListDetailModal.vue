@@ -25,7 +25,7 @@
         <!-- Badge Estado de Producción -->
         <span 
           class="px-3 py-1 text-xs font-black uppercase tracking-wider rounded-lg border"
-          :class="getProductionStatusClass(order.production_status)"
+          :class="getProductionStatusClass(order.production_status || null)"
         >
           Etapa: {{ order.production_status || 'Pendiente' }}
         </span>
@@ -69,7 +69,7 @@
           <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fechas</p>
           <div class="flex justify-between items-center text-sm font-bold text-slate-900 dark:text-white">
             <div>
-              <p class="text-xs text-slate-500 font-normal">Creación: {{ formatDate(order.order_date) }}</p>
+              <p class="text-xs text-slate-500 font-normal">Creación: {{ formatDate(order.order_date || null) }}</p>
               <p class="mt-1">Entrega Promesa: {{ formatDate(order.delivery_date) }}</p>
             </div>
             <div v-if="order.delivery_date && order.production_status !== 'Entregados'" class="text-right">
@@ -155,12 +155,44 @@
         </div>
       </div>
 
-      <!-- Notas Generales del Pedido -->
-      <div v-if="order.notes" class="bg-amber-500/5 border border-amber-500/15 p-4 rounded-2xl">
-        <p class="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 tracking-wider mb-1.5">Notas Generales</p>
-        <p class="text-xs text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
-          {{ order.notes }}
-        </p>
+      <!-- Notas / Observaciones Generales -->
+      <div v-if="order" class="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
+        <div class="flex justify-between items-center mb-2">
+          <p class="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">Observaciones Generales</p>
+          <button 
+            v-if="!isEditingNotes" 
+            @click="startEditingNotes"
+            class="text-[10px] font-black uppercase text-primary hover:underline flex items-center gap-1"
+          >
+            <PencilIcon class="w-3.5 h-3.5" />
+            Editar
+          </button>
+        </div>
+
+        <div v-if="isEditingNotes" class="space-y-3">
+          <textarea
+            v-model="localNotes"
+            rows="3"
+            class="w-full bg-white dark:bg-card-dark border border-slate-300 dark:border-slate-700 focus:border-primary outline-none p-3 rounded-xl text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+            placeholder="Escriba las observaciones generales de la orden..."
+          ></textarea>
+          <div class="flex justify-end gap-2">
+            <BaseButton size="sm" variant="secondary" :disabled="savingNotes" @click="cancelEditingNotes">
+              Cancelar
+            </BaseButton>
+            <BaseButton size="sm" variant="primary" :loading="savingNotes" @click="saveNotes">
+              Guardar
+            </BaseButton>
+          </div>
+        </div>
+        <div v-else>
+          <p v-if="order.notes" class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-line">
+            {{ order.notes }}
+          </p>
+          <p v-else class="text-xs text-slate-400 italic">
+            Sin observaciones registradas. Haga clic en Editar para agregar.
+          </p>
+        </div>
       </div>
 
       <!-- Sección de Totales y Liquidación -->
@@ -202,9 +234,9 @@
           <div class="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-2 text-base font-black">
             <span class="text-slate-900 dark:text-white">Saldo Restante:</span>
             <span 
-              :class="(order.is_internal || order.remaining_amount <= 0.01) ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'"
+              :class="(order.is_internal || (order.remaining_amount ?? 0) <= 0.01) ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'"
             >
-              {{ order.is_internal ? formatMoney(0) : formatMoney(order.remaining_amount) }}
+              {{ order.is_internal ? formatMoney(0) : formatMoney(order.remaining_amount ?? 0) }}
             </span>
           </div>
         </div>
@@ -219,19 +251,78 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
+import { PencilIcon } from 'lucide-vue-next'
 import { useFormatter } from '~/composables/useFormatter'
+import { useApi } from '~/composables/useApi'
+import { useToast } from '~/stores/toast'
 import type { Order } from '~/types'
 
-defineProps<{
+const props = defineProps<{
   show: boolean
   order: Order | null
 }>()
 
-const emit = defineEmits(['update:show'])
+const emit = defineEmits(['update:show', 'updated'])
 
 const { formatMoney } = useFormatter()
+const api = useApi()
+const toast = useToast()
+
+const isEditingNotes = ref(false)
+const localNotes = ref('')
+const savingNotes = ref(false)
+
+watch(() => props.show, (newVal) => {
+  if (newVal && props.order) {
+    localNotes.value = props.order.notes || ''
+    isEditingNotes.value = false
+  }
+}, { immediate: true })
+
+watch(() => props.order, (newOrder) => {
+  if (newOrder) {
+    localNotes.value = newOrder.notes || ''
+    isEditingNotes.value = false
+  }
+})
+
+const startEditingNotes = () => {
+  localNotes.value = props.order?.notes || ''
+  isEditingNotes.value = true
+}
+
+const cancelEditingNotes = () => {
+  isEditingNotes.value = false
+  localNotes.value = props.order?.notes || ''
+}
+
+const saveNotes = async () => {
+  if (!props.order?.id) return
+  
+  savingNotes.value = true
+  try {
+    await api.patch(`/api/orders/${props.order.id}/notes`, {
+      notes: localNotes.value
+    })
+    
+    if (props.order) {
+      props.order.notes = localNotes.value
+    }
+    
+    toast.success('Observaciones del pedido actualizadas correctamente')
+    isEditingNotes.value = false
+    emit('updated')
+  } catch (err: any) {
+    console.error('Error al guardar observaciones:', err)
+    const msg = err.data?.message || 'Error al guardar las observaciones'
+    toast.error(msg)
+  } finally {
+    savingNotes.value = false
+  }
+}
 
 const close = () => {
   emit('update:show', false)
