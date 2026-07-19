@@ -65,6 +65,7 @@
   </div>
 </template>
 
+<!-- Añadido por el sistema -->
 <script setup>
 import { useField } from 'vee-validate'
 import { computed, ref, reactive } from 'vue'

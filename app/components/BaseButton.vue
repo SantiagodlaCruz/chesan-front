@@ -19,6 +19,7 @@
   </button>
 </template>
 
+<!-- Añadido por el sistema -->
 <script setup>
 const props = defineProps({
   type: { type: String, default: 'button' },

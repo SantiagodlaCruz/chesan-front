@@ -72,7 +72,7 @@
           <tr v-else v-for="ticket in filteredTickets" :key="ticket.id" class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group">
             <td class="px-6 py-4">
               <span class="font-mono text-xs font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-md border border-primary/10 tracking-wider whitespace-nowrap">
-                #{{ ticket.ticket_number }}
+                {{ ticket.ticket_number }}
               </span>
             </td>
             <td class="px-6 py-4 text-[11px] font-bold text-slate-500 dark:text-slate-400">
@@ -107,9 +107,12 @@
                 {{ getStatusLabel(ticket) }}
               </span>
             </td>
-            <td class="px-6 py-4 text-right">
+            <td class="px-6 py-4 text-right flex justify-end gap-1">
               <button @click="viewDetails(ticket)" class="p-2 hover:bg-primary/10 rounded-xl transition-all group/btn" title="Ver Detalles">
                 <EyeIcon class="w-4 h-4 text-primary group-hover/btn:scale-110 transition-transform" />
+              </button>
+              <button @click="printTicket(ticket)" class="p-2 hover:bg-primary/10 rounded-xl transition-all group/btn" title="Imprimir Ticket">
+                <PrinterIcon class="w-4 h-4 text-primary group-hover/btn:scale-110 transition-transform" />
               </button>
             </td>
           </tr>
@@ -126,7 +129,7 @@
     <BaseModal v-model:show="showDetailsModal" title="Detalle del Ticket" size="xl">
       <template #title>
         <div class="flex items-center gap-3">
-          <span class="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-tighter shadow-sm shadow-primary/20">Ticket #{{ selectedTicket?.ticket_number }}</span>
+          <span class="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-tighter shadow-sm shadow-primary/20">Ticket {{ selectedTicket?.ticket_number }}</span>
           <h3 class="text-xl font-black text-slate-800 dark:text-white">Detalles de la transacción</h3>
         </div>
       </template>
@@ -184,16 +187,109 @@
       </div>
       
       <template #footer>
-        <div class="flex justify-end gap-3 w-full">
+        <div class="flex justify-between items-center w-full">
+          <BaseButton variant="primary" @click="printTicket(selectedTicket)" class="flex items-center gap-2">
+            <PrinterIcon class="w-4 h-4" /> Imprimir Ticket
+          </BaseButton>
           <BaseButton variant="secondary" @click="showDetailsModal = false">Cerrar Ventana</BaseButton>
         </div>
       </template>
     </BaseModal>
   </div>
+
+  <!-- Area de impresion del ticket (Oculta en pantalla, visible al imprimir) -->
+  <Teleport to="body">
+    <div id="pos-print-area" class="hidden print:block" v-if="ticketToPrint">
+      <div class="pos-ticket">
+        <div class="ticket-header">
+          <h2 class="company-name">CHESAN UNIFORMES</h2>
+          <p class="company-info" v-if="ticketToPrint.ticket_type === 'layaway' && ticketToPrint.balance > 0">COMPROBANTE DE APARTADO</p>
+          <p class="company-info" v-else-if="ticketToPrint.ticket_type === 'layaway' && ticketToPrint.balance === 0">LIQUIDACIÓN DE APARTADO</p>
+          <p class="company-info" v-else>Venta de Mostrador</p>
+          <p class="company-info">Fecha: {{ formatTicketDate(ticketToPrint.created_at) }}</p>
+          <p class="company-info ticket-number">Ticket {{ ticketToPrint.ticket_number || 'S/N' }}</p>
+          <p v-if="ticketToPrint.ticket_type === 'layaway'" class="company-info">Cliente: {{ ticketToPrint.client?.name || ticketToPrint.customer_name }}</p>
+          <p v-if="ticketToPrint.ticket_type === 'layaway' && ticketToPrint.balance > 0" class="company-info">Fecha límite: {{ ticketToPrint.due_date }}</p>
+        </div>
+        
+        <div class="ticket-divider"></div>
+
+        <table class="ticket-items">
+          <thead>
+            <tr>
+              <th class="qty-col">Cant</th>
+              <th class="desc-col">Producto</th>
+              <th class="price-col">Importe</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in ticketToPrint.items" :key="item.id">
+              <td class="qty-col">{{ item.quantity }}</td>
+              <td class="desc-col">
+                {{ item.product_name }}
+                <div v-if="item.size_name" class="item-meta">Talla: {{ item.size_name }}</div>
+                <div v-if="item.discount_amount > 0" class="item-meta font-bold">
+                  <span>Descto. (-{{ formatMoney(item.discount_amount) }})</span>
+                </div>
+              </td>
+              <td class="price-col">
+                <span v-if="item.discount_amount > 0" style="text-decoration: line-through; font-size: 8px;">
+                  {{ formatMoney(item.quantity * item.unit_price) }}
+                </span>
+                <br v-if="item.discount_amount > 0"/>
+                {{ formatMoney(item.total) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="ticket-divider"></div>
+
+        <div class="ticket-totals">
+          <div class="total-row" v-if="ticketToPrint.discount_amount > 0">
+            <span>Ahorro en Descuentos:</span>
+            <span>-{{ formatMoney(ticketToPrint.discount_amount) }}</span>
+          </div>
+          <div class="total-row font-bold">
+            <span>Total {{ ticketToPrint.ticket_type === 'layaway' ? 'Apartado' : '' }}:</span>
+            <span>{{ formatMoney(ticketToPrint.total) }}</span>
+          </div>
+          
+          <div class="total-row" v-if="ticketToPrint.ticket_type === 'layaway' && ticketToPrint.balance === 0">
+            <span>Anticipo Original:</span>
+            <span>{{ formatMoney(ticketToPrint.advance_amount || 0) }}</span>
+          </div>
+          <div class="total-row" v-if="ticketToPrint.ticket_type === 'layaway' && ticketToPrint.balance === 0">
+            <span>Pago Liquidación:</span>
+            <span>{{ formatMoney(ticketToPrint.liquidation_amount || 0) }}</span>
+          </div>
+          
+          <div class="total-row" v-if="ticketToPrint.ticket_type === 'layaway' && ticketToPrint.balance > 0">
+            <span>Anticipo Pagado:</span>
+            <span>{{ formatMoney(ticketToPrint.received_amount) }}</span>
+          </div>
+          
+          <div class="total-row font-bold" v-if="ticketToPrint.ticket_type === 'layaway'" style="font-size: 12px; margin-top: 2px;">
+            <span>RESTA POR PAGAR:</span>
+            <span>{{ formatMoney(ticketToPrint.balance) }}</span>
+          </div>
+        </div>
+
+        <div class="ticket-footer">
+          <p>Método de Pago: {{ getPrintPaymentMethod(ticketToPrint) }}</p>
+          <p class="thank-you">¡Gracias por tu compra!</p>
+          <p class="qr-info">Guarda este ticket para cualquier cambio o aclaración.</p>
+          <div class="qr-container">
+            <qrcode-vue :value="String(ticketToPrint.ticket_number)" :size="80" level="H" renderAs="canvas" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { 
   SearchIcon, 
   EyeIcon, 
@@ -203,6 +299,7 @@ import {
   PrinterIcon,
   TicketIcon
 } from 'lucide-vue-next'
+import QrcodeVue from 'qrcode.vue'
 import Select from '~/components/Select.vue'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
@@ -315,22 +412,30 @@ const viewDetails = (ticket) => {
   showDetailsModal.value = true
 }
 
+const ticketToPrint = ref(null)
+
 const printTicket = (ticket) => {
-  const iframe = document.createElement('iframe')
-  iframe.style.position = 'fixed'
-  iframe.style.right = '0'
-  iframe.style.bottom = '0'
-  iframe.style.width = '0'
-  iframe.style.height = '0'
-  iframe.style.border = '0'
-  iframe.src = `/print-ticket/${ticket.id}`
-  document.body.appendChild(iframe)
-  
-  setTimeout(() => {
-    if (document.body.contains(iframe)) {
-      document.body.removeChild(iframe)
-    }
-  }, 10000)
+  ticketToPrint.value = ticket
+  nextTick(() => {
+    window.print()
+  })
+}
+
+const formatTicketDate = (dateStr) => {
+  if (!dateStr) return ''
+  try {
+    return new Date(dateStr).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
+  } catch (e) {
+    return dateStr
+  }
+}
+
+const getPrintPaymentMethod = (ticket) => {
+  if (!ticket) return ''
+  const method = ticket.ticket_type === 'layaway' && ticket.balance === 0
+    ? (ticket.liquidation_payment_method || 'cash')
+    : (ticket.payment_method || 'cash')
+  return formatPaymentMethod(method)
 }
 
 const fetchUsers = async () => {
@@ -369,3 +474,73 @@ definePageMeta({
   layout: 'default'
 })
 </script>
+
+<style>
+/* Estilos para la impresión del ticket en formato térmico de 58mm */
+.pos-ticket {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  width: 48mm;
+  padding: 0.5mm 1mm;
+  box-sizing: border-box;
+  color: #000000 !important;
+  background: white;
+  font-weight: 600;
+}
+.ticket-header { text-align: center; margin-bottom: 4mm; }
+.company-name { font-size: 14px; font-weight: 800; margin: 0; color: #000000 !important; }
+.company-info { font-size: 9.5px; margin: 1mm 0; color: #000000 !important; }
+.ticket-number { font-weight: 800; font-size: 11px; }
+.ticket-divider { border-top: 1.5px dashed #000000; margin: 2mm 0; }
+.ticket-items { width: 100%; border-collapse: collapse; font-size: 9.5px; color: #000000 !important; }
+.ticket-items th { text-align: left; border-bottom: 1.5px solid #000000; padding-bottom: 1mm; font-weight: 800; }
+.qty-col { width: 20%; }
+.desc-col { width: 50%; }
+.price-col { width: 30%; text-align: right; }
+.item-meta { font-size: 8.5px; color: #000000 !important; font-weight: 500; }
+.ticket-totals { margin-top: 2mm; font-size: 9.5px; color: #000000 !important; }
+.total-row { display: flex; justify-content: space-between; margin-bottom: 0.5mm; }
+.font-bold { font-weight: 800; }
+.ticket-footer { text-align: center; margin-top: 4mm; font-size: 9px; color: #000000 !important; }
+.qr-container { margin-top: 3mm; display: flex; justify-content: center; }
+.qr-container canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ocultar todo lo que no sea el área de impresión */
+  body > * { display: none !important; }
+  #pos-print-area { 
+    display: block !important; 
+    position: absolute !important; 
+    left: -1mm !important;
+    top: 0 !important; 
+    width: 48mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: visible !important;
+    background: white !important;
+    color: #000000 !important;
+  }
+  #pos-print-area * { 
+    visibility: visible !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    background: transparent !important;
+  }
+  
+  @page {
+    margin: 0 !important;
+    size: 58mm auto;
+  }
+}
+</style>
