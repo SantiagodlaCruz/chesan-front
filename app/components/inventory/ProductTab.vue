@@ -213,7 +213,7 @@ const filtroCategoria = ref('')
 const filtroInstitucion = ref('')
 const filtroTalla = ref('')
 const filtroStock = ref('')
-const filtroOrden = ref('id_desc')
+const filtroOrden = ref('name_asc')
 const inventoryStore = useInventoryStore()
 const catalogs = useCatalogs()
 
