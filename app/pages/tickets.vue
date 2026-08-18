@@ -336,7 +336,9 @@ const statusOptions = [
   { label: 'Todos', value: '' },
   { label: 'Pagado', value: 'paid' },
   { label: 'Apartado Pendiente', value: 'layaway_pending' },
-  { label: 'Apartado Liquidado', value: 'layaway_completed' }
+  { label: 'Apartado Liquidado', value: 'layaway_completed' },
+  { label: 'Apartado Liquidado (Entregado)', value: 'layaway_completed_delivered' },
+  { label: 'Apartado Liquidado (Pendiente Entrega)', value: 'layaway_completed_pending' }
 ]
 
 const fetchTickets = async () => {
@@ -366,6 +368,10 @@ const filteredTickets = computed(() => {
       matchStatus = t.ticket_type === 'layaway' && t.balance > 0
     } else if (statusFilter.value === 'layaway_completed') {
       matchStatus = t.ticket_type === 'layaway' && t.balance <= 0
+    } else if (statusFilter.value === 'layaway_completed_delivered') {
+      matchStatus = t.ticket_type === 'layaway' && t.balance <= 0 && t.is_delivered
+    } else if (statusFilter.value === 'layaway_completed_pending') {
+      matchStatus = t.ticket_type === 'layaway' && t.balance <= 0 && !t.is_delivered
     }
 
     // Filter by user (seller)
@@ -388,14 +394,16 @@ const debouncedFetch = () => {
 
 const getStatusLabel = (t) => {
   if (t.ticket_type !== 'layaway') return 'Pagado'
-  return t.balance > 0 ? 'Apartado' : 'Liquidado'
+  if (t.balance > 0) return 'Apartado'
+  return t.is_delivered ? 'Liquidado (Entregado)' : 'Liquidado (Pendiente Entrega)'
 }
 
 const getStatusClasses = (t) => {
   if (t.ticket_type !== 'layaway') return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-  return t.balance > 0 
-    ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' 
-    : 'bg-primary/10 text-primary border-primary/20'
+  if (t.balance > 0) return 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+  return t.is_delivered 
+    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+    : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
 }
 
 const formatPaymentMethod = (method) => {
