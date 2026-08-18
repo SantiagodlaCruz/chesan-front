@@ -100,10 +100,7 @@
                </div>
             </td>
             <td class="px-6 py-4 text-center">
-              <span 
-                class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
-                :class="getStatusClasses(ticket)"
-              >
+              <span :class="getStatusClasses(ticket)">
                 {{ getStatusLabel(ticket) }}
               </span>
             </td>
@@ -395,15 +392,16 @@ const debouncedFetch = () => {
 const getStatusLabel = (t) => {
   if (t.ticket_type !== 'layaway') return 'Pagado'
   if (t.balance > 0) return 'Apartado'
-  return t.is_delivered ? 'Liquidado (Entregado)' : 'Liquidado (Pendiente Entrega)'
+  return t.is_delivered ? 'Liquidado' : 'Por Entregar'
 }
 
 const getStatusClasses = (t) => {
-  if (t.ticket_type !== 'layaway') return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-  if (t.balance > 0) return 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+  const base = 'px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border shadow-sm whitespace-nowrap '
+  if (t.ticket_type !== 'layaway') return base + 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+  if (t.balance > 0) return base + 'bg-amber-500/10 text-amber-600 border-amber-500/20'
   return t.is_delivered 
-    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
-    : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+    ? base + 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+    : base + 'bg-rose-500/10 text-rose-600 border-rose-500/20'
 }
 
 const formatPaymentMethod = (method) => {
