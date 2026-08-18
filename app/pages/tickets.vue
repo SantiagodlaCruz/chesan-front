@@ -32,7 +32,7 @@
           @update:modelValue="fetchTickets"
         />
       </div>
-      <div class="w-48 shrink-0">
+      <div class="w-64 shrink-0">
         <Select 
           v-model="statusFilter" 
           :options="statusOptions" 
