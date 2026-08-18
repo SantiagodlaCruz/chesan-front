@@ -102,8 +102,11 @@
                   <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
                     Saldo Pendiente
                   </span>
-                  <span class="text-lg font-black text-primary leading-none">
-                    {{ formatMoney(ticket.balance) }}
+                  <span 
+                    class="text-lg font-black leading-none"
+                    :class="ticket.balance === 0 ? 'text-emerald-500 font-bold text-xs uppercase tracking-wider' : 'text-primary'"
+                  >
+                    {{ ticket.balance === 0 ? 'Pagado (Pendiente Entrega)' : formatMoney(ticket.balance) }}
                   </span>
                 </div>
                 <span class="text-[10px] text-slate-500 font-semibold">
@@ -114,8 +117,9 @@
               <button
                 @click="selectTicket(ticket)"
                 class="w-full py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-widest active:scale-[0.98]"
+                :class="ticket.balance === 0 ? 'bg-emerald-600 hover:bg-emerald-500' : ''"
               >
-                <span>Liquidar</span>
+                <span>{{ ticket.balance === 0 ? 'Entregar' : 'Liquidar' }}</span>
                 <ChevronRightIcon class="w-4 h-4" />
               </button>
             </div>

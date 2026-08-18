@@ -57,7 +57,7 @@
       </div>
 
       <!-- Método de Pago de Liquidación -->
-      <div class="border-t border-slate-100 dark:border-white/5 pt-5">
+      <div v-if="ticket.balance > 0" class="border-t border-slate-100 dark:border-white/5 pt-5">
          <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-3">Método de pago de liquidación</h3>
          <div class="grid grid-cols-3 gap-3">
            <button
@@ -101,10 +101,15 @@
          <button 
              @click="confirmPayment" 
              :disabled="loading"
-             class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+             class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+             :class="ticket.balance === 0 ? 'bg-emerald-600 hover:bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : ''"
+         >
             <div v-if="loading" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-            <BanknoteIcon class="w-5 h-5" v-else />
-            {{ loading ? 'Procesando...' : `Liquidar y entregar artículos` }}
+            <template v-else>
+               <ShirtIcon class="w-5 h-5" v-if="ticket.balance === 0" />
+               <BanknoteIcon class="w-5 h-5" v-else />
+            </template>
+            {{ loading ? 'Procesando...' : (ticket.balance === 0 ? 'Confirmar entrega de artículos' : 'Liquidar y entregar artículos') }}
          </button>
          
          <BaseButton variant="secondary" @click="close" class="w-full" :disabled="loading">

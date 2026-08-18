@@ -490,11 +490,11 @@
           </div>
           <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">
             <span>Anticipo Original:</span>
-            <span>{{ formatMoney(lastTicket.original_deposit || 0) }}</span>
+            <span>{{ formatMoney(lastTicket.original_deposit || lastTicket.advance_amount || 0) }}</span>
           </div>
           <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">
             <span>Pago Liquidación:</span>
-            <span>{{ formatMoney(lastTicket.payment_made_today || 0) }}</span>
+            <span>{{ formatMoney(lastTicket.payment_made_today || lastTicket.liquidation_amount || 0) }}</span>
           </div>
           
           <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0">
