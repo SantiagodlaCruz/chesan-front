@@ -392,7 +392,7 @@ const debouncedFetch = () => {
 const getStatusLabel = (t) => {
   if (t.ticket_type !== 'layaway') return 'Pagado'
   if (t.balance > 0) return 'Apartado'
-  return t.is_delivered ? 'Liquidado' : 'Liquidado / Por Entregar'
+  return t.is_delivered ? 'Liquidado / Entregado' : 'Liquidado / Por Entregar'
 }
 
 const getStatusClasses = (t) => {
