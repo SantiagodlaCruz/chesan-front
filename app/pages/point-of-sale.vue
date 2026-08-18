@@ -741,8 +741,8 @@ const onBarcodeSubmit = async () => {
        }
 
        const scannedTicket = response.data
-       if (scannedTicket.ticket_type !== 'layaway' || scannedTicket.balance <= 0) {
-           showPosAlert(`El ticket ${query} no es un apartado pendiente o ya fue liquidado totalmente.`, 'error')
+       if (scannedTicket.ticket_type !== 'layaway' || scannedTicket.is_delivered) {
+           showPosAlert(`El ticket ${query} no es un apartado pendiente o ya fue entregado físicamente.`, 'error')
            return
        }
 
