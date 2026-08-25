@@ -32,25 +32,31 @@
         </div>
       </div>
 
-      <!-- Items List -->
+      <!-- Items List Grouped by School -->
       <div>
          <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-3">Productos resguardados</h3>
-         <div class="max-h-52 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-            <div v-for="detail in ticket.items" :key="detail.id" 
-                 class="p-3 bg-white dark:bg-card-dark border border-slate-100 dark:border-white/5 rounded-xl flex items-center gap-3">
-               
-               <div class="w-10 h-10 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0">
-                  <ShirtIcon class="w-5 h-5 text-slate-300" />
+         <div class="space-y-4 pr-1">
+            <div v-for="(items, schoolName) in groupedItems" :key="schoolName" class="space-y-2">
+               <div class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
+                  <GraduationCapIcon class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{{ schoolName }}</span>
                </div>
-               
-               <div class="flex-1 min-w-0">
-                  <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ detail.product?.name }}</p>
-                  <p class="text-[10px] text-slate-500">{{ detail.product?.barcode }}</p>
-               </div>
+               <div v-for="detail in items" :key="detail.id" 
+                    class="p-3 bg-white dark:bg-card-dark border border-slate-100 dark:border-white/5 rounded-xl flex items-center gap-3">
+                  
+                  <div class="w-10 h-10 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0">
+                     <ShirtIcon class="w-5 h-5 text-slate-300" />
+                  </div>
+                  
+                  <div class="flex-1 min-w-0">
+                     <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ detail.product?.name }}</p>
+                     <p class="text-[10px] text-slate-500">{{ detail.product?.barcode }}</p>
+                  </div>
 
-               <div class="text-center font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <span class="text-[10px] text-slate-400 block leading-none mb-0.5">CANT</span>
-                  {{ detail.quantity }}
+                  <div class="text-center font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                     <span class="text-[10px] text-slate-400 block leading-none mb-0.5">CANT</span>
+                     {{ detail.quantity }}
+                  </div>
                </div>
             </div>
          </div>
@@ -121,8 +127,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { ShirtIcon, BanknoteIcon, CreditCardIcon, ArrowRightLeftIcon } from 'lucide-vue-next'
+import { ref, watch, computed } from 'vue'
+import { ShirtIcon, BanknoteIcon, CreditCardIcon, ArrowRightLeftIcon, GraduationCapIcon } from 'lucide-vue-next'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
 import { useFormatter } from '~/composables/useFormatter'
@@ -138,6 +144,19 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'confirm'])
 
 const liquidationPaymentMethod = ref('cash')
+
+const groupedItems = computed(() => {
+  if (!props.ticket || !props.ticket.items) return {}
+  const groups = {}
+  props.ticket.items.forEach(detail => {
+    const schoolName = detail.product?.institution?.name || 'Sin Escuela / Venta General'
+    if (!groups[schoolName]) {
+      groups[schoolName] = []
+    }
+    groups[schoolName].push(detail)
+  })
+  return groups
+})
 
 watch(() => props.show, (newVal) => {
   if (newVal) {

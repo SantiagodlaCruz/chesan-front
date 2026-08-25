@@ -151,35 +151,43 @@
           </div>
         </div>
 
-        <!-- Items Table -->
-        <div class="bg-white dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark overflow-hidden shadow-sm">
-           <table class="w-full text-left text-sm">
-              <thead>
-                <tr class="bg-slate-50 dark:bg-white/5 text-slate-500 text-[10px] font-bold uppercase tracking-widest border-b border-border-light dark:border-border-dark">
-                  <th class="px-4 py-3">Producto / Talla</th>
-                  <th class="px-4 py-3 text-center">Cantidad</th>
-                  <th class="px-4 py-3 text-right">P. Unitario</th>
-                  <th class="px-4 py-3 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-border-light dark:divide-border-dark font-medium">
-                <tr v-for="item in selectedTicket.items" :key="item.id">
-                  <td class="px-4 py-3">
-                    <p class="font-bold text-slate-800 dark:text-white">{{ item.product_name }}</p>
-                    <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold">Talla: {{ item.size_name }}</span>
-                  </td>
-                  <td class="px-4 py-3 text-center font-black dark:text-slate-200">{{ item.quantity }}</td>
-                  <td class="px-4 py-3 text-right text-slate-500 dark:text-slate-400">{{ formatMoney(item.unit_price) }}</td>
-                  <td class="px-4 py-3 text-right font-black text-primary">{{ formatMoney(item.total) }}</td>
-                </tr>
-              </tbody>
-              <tfoot class="bg-slate-50 dark:bg-white/5 font-black">
-                <tr>
-                  <td colspan="3" class="px-4 py-3 text-right text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-widest">Monto Total</td>
-                  <td class="px-4 py-3 text-right text-lg text-primary">{{ formatMoney(selectedTicket.total) }}</td>
-                </tr>
-              </tfoot>
-           </table>
+        <!-- Items Groups by School -->
+        <div class="space-y-6">
+          <div v-for="(items, schoolName) in groupedItems" :key="schoolName" class="bg-white dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark overflow-hidden shadow-sm">
+             <div class="bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3 border-b border-indigo-100 dark:border-indigo-950/50 flex items-center gap-2">
+                <GraduationCapIcon class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span class="text-xs font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">{{ schoolName }}</span>
+             </div>
+             <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="bg-slate-50/50 dark:bg-white/5 text-slate-500 text-[10px] font-bold uppercase tracking-widest border-b border-border-light dark:border-border-dark">
+                    <th class="px-4 py-3">Producto / Talla</th>
+                    <th class="px-4 py-3 text-center">Cantidad</th>
+                    <th class="px-4 py-3 text-right">P. Unitario</th>
+                    <th class="px-4 py-3 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border-light dark:divide-border-dark font-medium">
+                  <tr v-for="item in items" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-white/[0.01]">
+                    <td class="px-4 py-3">
+                      <p class="font-bold text-slate-800 dark:text-white">{{ item.product_name }}</p>
+                      <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold">Talla: {{ item.size_name }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center font-black dark:text-slate-200">{{ item.quantity }}</td>
+                    <td class="px-4 py-3 text-right text-slate-500 dark:text-slate-400">{{ formatMoney(item.unit_price) }}</td>
+                    <td class="px-4 py-3 text-right font-black text-primary">{{ formatMoney(item.total) }}</td>
+                  </tr>
+                </tbody>
+             </table>
+          </div>
+
+          <!-- Resumen de Monto Total -->
+          <div class="flex justify-end bg-slate-50 dark:bg-white/5 rounded-2xl border border-border-light dark:border-border-dark p-4 font-black">
+             <div class="flex items-center gap-4">
+                <span class="text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-widest">Monto Total</span>
+                <span class="text-xl text-primary">{{ formatMoney(selectedTicket.total) }}</span>
+             </div>
+          </div>
         </div>
       </div>
       
@@ -294,7 +302,8 @@ import {
   BanknoteIcon, 
   RefreshCwIcon,
   PrinterIcon,
-  TicketIcon
+  TicketIcon,
+  GraduationCapIcon
 } from 'lucide-vue-next'
 import QrcodeVue from 'qrcode.vue'
 import Select from '~/components/Select.vue'
@@ -318,6 +327,19 @@ const users = ref([])
 const clients = ref([])
 const showDetailsModal = ref(false)
 const selectedTicket = ref(null)
+
+const groupedItems = computed(() => {
+  if (!selectedTicket.value || !selectedTicket.value.items) return {}
+  const groups = {}
+  selectedTicket.value.items.forEach(item => {
+    const schoolName = item.product?.institution?.name || 'Sin Escuela / Venta General'
+    if (!groups[schoolName]) {
+      groups[schoolName] = []
+    }
+    groups[schoolName].push(item)
+  })
+  return groups
+})
 
 const clientOptions = computed(() => [
   { label: 'Todos los clientes', value: '' },
