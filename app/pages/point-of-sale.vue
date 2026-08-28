@@ -963,6 +963,7 @@ const handleLayawayPayment = async ({ ticket, paymentMethod }) => {
             // lastTicket.value = null (Mantenemos para evitar impresión en blanco)
             showPosAlert('Apartado liquidado con éxito.', 'success')
             barcodeInput.value?.focus()
+            loadingLayaway.value = false
         }, 300)
         
     } catch (err) {
