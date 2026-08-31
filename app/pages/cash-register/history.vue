@@ -135,80 +135,152 @@
         </p>
       </template>
 
-      <div v-if="selectedSession" class="space-y-8">
-        <div class="space-y-4">
-          <!-- Ventas -->
-          <div class="grid grid-cols-3 gap-4">
-            <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-              <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Efectivo</p>
-              <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_cash_sales) }}</p>
-            </div>
-            <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-              <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Tarjeta</p>
-              <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_card_sales) }}</p>
-            </div>
-            <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-              <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Transferencias</p>
-              <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_transfer_sales) }}</p>
-            </div>
-          </div>
-          <!-- Movimientos -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400 p-4 rounded-2xl border border-green-100 dark:border-green-500/20">
-              <p class="text-[9px] font-black opacity-80 uppercase tracking-widest mb-1">Ingresos Extras</p>
-              <p class="text-lg font-black">{{ formatMoney(selectedSession.total_inflows) }}</p>
-            </div>
-            <div class="bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 p-4 rounded-2xl border border-red-100 dark:border-red-500/20">
-              <p class="text-[9px] font-black opacity-80 uppercase tracking-widest mb-1">Salidas (Gastos)</p>
-              <p class="text-lg font-black">{{ formatMoney(selectedSession.total_outflows) }}</p>
-            </div>
-          </div>
+      <div v-if="selectedSession" class="space-y-6">
+        <!-- Spinner mientras carga el desglose detallado -->
+        <div v-if="loadingDetail" class="py-8 flex flex-col items-center justify-center gap-3">
+          <div class="animate-spin rounded-full h-8 w-8 border-3 border-primary border-t-transparent"></div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cargando desglose financiero...</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 py-6 border-y border-slate-100 dark:border-white/5">
-           <div>
-             <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Balance General</h4>
-             <div class="space-y-3">
-               <div class="flex justify-between text-sm">
-                 <span class="text-slate-500">Fondo Inicial:</span>
-                 <span class="font-semibold text-slate-700 dark:text-slate-200">{{ formatMoney(selectedSession.opening_balance) }}</span>
-               </div>
-               <div class="flex justify-between text-sm">
-                 <span class="text-slate-500">Ingresos Extras:</span>
-                 <span class="font-semibold text-green-600 dark:text-green-400">+{{ formatMoney(selectedSession.total_inflows) }}</span>
-               </div>
-               <div class="flex justify-between text-sm">
-                 <span class="text-slate-500">Salidas / Gastos:</span>
-                 <span class="font-semibold text-red-600 dark:text-red-400">-{{ formatMoney(selectedSession.total_outflows) }}</span>
-               </div>
-               <div class="flex justify-between text-sm border-t border-slate-100 dark:border-white/5 pt-2">
-                 <span class="text-slate-500 font-bold">Efectivo Esperado:</span>
-                 <span class="font-bold text-slate-800 dark:text-slate-100">{{ formatMoney(selectedSession.expected_cash) }}</span>
-               </div>
-               <div class="flex justify-between text-sm pt-2 border-t border-dashed border-slate-200 dark:border-white/10">
-                 <span class="text-slate-900 dark:text-white font-black">EFECTIVO REAL:</span>
-                 <span class="font-black text-primary text-base">{{ formatMoney(selectedSession.real_cash) }}</span>
+        <div v-else class="space-y-6">
+          <!-- Totales Resumen -->
+          <div class="space-y-3">
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Efectivo</p>
+                <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_cash_sales) }}</p>
+              </div>
+              <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Tarjeta</p>
+                <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_card_sales) }}</p>
+              </div>
+              <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Transferencias</p>
+                <p class="text-lg font-black text-slate-900 dark:text-white">{{ formatMoney(selectedSession.total_transfer_sales) }}</p>
+              </div>
+            </div>
+
+            <!-- Movimientos -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400 p-3.5 rounded-2xl border border-green-100 dark:border-green-500/20">
+                <p class="text-[9px] font-black opacity-80 uppercase tracking-widest mb-1">Ingresos Extras</p>
+                <p class="text-base font-black">{{ formatMoney(selectedSession.total_inflows) }}</p>
+              </div>
+              <div class="bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 p-3.5 rounded-2xl border border-red-100 dark:border-red-500/20">
+                <p class="text-[9px] font-black opacity-80 uppercase tracking-widest mb-1">Salidas (Gastos)</p>
+                <p class="text-base font-black">{{ formatMoney(selectedSession.total_outflows) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desglose de Origen de Dinero (Camino 1) -->
+          <div v-if="sessionDetail?.breakdown" class="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5 space-y-3">
+            <h4 class="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <ReceiptIcon class="w-3.5 h-3.5 text-primary" />
+              Desglose de Entradas en Efectivo del Turno
+            </h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-white/5">
+                <span class="text-[9px] font-bold text-slate-500 uppercase block">Ventas Directas</span>
+                <p class="text-sm font-black text-slate-800 dark:text-white mt-1">
+                  {{ formatMoney(sessionDetail.breakdown.direct_sales?.cash || 0) }}
+                </p>
+                <span class="text-[9px] text-slate-400">{{ sessionDetail.breakdown.direct_sales?.count || 0 }} tickets</span>
+              </div>
+
+              <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-white/5">
+                <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase block">Anticipos Apartados</span>
+                <p class="text-sm font-black text-amber-600 dark:text-amber-400 mt-1">
+                  {{ formatMoney(sessionDetail.breakdown.layaway_advances?.cash || 0) }}
+                </p>
+                <span class="text-[9px] text-slate-400">{{ sessionDetail.breakdown.layaway_advances?.count || 0 }} nuevos apartados</span>
+              </div>
+
+              <div class="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-white/5">
+                <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase block">Liquidaciones</span>
+                <p class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                  {{ formatMoney(sessionDetail.breakdown.liquidations?.cash || 0) }}
+                </p>
+                <span class="text-[9px] text-slate-400">{{ sessionDetail.breakdown.liquidations?.count || 0 }} apartados cobrados</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista de Apartados Liquidados si los hubo -->
+          <div v-if="sessionDetail?.liquidations_list && sessionDetail.liquidations_list.length > 0" class="border border-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-500/5 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h5 class="text-xs font-black text-emerald-900 dark:text-emerald-300 uppercase tracking-wide flex items-center gap-2">
+                <CheckCircleIcon class="w-3.5 h-3.5 text-emerald-500" />
+                Apartados Liquidados en este Turno ({{ sessionDetail.liquidations_list.length }})
+              </h5>
+              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Total: {{ formatMoney(sessionDetail.breakdown.liquidations.total) }}</span>
+            </div>
+
+            <div class="max-h-36 overflow-y-auto divide-y divide-emerald-500/10 rounded-xl bg-white dark:bg-slate-800/90 border border-emerald-500/10">
+              <div v-for="item in sessionDetail.liquidations_list" :key="item.id" class="px-3 py-2 text-xs flex items-center justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-800 dark:text-slate-100 font-mono">{{ item.ticket_number }}</span>
+                    <span class="text-slate-500 dark:text-slate-400">• {{ item.customer_name }}</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">
+                    Total: {{ formatMoney(item.total) }} | Anticipo previo: {{ formatMoney(item.advance_amount) }}
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="font-black text-emerald-600 dark:text-emerald-400 block">+{{ formatMoney(item.liquidation_amount) }}</span>
+                  <span class="text-[9px] uppercase font-bold text-slate-400">{{ item.payment_method }} ({{ item.time }})</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 border-y border-slate-100 dark:border-white/5">
+             <div>
+               <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Balance General</h4>
+               <div class="space-y-2.5">
+                 <div class="flex justify-between text-sm">
+                   <span class="text-slate-500">Fondo Inicial:</span>
+                   <span class="font-semibold text-slate-700 dark:text-slate-200">{{ formatMoney(selectedSession.opening_balance) }}</span>
+                 </div>
+                 <div class="flex justify-between text-sm">
+                   <span class="text-slate-500">Ingresos Extras:</span>
+                   <span class="font-semibold text-green-600 dark:text-green-400">+{{ formatMoney(selectedSession.total_inflows) }}</span>
+                 </div>
+                 <div class="flex justify-between text-sm">
+                   <span class="text-slate-500">Salidas / Gastos:</span>
+                   <span class="font-semibold text-red-600 dark:text-red-400">-{{ formatMoney(selectedSession.total_outflows) }}</span>
+                 </div>
+                 <div class="flex justify-between text-sm border-t border-slate-100 dark:border-white/5 pt-2">
+                   <span class="text-slate-500 font-bold">Efectivo Esperado:</span>
+                   <span class="font-bold text-slate-800 dark:text-slate-100">{{ formatMoney(selectedSession.expected_cash) }}</span>
+                 </div>
+                 <div class="flex justify-between text-sm pt-2 border-t border-dashed border-slate-200 dark:border-white/10">
+                   <span class="text-slate-900 dark:text-white font-black">EFECTIVO REAL:</span>
+                   <span class="font-black text-primary text-base">{{ formatMoney(selectedSession.real_cash) }}</span>
+                 </div>
                </div>
              </div>
-           </div>
 
-           <div class="bg-slate-50 dark:bg-white/5 p-5 rounded-2xl border border-slate-100 dark:border-white/5">
-             <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Observaciones</h4>
-             <p class="text-sm text-slate-600 dark:text-slate-400 italic leading-relaxed">
-               {{ selectedSession.notes || 'Sin observaciones registradas.' }}
-             </p>
-           </div>
-        </div>
-
-        <div class="flex items-center gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            Abierto por: <span class="text-slate-600 dark:text-slate-300">{{ selectedSession.opened_by?.name }}</span>
+             <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+               <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Observaciones</h4>
+               <p class="text-sm text-slate-600 dark:text-slate-400 italic leading-relaxed">
+                 {{ selectedSession.notes || 'Sin observaciones registradas.' }}
+               </p>
+             </div>
           </div>
-          <div class="w-px h-3 bg-slate-200 dark:bg-white/10"></div>
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-red-500"></span>
-            Cerrado por: <span class="text-slate-600 dark:text-slate-300">{{ selectedSession.closed_by?.name }}</span>
+
+          <div class="flex items-center gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Abierto por: <span class="text-slate-600 dark:text-slate-300">{{ selectedSession.opened_by?.name }}</span>
+            </div>
+            <div class="w-px h-3 bg-slate-200 dark:bg-white/10"></div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>
+              Cerrado por: <span class="text-slate-600 dark:text-slate-300">{{ selectedSession.closed_by?.name }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -231,7 +303,9 @@ import {
   InboxIcon, 
   EyeIcon, 
   ChevronLeftIcon, 
-  ChevronRightIcon 
+  ChevronRightIcon,
+  ReceiptIcon,
+  CheckCircleIcon
 } from 'lucide-vue-next'
 import { useFormatter } from '~/composables/useFormatter'
 import BaseModal from '~/components/BaseModal.vue'
@@ -243,6 +317,8 @@ const sessions = ref([])
 const loading = ref(true)
 const pagination = ref({ current_page: 1, last_page: 1 })
 const selectedSession = ref(null)
+const sessionDetail = ref(null)
+const loadingDetail = ref(false)
 
 const todayFormatted = new Date().toLocaleDateString('es-MX', { 
   weekday: 'long', 
@@ -269,11 +345,22 @@ const fetchHistory = async (page = 1) => {
   }
 }
 
-const viewDetails = (session) => {
+const viewDetails = async (session) => {
   selectedSession.value = session
+  loadingDetail.value = true
+  sessionDetail.value = null
+  try {
+    const res = await api.get(`/api/cash-register/${session.id}`)
+    sessionDetail.value = res.summary
+  } catch (e) {
+    console.error('Error fetching session details:', e)
+  } finally {
+    loadingDetail.value = false
+  }
 }
 
 onMounted(() => {
   fetchHistory()
 })
 </script>
+

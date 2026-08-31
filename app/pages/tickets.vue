@@ -112,6 +112,8 @@
                 <PrinterIcon class="w-4 h-4 text-primary group-hover/btn:scale-110 transition-transform" />
               </button>
             </td>
+
+
           </tr>
           <tr v-if="!loading && filteredTickets.length === 0">
             <td colspan="7" class="px-6 py-12 text-center text-slate-400 text-sm italic">
@@ -192,13 +194,57 @@
       </div>
       
       <template #footer>
-        <div class="flex justify-between items-center w-full">
-          <BaseButton variant="primary" @click="printTicket(selectedTicket)" class="flex items-center gap-2">
-            <PrinterIcon class="w-4 h-4" /> Imprimir Ticket
-          </BaseButton>
-          <BaseButton variant="secondary" @click="showDetailsModal = false">Cerrar Ventana</BaseButton>
+        <div class="flex items-center justify-between gap-4 w-full">
+          <!-- Indicador de Estado del Ticket (Aprovechando el espacio izquierdo) -->
+          <div class="flex items-center gap-3 min-w-0">
+            <div 
+              class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border"
+              :class="selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered
+                ? 'bg-amber-500/10 border-amber-500/20 text-amber-500'
+                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'"
+            >
+              <ShirtIcon v-if="selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered" class="w-4 h-4" />
+              <CheckCircleIcon v-else class="w-4 h-4" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs font-black text-slate-800 dark:text-slate-100 truncate">
+                {{ selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered 
+                    ? 'Pendiente de Entrega Física' 
+                    : (selectedTicket.ticket_type === 'layaway' && selectedTicket.is_delivered 
+                        ? 'Apartado Liquidado y Entregado' 
+                        : (selectedTicket.ticket_type === 'layaway' 
+                            ? 'Apartado con Saldo Pendiente' 
+                            : 'Venta de Mostrador')) }}
+              </p>
+              <p class="text-[10px] text-slate-400 truncate">
+                {{ selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered 
+                    ? '100% pagado • Artículos resguardados en tienda' 
+                    : (selectedTicket.ticket_type === 'layaway' && selectedTicket.is_delivered 
+                        ? 'Prendas entregadas al cliente' 
+                        : (selectedTicket.ticket_type === 'layaway' 
+                            ? `Saldo por liquidar: ${formatMoney(selectedTicket.balance)}` 
+                            : 'Transacción completada')) }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Botón de Acción a la derecha -->
+          <div class="flex items-center shrink-0">
+            <button
+              @click="printTicket(selectedTicket)"
+              class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-primary/20 active:scale-95 whitespace-nowrap"
+            >
+              <PrinterIcon class="w-4 h-4" />
+              <span>Imprimir Ticket</span>
+            </button>
+          </div>
         </div>
       </template>
+
+
+
+
+
     </BaseModal>
   </div>
 
@@ -303,7 +349,10 @@ import {
   RefreshCwIcon,
   PrinterIcon,
   TicketIcon,
-  GraduationCapIcon
+  GraduationCapIcon,
+  ShirtIcon,
+  CheckCircleIcon,
+  ClockIcon
 } from 'lucide-vue-next'
 import QrcodeVue from 'qrcode.vue'
 import Select from '~/components/Select.vue'
@@ -441,6 +490,7 @@ const viewDetails = (ticket) => {
 }
 
 const ticketToPrint = ref(null)
+
 
 const printTicket = (ticket) => {
   ticketToPrint.value = ticket

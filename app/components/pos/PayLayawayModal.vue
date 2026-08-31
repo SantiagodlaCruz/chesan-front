@@ -62,7 +62,16 @@
          </div>
       </div>
 
-      <!-- Método de Pago de Liquidación -->
+      <!-- Estado de pago y aviso si ya está pagado -->
+      <div v-if="ticket.balance === 0" class="p-3.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl flex items-center gap-3">
+        <CheckCircleIcon class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <div class="text-xs">
+          <p class="font-black text-emerald-800 dark:text-emerald-200">Apartado 100% Pagado</p>
+          <p class="text-emerald-600 dark:text-emerald-400 text-[11px] mt-0.5">El cliente no tiene saldo pendiente. Confirma la entrega para descontar el stock físico.</p>
+        </div>
+      </div>
+
+      <!-- Método de Pago de Liquidación (Solo si tiene saldo pendiente) -->
       <div v-if="ticket.balance > 0" class="border-t border-slate-100 dark:border-white/5 pt-5">
          <h3 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1 transition-colors mb-3">Método de pago de liquidación</h3>
          <div class="grid grid-cols-3 gap-3">
@@ -104,21 +113,48 @@
 
       <!-- Actions -->
       <div class="flex flex-col gap-3 border-t border-slate-100 dark:border-white/5 pt-5">
-         <button 
-             @click="confirmPayment" 
-             :disabled="loading"
-             class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-             :class="ticket.balance === 0 ? 'bg-emerald-600 hover:bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : ''"
-         >
-            <div v-if="loading" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-            <template v-else>
-               <ShirtIcon class="w-5 h-5" v-if="ticket.balance === 0" />
-               <BanknoteIcon class="w-5 h-5" v-else />
-            </template>
-            {{ loading ? 'Procesando...' : (ticket.balance === 0 ? 'Confirmar entrega de artículos' : 'Liquidar y entregar artículos') }}
-         </button>
+         <!-- CASO 1: Aún debe saldo (balance > 0) -> Dos opciones: Solo Liquidar vs Liquidar y Entregar -->
+         <template v-if="ticket.balance > 0">
+           <!-- Botón 1: Liquidar y Entregar (Acción completa inmediata) -->
+           <button 
+               @click="confirmPayment(true)" 
+               :disabled="loading"
+               class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+           >
+              <div v-if="loading" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <template v-else>
+                 <ShirtIcon class="w-4 h-4" />
+              </template>
+              <span>{{ loading ? 'Procesando...' : 'Liquidar y Entregar Ahora' }}</span>
+           </button>
+
+           <!-- Botón 2: Solo Liquidar (Guarda dinero en caja, prenda queda por entregar) -->
+           <button 
+               @click="confirmPayment(false)" 
+               :disabled="loading"
+               class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-800 dark:text-slate-100 font-bold text-xs uppercase tracking-wider py-3 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 border border-slate-200 dark:border-white/10"
+           >
+              <ClockIcon class="w-4 h-4 text-amber-500" />
+              <span>Solo Liquidar Saldo (Entrega Posterior)</span>
+           </button>
+         </template>
+
+         <!-- CASO 2: Ya pagó todo (balance == 0) -> Solo confirmar entrega -->
+         <template v-else>
+           <button 
+               @click="confirmPayment(true)" 
+               :disabled="loading"
+               class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+           >
+              <div v-if="loading" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <template v-else>
+                 <ShirtIcon class="w-4 h-4" />
+              </template>
+              <span>{{ loading ? 'Entregando...' : 'Confirmar Entrega de Artículos' }}</span>
+           </button>
+         </template>
          
-         <BaseButton variant="secondary" @click="close" class="w-full" :disabled="loading">
+         <BaseButton variant="secondary" @click="close" class="w-full text-xs" :disabled="loading">
             Cancelar
          </BaseButton>
       </div>
@@ -128,7 +164,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { ShirtIcon, BanknoteIcon, CreditCardIcon, ArrowRightLeftIcon, GraduationCapIcon } from 'lucide-vue-next'
+import { ShirtIcon, BanknoteIcon, CreditCardIcon, ArrowRightLeftIcon, GraduationCapIcon, CheckCircleIcon, ClockIcon } from 'lucide-vue-next'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
 import { useFormatter } from '~/composables/useFormatter'
@@ -164,8 +200,12 @@ watch(() => props.show, (newVal) => {
   }
 })
 
-const confirmPayment = () => {
-    emit('confirm', { ticket: props.ticket, paymentMethod: liquidationPaymentMethod.value })
+const confirmPayment = (deliverNow = true) => {
+    emit('confirm', { 
+      ticket: props.ticket, 
+      paymentMethod: liquidationPaymentMethod.value,
+      deliverNow 
+    })
 }
 
 const close = () => {
@@ -173,4 +213,5 @@ const close = () => {
       emit('update:show', false)
   }
 }
+
 </script>

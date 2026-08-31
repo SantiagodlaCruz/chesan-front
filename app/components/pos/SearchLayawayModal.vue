@@ -60,18 +60,25 @@
                 <div class="flex justify-between items-center mb-1">
                   <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Apartado</span>
                   <span
-                    v-if="isOverdue(ticket.due_date)"
+                    v-if="ticket.balance === 0"
+                    class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+                  >
+                    Por Entregar
+                  </span>
+                  <span
+                    v-else-if="isOverdue(ticket.due_date)"
                     class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
                   >
                     Vencido
                   </span>
                   <span
                     v-else
-                    class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                    class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
                   >
-                    Vigente
+                    Pendiente
                   </span>
                 </div>
+
                 <span class="font-mono text-xs font-black text-slate-400 group-hover:text-primary transition-colors truncate" :title="ticket.ticket_number">
                   {{ ticket.ticket_number }}
                 </span>
@@ -119,9 +126,10 @@
                 class="w-full py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-widest active:scale-[0.98]"
                 :class="ticket.balance === 0 ? 'bg-emerald-600 hover:bg-emerald-500' : ''"
               >
-                <span>{{ ticket.balance === 0 ? 'Entregar' : 'Liquidar' }}</span>
+                <span>{{ ticket.balance === 0 ? 'Entregar Artículos' : 'Gestionar / Liquidar' }}</span>
                 <ChevronRightIcon class="w-4 h-4" />
               </button>
+
             </div>
           </div>
         </div>

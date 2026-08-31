@@ -440,8 +440,10 @@
         <div class="ticket-header">
           <h2 class="company-name">CHESAN UNIFORMES</h2>
           <p class="company-info" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0">COMPROBANTE DE APARTADO</p>
-          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">LIQUIDACIÓN DE APARTADO</p>
+          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0 && lastTicket.is_delivered">LIQUIDACIÓN Y ENTREGA DE APARTADO</p>
+          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0 && !lastTicket.is_delivered">LIQUIDACIÓN (PENDIENTE DE ENTREGA)</p>
           <p class="company-info" v-else>Venta de Mostrador</p>
+
           <p class="company-info">Fecha: {{ new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) }}</p>
           <p class="company-info ticket-number">Ticket #{{ lastTicket.ticket_number || 'S/N' }}</p>
           <p v-if="lastTicket.ticket_type === 'layaway'" class="company-info">Cliente: {{ lastTicket.customer_name }}</p>
@@ -931,11 +933,12 @@ const onCheckout = async () => {
   }
 }
 
-const handleLayawayPayment = async ({ ticket, paymentMethod }) => {
+const handleLayawayPayment = async ({ ticket, paymentMethod, deliverNow = true }) => {
     loadingLayaway.value = true
     try {
         const response = await api.post(`/api/tickets/${ticket.id}/complete-layaway`, {
-            payment_method: paymentMethod
+            payment_method: paymentMethod,
+            deliver_now: deliverNow
         })
         showPayLayawayModal.value = false
         
@@ -958,16 +961,19 @@ const handleLayawayPayment = async ({ ticket, paymentMethod }) => {
             payment_made_today: ticket.balance
         }
         
+        const successMsg = deliverNow 
+          ? (ticket.balance === 0 ? 'Apartado entregado con éxito.' : 'Apartado liquidado y entregado con éxito.')
+          : 'Apartado liquidado con éxito. Prenda resguardada para entrega posterior.'
+
         setTimeout(() => {
             window.print()
-            // lastTicket.value = null (Mantenemos para evitar impresión en blanco)
-            showPosAlert('Apartado liquidado con éxito.', 'success')
+            showPosAlert(successMsg, 'success')
             barcodeInput.value?.focus()
             loadingLayaway.value = false
         }, 300)
         
     } catch (err) {
-        showPosAlert(err.data?.message || 'Error al liquidar el apartado.', 'error')
+        showPosAlert(err.data?.message || 'Error al procesar el apartado.', 'error')
         loadingLayaway.value = false
     }
 }
