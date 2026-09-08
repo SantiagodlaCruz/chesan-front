@@ -236,6 +236,43 @@
             </div>
           </div>
 
+          <!-- Lista de Movimientos Manuales (Ingresos Extras y Salidas de Caja) -->
+          <div v-if="sessionDetail?.movements_list && sessionDetail.movements_list.length > 0" class="border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h5 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide flex items-center gap-2">
+                <ArrowRightLeftIcon class="w-3.5 h-3.5 text-primary" />
+                Movimientos Manuales del Turno ({{ sessionDetail.movements_list.length }})
+              </h5>
+              <div class="flex items-center gap-3 text-[10px] font-bold">
+                <span v-if="sessionDetail.inflows > 0" class="text-emerald-600 dark:text-emerald-400">+{{ formatMoney(sessionDetail.inflows) }} Entradas</span>
+                <span v-if="sessionDetail.outflows > 0" class="text-red-600 dark:text-red-400">-{{ formatMoney(sessionDetail.outflows) }} Salidas</span>
+              </div>
+            </div>
+
+            <div class="max-h-36 overflow-y-auto divide-y divide-slate-200/60 dark:divide-white/5 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200/60 dark:border-white/5">
+              <div v-for="item in sessionDetail.movements_list" :key="item.id" class="px-3 py-2 text-xs flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span 
+                    class="text-[8px] font-black uppercase px-1.5 py-0.5 rounded"
+                    :class="item.type === 'inflow' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300'"
+                  >
+                    {{ item.type === 'inflow' ? 'Ingreso Extra' : 'Salida / Gasto' }}
+                  </span>
+                  <span class="font-medium text-slate-700 dark:text-slate-200">{{ item.description }}</span>
+                </div>
+                <div class="text-right flex items-center gap-3">
+                  <span class="text-[10px] text-slate-400">{{ item.cashier }} • {{ item.time }}</span>
+                  <span 
+                    class="font-black text-xs"
+                    :class="item.type === 'inflow' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                  >
+                    {{ item.type === 'inflow' ? '+' : '-' }}{{ formatMoney(item.amount) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 border-y border-slate-100 dark:border-white/5">
              <div>
                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Balance General</h4>
@@ -305,7 +342,8 @@ import {
   ChevronLeftIcon, 
   ChevronRightIcon,
   ReceiptIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ArrowRightLeftIcon
 } from 'lucide-vue-next'
 import { useFormatter } from '~/composables/useFormatter'
 import BaseModal from '~/components/BaseModal.vue'

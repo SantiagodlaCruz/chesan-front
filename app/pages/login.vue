@@ -213,7 +213,7 @@
           <div class="mt-8 pt-8 border-t border-slate-200 dark:border-border-dark">
             <p class="text-center text-sm text-slate-500 dark:text-slate-400">
               ¿Problemas para acceder?
-              <a href="#" class="text-accent-red font-bold hover:underline ml-1">Contactar a Soporte</a>
+              <a href="mailto:santiagoaaron.delacruz@gmail.com?subject=Soporte%20CHESAN%20-%20Problemas%20para%20acceder" class="text-accent-red font-bold hover:underline ml-1">Contactar a Soporte</a>
             </p>
           </div>
         </div>

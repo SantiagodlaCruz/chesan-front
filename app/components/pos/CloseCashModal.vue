@@ -18,130 +18,156 @@
       <div v-if="!showConfirm" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         <!-- COLUMNA IZQUIERDA: Balance y Desglose Financiero (7 cols) -->
-        <div class="lg:col-span-7 space-y-4">
+        <div class="lg:col-span-7 space-y-3">
           
-          <!-- Hero Card: Efectivo Esperado -->
-          <div class="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 rounded-2xl border border-primary/20">
-            <div class="flex items-center justify-between mb-3">
+          <!-- Hero Card: Total Esperado -->
+          <div class="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 rounded-2xl border border-primary/20 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-black text-primary uppercase tracking-widest block">Efectivo Esperado en Cajón</span>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Total de dinero físico que debe haber en caja</p>
+            </div>
+            <p class="text-3xl font-black text-primary tracking-tight">{{ formatMoney(summary.expected_cash) }}</p>
+          </div>
+
+          <!-- Cuadrícula de Cajas de Componentes del Efectivo -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            
+            <!-- 1. Fondo Inicial -->
+            <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/5 flex flex-col justify-between">
               <div>
-                <span class="text-[10px] font-black text-primary uppercase tracking-widest block">Efectivo Esperado en Cajón</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Dinero físico que debe haber en caja</p>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1 truncate">Fondo Inicial</span>
+                <p class="text-base font-black text-slate-800 dark:text-white">
+                  {{ formatMoney(summary.opening_balance) }}
+                </p>
               </div>
-              <p class="text-3xl font-black text-primary tracking-tight">{{ formatMoney(summary.expected_cash) }}</p>
+              <span class="text-[8px] text-slate-400 mt-1 block">Apertura</span>
             </div>
 
-            <!-- Mini Pipeline de Cálculo -->
-            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-primary/15 text-[10px]">
-              <div class="bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200/50 dark:border-white/5">
-                <span class="text-slate-400 font-bold block uppercase text-[8px]">Fondo Inicial</span>
-                <span class="font-bold text-slate-700 dark:text-slate-200">{{ formatMoney(summary.opening_balance) }}</span>
-              </div>
-              <div class="bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200/50 dark:border-white/5">
-                <span class="text-blue-500 font-bold block uppercase text-[8px]">+ Cobros Efectivo</span>
-                <span class="font-bold text-blue-600 dark:text-blue-400">+{{ formatMoney(summary.cash_sales) }}</span>
-              </div>
-              <div class="bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200/50 dark:border-white/5">
-                <span class="text-red-500 font-bold block uppercase text-[8px]">- Salidas / Gastos</span>
-                <span class="font-bold text-red-600 dark:text-red-400">-{{ formatMoney(summary.outflows) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Desglose de Entradas en Efectivo (3 Tarjetas) -->
-          <div class="space-y-2.5">
-            <div class="flex items-center justify-between px-1">
-              <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                <ReceiptIcon class="w-3.5 h-3.5 text-primary" />
-                Origen del Dinero en Efectivo
-              </span>
-              <span class="text-[9px] font-bold text-slate-400">Total: {{ formatMoney(summary.cash_sales) }}</span>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2.5">
-              <!-- Ventas Directas -->
-              <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/5 flex flex-col justify-between">
-                <div>
-                  <div class="flex items-center justify-between gap-1 mb-1">
-                    <span class="text-[9px] font-bold text-slate-500 uppercase truncate">Ventas Directas</span>
-                    <span class="text-[8px] px-1 py-0.2 bg-slate-200/60 dark:bg-white/10 rounded font-bold text-slate-500 shrink-0">
-                      {{ summary.breakdown?.direct_sales?.count || 0 }}
-                    </span>
-                  </div>
-                  <p class="text-base font-black text-slate-800 dark:text-white">
-                    {{ formatMoney(summary.breakdown?.direct_sales?.cash || 0) }}
-                  </p>
-                </div>
-                <span class="text-[8px] text-slate-400 mt-1 block">Tickets del turno</span>
-              </div>
-
-              <!-- Anticipos de Apartados -->
-              <div class="p-3 bg-amber-50/50 dark:bg-amber-500/5 rounded-2xl border border-amber-200/60 dark:border-amber-500/10 flex flex-col justify-between">
-                <div>
-                  <div class="flex items-center justify-between gap-1 mb-1">
-                    <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase truncate">Anticipos</span>
-                    <span class="text-[8px] px-1 py-0.2 bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded font-bold shrink-0">
-                      {{ summary.breakdown?.layaway_advances?.count || 0 }}
-                    </span>
-                  </div>
-                  <p class="text-base font-black text-amber-600 dark:text-amber-400">
-                    {{ formatMoney(summary.breakdown?.layaway_advances?.cash || 0) }}
-                  </p>
-                </div>
-                <span class="text-[8px] text-amber-600/70 dark:text-amber-400/70 mt-1 block">Nuevos apartados</span>
-              </div>
-
-              <!-- Liquidaciones de Apartados -->
-              <div class="p-3 bg-emerald-50/50 dark:bg-emerald-500/5 rounded-2xl border border-emerald-200/60 dark:border-emerald-500/10 flex flex-col justify-between">
-                <div>
-                  <div class="flex items-center justify-between gap-1 mb-1">
-                    <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase truncate">Liquidaciones</span>
-                    <span class="text-[8px] px-1 py-0.2 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded font-bold shrink-0">
-                      {{ summary.breakdown?.liquidations?.count || 0 }}
-                    </span>
-                  </div>
-                  <p class="text-base font-black text-emerald-600 dark:text-emerald-400">
-                    {{ formatMoney(summary.breakdown?.liquidations?.cash || 0) }}
-                  </p>
-                </div>
-                <span class="text-[8px] text-emerald-600/70 dark:text-emerald-400/70 mt-1 block">Entregas de hoy</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Lista de Liquidaciones (si las hay) -->
-          <div v-if="summary.liquidations_list && summary.liquidations_list.length > 0" class="p-3 bg-emerald-50/30 dark:bg-emerald-500/5 rounded-2xl border border-emerald-500/20 space-y-2">
-            <div class="flex items-center justify-between px-1">
-              <span class="text-[9px] font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircleIcon class="w-3.5 h-3.5 text-emerald-500" />
-                Apartados Liquidados en este Turno ({{ summary.liquidations_list.length }})
-              </span>
-              <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">Total: {{ formatMoney(summary.breakdown?.liquidations?.total || 0) }}</span>
-            </div>
-
-            <div class="max-h-28 overflow-y-auto divide-y divide-emerald-500/10 rounded-xl bg-white dark:bg-slate-800/90 border border-emerald-500/10">
-              <div v-for="item in summary.liquidations_list" :key="item.id" class="px-3 py-1.5 text-xs flex items-center justify-between">
-                <div>
-                  <span class="font-bold text-slate-800 dark:text-slate-100 font-mono text-[11px]">{{ item.ticket_number }}</span>
-                  <span class="text-slate-500 dark:text-slate-400 text-[10px] ml-1.5">• {{ item.customer_name }}</span>
-                </div>
-                <div class="text-right flex items-center gap-2">
-                  <span 
-                    class="text-[8px] font-black uppercase px-1.5 py-0.5 rounded"
-                    :class="item.is_delivered ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'"
-                  >
-                    {{ item.is_delivered ? 'Entregado' : 'Por entregar' }}
+            <!-- 2. Ventas Directas -->
+            <div class="p-3 bg-blue-50/50 dark:bg-blue-500/5 rounded-2xl border border-blue-200/60 dark:border-blue-500/10 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase truncate">Ventas Directas</span>
+                  <span class="text-[8px] px-1 py-0.2 bg-blue-500/20 text-blue-700 dark:text-blue-300 rounded font-bold shrink-0">
+                    {{ summary.breakdown?.direct_sales?.count || 0 }}
                   </span>
-                  <span class="font-black text-emerald-600 dark:text-emerald-400 text-[11px]">+{{ formatMoney(item.liquidation_amount) }}</span>
                 </div>
+                <p class="text-base font-black text-blue-600 dark:text-blue-400">
+                  +{{ formatMoney(summary.breakdown?.direct_sales?.cash || 0) }}
+                </p>
+              </div>
+              <span class="text-[8px] text-blue-500/70 mt-1 block">Cobros mostrador</span>
+            </div>
+
+            <!-- 3. Anticipos de Apartados -->
+            <div class="p-3 bg-amber-50/50 dark:bg-amber-500/5 rounded-2xl border border-amber-200/60 dark:border-amber-500/10 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase truncate">Anticipos</span>
+                  <span class="text-[8px] px-1 py-0.2 bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded font-bold shrink-0">
+                    {{ summary.breakdown?.layaway_advances?.count || 0 }}
+                  </span>
+                </div>
+                <p class="text-base font-black text-amber-600 dark:text-amber-400">
+                  +{{ formatMoney(summary.breakdown?.layaway_advances?.cash || 0) }}
+                </p>
+              </div>
+              <span class="text-[8px] text-amber-600/70 mt-1 block">Nuevos apartados</span>
+            </div>
+
+            <!-- 4. Liquidaciones de Apartados -->
+            <div class="p-3 bg-emerald-50/50 dark:bg-emerald-500/5 rounded-2xl border border-emerald-200/60 dark:border-emerald-500/10 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase truncate">Liquidaciones</span>
+                  <span class="text-[8px] px-1 py-0.2 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded font-bold shrink-0">
+                    {{ summary.breakdown?.liquidations?.count || 0 }}
+                  </span>
+                </div>
+                <p class="text-base font-black text-emerald-600 dark:text-emerald-400">
+                  +{{ formatMoney(summary.breakdown?.liquidations?.cash || 0) }}
+                </p>
+              </div>
+              <span class="text-[8px] text-emerald-600/70 mt-1 block">Entregas de hoy</span>
+            </div>
+
+            <!-- 5. Ingresos Extras -->
+            <div class="p-3 bg-teal-50/50 dark:bg-teal-500/5 rounded-2xl border border-teal-200/60 dark:border-teal-500/10 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[9px] font-bold text-teal-600 dark:text-teal-400 uppercase truncate">Ingreso Extra</span>
+                  <span class="text-[8px] px-1 py-0.2 bg-teal-500/20 text-teal-700 dark:text-teal-300 rounded font-bold shrink-0">
+                    {{ summary.movements_list?.filter(m => m.type === 'inflow').length || (summary.inflows > 0 ? 1 : 0) }}
+                  </span>
+                </div>
+                <p class="text-base font-black text-teal-600 dark:text-teal-400">
+                  +{{ formatMoney(summary.inflows) }}
+                </p>
+              </div>
+              <span class="text-[8px] text-teal-600/70 mt-1 block">Dinero agregado</span>
+            </div>
+
+            <!-- 6. Salidas / Gastos -->
+            <div class="p-3 bg-red-50/50 dark:bg-red-500/5 rounded-2xl border border-red-200/60 dark:border-red-500/10 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[9px] font-bold text-red-600 dark:text-red-400 uppercase truncate">Salidas / Gastos</span>
+                  <span class="text-[8px] px-1 py-0.2 bg-red-500/20 text-red-700 dark:text-red-300 rounded font-bold shrink-0">
+                    {{ summary.movements_list?.filter(m => m.type === 'outflow').length || (summary.outflows > 0 ? 1 : 0) }}
+                  </span>
+                </div>
+                <p class="text-base font-black text-red-600 dark:text-red-400">
+                  -{{ formatMoney(summary.outflows) }}
+                </p>
+              </div>
+              <span class="text-[8px] text-red-500/70 mt-1 block">Retiros del turno</span>
+            </div>
+
+          </div>
+
+          <!-- Detalle de Comprobantes Específicos (Liquidaciones y Movimientos Manuales) -->
+          <div v-if="(summary.liquidations_list && summary.liquidations_list.length > 0) || (summary.movements_list && summary.movements_list.length > 0)" 
+               class="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/10 space-y-2">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-0.5">
+              Detalles Extra del Turno
+            </span>
+
+            <div class="max-h-24 overflow-y-auto divide-y divide-slate-200/60 dark:divide-white/5 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200/60 dark:border-white/5 text-[11px]">
+              <!-- Renglones de Liquidaciones -->
+              <div v-for="item in summary.liquidations_list" :key="'liq-' + item.id" class="px-2.5 py-1.5 flex items-center justify-between">
+                <div class="flex items-center gap-1.5 truncate">
+                  <span class="text-[8px] font-black uppercase px-1 py-0.2 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 shrink-0">Liquidación</span>
+                  <span class="font-bold text-slate-700 dark:text-slate-200 font-mono text-[10px]">{{ item.ticket_number }}</span>
+                  <span class="text-slate-500 dark:text-slate-400 text-[10px] truncate">• {{ item.customer_name }}</span>
+                </div>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 shrink-0 text-[10px]">{{ formatMoney(item.liquidation_amount) }}</span>
+              </div>
+
+              <!-- Renglones de Movimientos Manuales -->
+              <div v-for="m in summary.movements_list" :key="'mov-' + m.id" class="px-2.5 py-1.5 flex items-center justify-between">
+                <div class="flex items-center gap-1.5 truncate">
+                  <span 
+                    class="text-[8px] font-black uppercase px-1 py-0.2 rounded shrink-0"
+                    :class="m.type === 'inflow' ? 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300'"
+                  >
+                    {{ m.type === 'inflow' ? 'Ingreso Extra' : 'Salida / Gasto' }}
+                  </span>
+                  <span class="font-medium text-slate-700 dark:text-slate-200 text-[10px] truncate">{{ m.description }}</span>
+                </div>
+                <span 
+                  class="font-bold shrink-0 text-[10px]"
+                  :class="m.type === 'inflow' ? 'text-teal-600 dark:text-teal-400' : 'text-red-600 dark:text-red-400'"
+                >
+                  {{ m.type === 'inflow' ? '+' : '-' }}{{ formatMoney(m.amount) }}
+                </span>
               </div>
             </div>
           </div>
-
 
           <!-- Pagos Digitales Informativos (Tarjeta / SPEI) -->
-          <div class="flex items-center justify-between px-4 py-2.5 bg-slate-50 dark:bg-white/5 rounded-xl text-[10px] text-slate-500 border border-slate-200/60 dark:border-white/5">
-            <span class="font-bold uppercase tracking-wider text-[8px] text-slate-400">Digital (Informativo):</span>
-            <div class="flex items-center gap-4">
+          <div class="flex items-center justify-between px-3.5 py-2 bg-slate-50 dark:bg-white/5 rounded-xl text-[10px] text-slate-500 border border-slate-200/60 dark:border-white/5">
+            <span class="font-bold uppercase tracking-wider text-[8px] text-slate-400">Digitales (Sin impacto en cajón):</span>
+            <div class="flex items-center gap-3">
               <span>Tarjeta: <strong class="text-slate-700 dark:text-slate-200">{{ formatMoney(summary.card_sales) }}</strong></span>
               <span class="text-slate-300 dark:text-white/10">|</span>
               <span>SPEI / Transf: <strong class="text-slate-700 dark:text-slate-200">{{ formatMoney(summary.transfer_sales) }}</strong></span>
@@ -262,7 +288,7 @@
 <script setup>
 
 import { ref, computed, watch, onMounted } from 'vue'
-import { FlagIcon, LockIcon, AlertTriangleIcon, ReceiptIcon, CheckCircleIcon } from 'lucide-vue-next'
+import { FlagIcon, LockIcon, AlertTriangleIcon, ReceiptIcon, CheckCircleIcon, ArrowRightLeftIcon } from 'lucide-vue-next'
 import BaseModal from '~/components/BaseModal.vue'
 
 
