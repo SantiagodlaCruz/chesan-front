@@ -121,8 +121,13 @@
 
                 <!-- Controles de Cantidad y Botón Cancelar (Compactos y Alineados) -->
                 <div class="flex items-center gap-1.5 shrink-0">
+                  <!-- Ya cancelada totalmente previamente -->
+                  <span v-if="item.is_cancelled_already && item.available_to_deliver === 0" class="px-2.5 py-1 bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-300/40 dark:border-rose-500/40 text-[10px] font-black uppercase tracking-wider rounded-lg whitespace-nowrap shadow-sm">
+                    Eliminado ({{ item.cancelled_quantity || item.quantity }}/{{ item.quantity }})
+                  </span>
+
                   <!-- Ya entregada previamente -->
-                  <span v-if="item.is_delivered_already" class="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 dark:border-emerald-500/40 text-[10px] font-black uppercase tracking-wider rounded-lg whitespace-nowrap shadow-sm">
+                  <span v-else-if="item.is_delivered_already" class="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 dark:border-emerald-500/40 text-[10px] font-black uppercase tracking-wider rounded-lg whitespace-nowrap shadow-sm">
                     Entregado ({{ item.delivered_quantity }}/{{ item.quantity }})
                   </span>
 
@@ -231,66 +236,66 @@
             </p>
           </div>
 
-          <!-- Total a Cobrar en Caja y Método de Pago -->
-          <div class="pt-3 border-t border-slate-200 dark:border-white/10 space-y-3">
-            <div class="flex justify-between items-center">
-              <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                {{ refundAmount > 0 ? 'Devolución al Cliente' : 'Total a Cobrar Hoy' }}
-              </span>
-              <p class="text-2xl font-black" :class="refundAmount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'">
-                {{ formatMoney(refundAmount > 0 ? refundAmount : totalToChargeToday) }}
-              </p>
-            </div>
-
-            <!-- Método de Pago si hay cobro -->
-            <div v-if="totalToChargeToday > 0" class="space-y-2">
-              <div class="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  @click="paymentMethod = 'cash'"
-                  class="py-2 rounded-xl text-xs font-black uppercase transition-all"
-                  :class="paymentMethod === 'cash' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-card-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10'"
-                >
-                  Efectivo
-                </button>
-                <button
-                  type="button"
-                  @click="paymentMethod = 'card'"
-                  class="py-2 rounded-xl text-xs font-black uppercase transition-all"
-                  :class="paymentMethod === 'card' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-card-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10'"
-                >
-                  Tarjeta
-                </button>
-                <button
-                  type="button"
-                  @click="paymentMethod = 'transfer'"
-                  class="py-2 rounded-xl text-xs font-black uppercase transition-all"
-                  :class="paymentMethod === 'transfer' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-card-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10'"
-                >
-                  Transf.
-                </button>
+            <!-- Total a Cobrar en Caja y Método de Pago -->
+            <div class="pt-3 border-t border-slate-200 dark:border-white/10 space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  {{ refundAmount > 0 ? 'Devolución al Cliente' : 'Total a Cobrar Hoy' }}
+                </span>
+                <p class="text-2xl font-black" :class="refundAmount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'">
+                  {{ formatMoney(refundAmount > 0 ? refundAmount : totalToChargeToday) }}
+                </p>
               </div>
 
-              <!-- Efectivo Recibido y Cambio -->
-              <div v-if="paymentMethod === 'cash'" class="p-2.5 bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-white/10 flex items-center gap-3">
-                <div class="relative flex-1">
-                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
-                  <input 
-                    v-model.number="receivedCash" 
-                    type="number"
-                    placeholder="Efectivo Recibido"
-                    class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 pl-6 pr-2 py-1.5 rounded-lg text-xs font-bold"
-                  />
+              <!-- Método de Pago si hay cobro -->
+              <div v-if="totalToChargeToday > 0" class="space-y-2">
+                <div class="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    @click="paymentMethod = 'cash'"
+                    class="py-2 rounded-xl text-xs font-black uppercase transition-all"
+                    :class="paymentMethod === 'cash' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-card-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10'"
+                  >
+                    Efectivo
+                  </button>
+                  <button
+                    type="button"
+                    @click="paymentMethod = 'card'"
+                    class="py-2 rounded-xl text-xs font-black uppercase transition-all"
+                    :class="paymentMethod === 'card' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-card-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10'"
+                  >
+                    Tarjeta
+                  </button>
+                  <button
+                    type="button"
+                    @click="paymentMethod = 'transfer'"
+                    class="py-2 rounded-xl text-xs font-black uppercase transition-all"
+                    :class="paymentMethod === 'transfer' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-card-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10'"
+                  >
+                    Transf.
+                  </button>
                 </div>
-                <div class="text-right text-xs shrink-0">
-                  <span class="text-[10px] text-slate-400 block">Cambio:</span>
-                  <span class="font-black text-sm" :class="changeCash >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-                    {{ formatMoney(Math.max(0, changeCash)) }}
-                  </span>
+
+                <!-- Efectivo Recibido y Cambio -->
+                <div v-if="paymentMethod === 'cash'" class="p-2.5 bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-white/10 flex items-center gap-3">
+                  <div class="relative flex-1">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                    <input 
+                      v-model.number="receivedCash" 
+                      type="number"
+                      placeholder="Efectivo Recibido"
+                      class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary transition-all outline-none pl-6 pr-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  <div class="text-right text-xs shrink-0">
+                    <span class="text-[10px] text-slate-400 block">Cambio:</span>
+                    <span class="font-black text-sm" :class="changeCash >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'">
+                      {{ formatMoney(Math.max(0, changeCash)) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
           <!-- Botones de Acción dentro de la columna derecha -->
           <div class="pt-2 flex flex-col gap-2">
@@ -350,8 +355,11 @@ watch(() => [props.show, props.ticket], () => {
     itemsState.value = props.ticket.items.map(item => {
       const isTicketDelivered = Boolean(props.ticket.is_delivered || props.ticket.delivery_status === 'delivered' || (props.ticket.ticket_type && props.ticket.ticket_type !== 'layaway'))
       const deliveredQty = isTicketDelivered ? item.quantity : (Number(item.delivered_quantity) || 0)
-      const isDeliveredAlready = isTicketDelivered || Boolean(item.is_delivered) || (deliveredQty >= item.quantity && item.quantity > 0)
-      const availableToDeliver = Math.max(0, item.quantity - deliveredQty)
+      const cancelledQty = Number(item.cancelled_quantity) || (item.is_cancelled ? Math.max(0, item.quantity - deliveredQty) : 0)
+      const activeQty = Math.max(0, item.quantity - cancelledQty)
+      const isDeliveredAlready = isTicketDelivered || Boolean(item.is_delivered) || (deliveredQty >= activeQty && activeQty > 0)
+      const isCancelledAlready = Boolean(item.is_cancelled) || (cancelledQty >= item.quantity && item.quantity > 0)
+      const availableToDeliver = Math.max(0, item.quantity - deliveredQty - cancelledQty)
 
       return {
         id: item.id,
@@ -359,13 +367,15 @@ watch(() => [props.show, props.ticket], () => {
         size_name: item.size_name || item.product?.size?.name,
         quantity: item.quantity,
         delivered_quantity: deliveredQty,
+        cancelled_quantity: cancelledQty,
         available_to_deliver: availableToDeliver,
         is_delivered_already: isDeliveredAlready,
+        is_cancelled_already: isCancelledAlready,
         unit_price: Number(item.unit_price) || 0,
         selected_for_delivery: false,
         qty_to_deliver: availableToDeliver > 0 ? availableToDeliver : 0,
-        marked_for_cancel: Boolean(item.is_cancelled),
-        qty_to_cancel: item.is_cancelled ? availableToDeliver : 0
+        marked_for_cancel: false,
+        qty_to_cancel: 0
       }
     })
   }

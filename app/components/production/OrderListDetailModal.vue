@@ -243,7 +243,11 @@
       </div>
 
       <!-- Acciones Inferiores -->
-      <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-white/5">
+      <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5">
+        <BaseButton variant="outline" size="sm" @click="$emit('print', order)">
+          <PrinterIcon class="w-4 h-4 mr-1.5" />
+          Imprimir Nota
+        </BaseButton>
         <BaseButton variant="secondary" @click="close">Cerrar detalle</BaseButton>
       </div>
     </div>
@@ -254,7 +258,7 @@
 import { ref, watch } from 'vue'
 import BaseModal from '~/components/BaseModal.vue'
 import BaseButton from '~/components/BaseButton.vue'
-import { PencilIcon } from 'lucide-vue-next'
+import { PencilIcon, PrinterIcon } from 'lucide-vue-next'
 import { useFormatter } from '~/composables/useFormatter'
 import { useApi } from '~/composables/useApi'
 import { useToast } from '~/stores/toast'
@@ -265,7 +269,7 @@ const props = defineProps<{
   order: Order | null
 }>()
 
-const emit = defineEmits(['update:show', 'updated'])
+const emit = defineEmits(['update:show', 'updated', 'print'])
 
 const { formatMoney } = useFormatter()
 const api = useApi()

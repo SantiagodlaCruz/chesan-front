@@ -44,7 +44,7 @@
             <!-- Folio and Date -->
             <div class="space-y-1">
               <p class="text-base font-bold">FOLIO: <span class="text-red-700 font-black">No. {{ quotation.folio }}</span></p>
-              <p class="text-xs font-normal text-slate-900 uppercase">FECHA: <span class="font-medium">{{ new Date(quotation.quotation_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) }}</span></p>
+              <p class="text-xs font-normal text-slate-900 uppercase">FECHA: <span class="font-medium">{{ formatDate(quotation.quotation_date) }}</span></p>
             </div>
           </div>
         </div>
@@ -118,7 +118,9 @@
           <div class="w-1/2 space-y-6">
             <div class="flex flex-col gap-1">
               <span class="text-xs font-bold text-black uppercase tracking-widest">FECHA DE ENTREGA:</span>
-              <div class="border-b-2 border-black w-64 h-6"></div>
+              <div class="text-sm font-semibold border-b-2 border-black w-64 pb-1 min-h-[24px]">
+                {{ (quotation.order?.delivery_date || quotation.delivery_date) ? formatDate(quotation.order?.delivery_date || quotation.delivery_date) : '' }}
+              </div>
             </div>
             
             <div v-if="quotation.notes" class="max-w-md">
@@ -127,14 +129,14 @@
             </div>
           </div>
 
-          <div class="w-1/3 space-y-2">
-            <div class="flex justify-between text-sm py-1">
+          <div class="w-2/5 max-w-[340px] space-y-2">
+            <div class="flex justify-between items-center text-sm py-1">
               <span class="font-bold text-black uppercase text-xs">SUBTOTAL:</span>
               <span class="font-medium">${{ formatMoney(quotation.total_amount) }}</span>
             </div>
-            <div class="flex justify-between text-xl py-4 border-t-2 border-black">
-              <span class="font-black uppercase tracking-tighter">TOTAL $:</span>
-              <span class="font-black text-2xl">${{ formatMoney(quotation.total_amount) }}</span>
+            <div class="flex justify-between items-baseline gap-2 py-3 border-t-2 border-black">
+              <span class="font-black uppercase tracking-tight text-lg whitespace-nowrap">TOTAL:</span>
+              <span class="font-black text-2xl tracking-tight">${{ formatMoney(quotation.total_amount) }}</span>
             </div>
           </div>
         </div>
@@ -176,6 +178,15 @@ const logoContainerStyle = computed(() => {
     borderColor: 'rgba(0, 0, 0, 0.05)'
   }
 })
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const str = typeof dateStr === 'string' ? dateStr : (dateStr instanceof Date ? dateStr.toISOString() : String(dateStr))
+  const cleanStr = str.split('T')[0]
+  const date = new Date(cleanStr + 'T00:00:00')
+  if (isNaN(date.getTime())) return str
+  return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+}
 
 const formatMoney = (value) => {
   const num = Number(value)

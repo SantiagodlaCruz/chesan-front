@@ -465,13 +465,41 @@
             <tr v-for="item in lastTicket.items" :key="item.id">
               <td class="qty-col">
                 {{ item.qty || item.quantity }}
-                <div v-if="item.delivered_qty > 0 && item.delivered_qty < (item.qty || item.quantity)" style="font-size: 7px; color: #555;">(Entr: {{ item.delivered_qty }})</div>
               </td>
               <td class="desc-col">
                 {{ item.name || item.product?.name }}
                 <div v-if="item.size || item.color" class="item-meta">{{ item.size }} {{ item.color }}</div>
-                <div v-if="item.is_cancelled" class="item-meta" style="color: #c00; font-weight: bold;">[CANCELADO]</div>
-                <div v-else-if="item.is_delivered" class="item-meta" style="color: #080; font-weight: bold;">[ENTREGADO]</div>
+
+                <!-- Status de Entrega y Cancelación para Apartados -->
+                <template v-if="lastTicket.ticket_type === 'layaway'">
+                  <!-- Caso 1: Tiene tanto entregas como eliminaciones -->
+                  <div v-if="getItemDeliveredQty(item, lastTicket) > 0 && getItemCancelledQty(item, lastTicket) > 0" class="item-meta" style="color: #b45309; font-weight: bold;">
+                    [Entregados {{ getItemDeliveredQty(item, lastTicket) }}/{{ item.qty || item.quantity }}, Eliminados {{ getItemCancelledQty(item, lastTicket) }}/{{ item.qty || item.quantity }}]
+                    <div v-if="(item.qty || item.quantity) - getItemDeliveredQty(item, lastTicket) - getItemCancelledQty(item, lastTicket) > 0" style="color: #555; font-size: 7.5px; font-weight: normal;">
+                      (Pendiente: {{ (item.qty || item.quantity) - getItemDeliveredQty(item, lastTicket) - getItemCancelledQty(item, lastTicket) }}/{{ item.qty || item.quantity }})
+                    </div>
+                  </div>
+
+                  <!-- Caso 2: Solo tiene cancelaciones/eliminaciones -->
+                  <div v-else-if="getItemCancelledQty(item, lastTicket) > 0" class="item-meta" style="color: #c00; font-weight: bold;">
+                    [Eliminados {{ getItemCancelledQty(item, lastTicket) }}/{{ item.qty || item.quantity }}]
+                    <div v-if="(item.qty || item.quantity) - getItemCancelledQty(item, lastTicket) > 0" style="color: #555; font-size: 7.5px; font-weight: normal;">
+                      (Pendiente: {{ (item.qty || item.quantity) - getItemCancelledQty(item, lastTicket) }}/{{ item.qty || item.quantity }})
+                    </div>
+                  </div>
+
+                  <!-- Caso 3: Solo tiene entregas (Total o Parcial) -->
+                  <div v-else-if="getItemDeliveredQty(item, lastTicket) >= (item.qty || item.quantity)" class="item-meta" style="color: #080; font-weight: bold;">
+                    [Entregados {{ getItemDeliveredQty(item, lastTicket) }}/{{ item.qty || item.quantity }}]
+                  </div>
+                  <div v-else-if="getItemDeliveredQty(item, lastTicket) > 0" class="item-meta" style="color: #b45309; font-weight: bold;">
+                    [Entregados {{ getItemDeliveredQty(item, lastTicket) }}/{{ item.qty || item.quantity }}]
+                    <div style="color: #555; font-size: 7.5px; font-weight: normal;">
+                      (Pendiente: {{ (item.qty || item.quantity) - getItemDeliveredQty(item, lastTicket) }}/{{ item.qty || item.quantity }})
+                    </div>
+                  </div>
+                </template>
+
                 <div v-if="item.discount_percentage > 0 || item.discount_amount > 0" class="item-meta font-bold">
                    <span v-if="item.discount_type === 'amount'">(-${{ parseFloat(item.discount_amount).toFixed(2) }})</span>
                    <span v-else>(-{{ Math.round(item.discount_percentage) }}%)</span>
@@ -702,6 +730,31 @@ const paymentMethodName = computed(() => {
 })
 
 // — Helpers —
+const getItemDeliveredQty = (item, ticket) => {
+  if (!ticket || ticket.ticket_type !== 'layaway') return item?.qty || item?.quantity || 0
+  const total = Number(item?.qty || item?.quantity || 0)
+  if (ticket.is_delivered || ticket.delivery_status === 'delivered') {
+    const cancelled = getItemCancelledQty(item, ticket)
+    return Math.max(0, total - cancelled)
+  }
+  if (item?.is_delivered) {
+    const cancelled = getItemCancelledQty(item, ticket)
+    return Math.max(0, total - cancelled)
+  }
+  return Number(item?.delivered_qty ?? item?.delivered_quantity ?? 0)
+}
+
+const getItemCancelledQty = (item, ticket) => {
+  if (!ticket || ticket.ticket_type !== 'layaway') return 0
+  if (item?.cancelled_qty !== undefined && item?.cancelled_qty !== null) return Number(item.cancelled_qty)
+  if (item?.cancelled_quantity !== undefined && item?.cancelled_quantity !== null) return Number(item.cancelled_quantity)
+  if (item?.is_cancelled) {
+    const del = Number(item?.delivered_qty ?? item?.delivered_quantity ?? 0)
+    const total = Number(item?.qty || item?.quantity || 0)
+    return Math.max(0, total - del)
+  }
+  return 0
+}
 
 
 // — Actions —
@@ -978,6 +1031,7 @@ const handleLayawayPayment = async ({
             discount_amount: detail.discount_amount || 0,
             qty: detail.quantity,
             delivered_qty: detail.delivered_quantity || 0,
+            cancelled_qty: detail.cancelled_quantity || 0,
             is_delivered: detail.is_delivered,
             is_cancelled: detail.is_cancelled,
         }))

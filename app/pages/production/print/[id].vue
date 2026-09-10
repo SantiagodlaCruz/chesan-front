@@ -44,7 +44,7 @@
             <!-- Folio and Date -->
             <div class="space-y-1">
               <p class="text-base font-bold">ORDEN: <span class="text-primary font-black">{{ order.order_code }}</span></p>
-              <p class="text-xs font-normal text-slate-900 uppercase">FECHA: <span class="font-medium">{{ new Date(order.order_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) }}</span></p>
+              <p class="text-xs font-normal text-slate-900 uppercase">FECHA: <span class="font-medium">{{ formatDate(order.order_date) }}</span></p>
             </div>
           </div>
         </div>
@@ -118,8 +118,8 @@
           <div class="w-1/2 space-y-6">
             <div class="flex flex-col gap-1">
               <span class="text-xs font-bold text-black uppercase tracking-widest">FECHA PROMESA DE ENTREGA:</span>
-              <div class="text-sm font-semibold border-b-2 border-black w-64 pb-1">
-                {{ new Date(order.delivery_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) }}
+              <div class="text-sm font-semibold border-b-2 border-black w-64 pb-1 min-h-[24px]">
+                {{ formatDate(order.delivery_date) }}
               </div>
             </div>
             
@@ -129,34 +129,24 @@
             </div>
           </div>
 
-          <div class="w-1/3 space-y-2">
-            <div class="flex justify-between text-sm py-1">
+          <div class="w-2/5 max-w-[340px] space-y-2">
+            <div class="flex justify-between items-center text-sm py-1">
               <span class="font-bold text-black uppercase text-xs">TOTAL PEDIDO:</span>
               <span class="font-medium">${{ formatMoney(order.total_amount) }}</span>
             </div>
-            <div v-if="order.advance_payment > 0" class="flex justify-between text-sm py-1 text-emerald-700 font-bold">
+            <div class="flex justify-between items-center text-sm py-1" :class="Number(order.advance_payment || 0) > 0 ? 'text-emerald-700 font-bold' : 'text-slate-800'">
               <span class="font-bold uppercase text-xs">ANTICIPO PAGADO:</span>
-              <span class="font-medium">-${{ formatMoney(order.advance_payment) }}</span>
+              <span class="font-medium">{{ Number(order.advance_payment || 0) > 0 ? '-' : '' }}${{ formatMoney(order.advance_payment || 0) }}</span>
             </div>
-            <div class="flex flex-col pt-4 border-t-2 border-black">
-              <div class="flex justify-between text-xl">
-                <span class="font-black uppercase tracking-tighter">RESTANTE $:</span>
-                <span class="font-black text-2xl">${{ formatMoney(order.total_amount - (order.advance_payment || 0)) }}</span>
+            <div class="flex flex-col pt-3 border-t-2 border-black">
+              <div class="flex justify-between items-baseline gap-2">
+                <span class="font-black uppercase tracking-tight text-lg whitespace-nowrap">RESTANTE:</span>
+                <span class="font-black text-2xl tracking-tight">${{ formatMoney(order.total_amount - (order.advance_payment || 0)) }}</span>
               </div>
-              <div v-if="Number(order.total_amount - (order.advance_payment || 0)) <= 0.01 || order.kanban_card?.column?.name === 'Entregados'" class="flex justify-end mt-4 text-emerald-700">
-                <span class="font-black text-2xl tracking-widest border-2 border-emerald-700 px-4 py-1 rounded-lg transform -rotate-2 bg-white">LIQUIDADO</span>
+              <div v-if="Number(order.total_amount - (order.advance_payment || 0)) <= 0.01 || order.kanban_card?.column?.name === 'Entregados'" class="flex justify-end mt-3 text-emerald-700">
+                <span class="font-black text-xl tracking-widest border-2 border-emerald-700 px-3 py-0.5 rounded-lg transform -rotate-2 bg-white">LIQUIDADO</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Signatures -->
-        <div class="mt-12 flex justify-around text-center text-black">
-          <div class="w-48 border-t border-black pt-2">
-            <p class="text-xs font-bold uppercase text-slate-800">Firma de Conformidad</p>
-          </div>
-          <div class="w-48 border-t border-black pt-2">
-            <p class="text-xs font-bold uppercase text-slate-800">Entregó (Chesan)</p>
           </div>
         </div>
 
@@ -214,6 +204,15 @@ const formatMoney = (value: any) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
+}
+
+const formatDate = (dateStr: any) => {
+  if (!dateStr) return ''
+  const str = typeof dateStr === 'string' ? dateStr : (dateStr instanceof Date ? dateStr.toISOString() : String(dateStr))
+  const cleanStr = str.split('T')[0]
+  const date = new Date(cleanStr + 'T00:00:00')
+  if (isNaN(date.getTime())) return str
+  return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 onMounted(async () => {

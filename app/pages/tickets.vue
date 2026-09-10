@@ -176,14 +176,17 @@
                         <p class="font-bold text-slate-800 dark:text-white">{{ item.product_name }}</p>
                         
                         <!-- Badges de estado de entrega individual -->
-                        <span v-if="item.is_cancelled" class="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-[9px] font-black uppercase">
-                          Cancelada
+                        <span v-if="getItemCancelledQty(item, selectedTicket) > 0 && getItemDeliveredQty(item, selectedTicket) > 0" class="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-black uppercase">
+                          Entregado ({{ getItemDeliveredQty(item, selectedTicket) }}/{{ item.quantity }}) • Eliminado ({{ getItemCancelledQty(item, selectedTicket) }}/{{ item.quantity }})
                         </span>
-                        <span v-else-if="item.is_delivered || (item.delivered_quantity >= item.quantity && item.quantity > 0) || selectedTicket.is_delivered || selectedTicket.delivery_status === 'delivered' || selectedTicket.ticket_type !== 'layaway'" class="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[9px] font-black uppercase flex items-center gap-1">
+                        <span v-else-if="getItemCancelledQty(item, selectedTicket) > 0" class="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-[9px] font-black uppercase">
+                          Eliminado ({{ getItemCancelledQty(item, selectedTicket) }}/{{ item.quantity }})
+                        </span>
+                        <span v-else-if="getItemDeliveredQty(item, selectedTicket) >= item.quantity || item.is_delivered || selectedTicket.is_delivered || selectedTicket.delivery_status === 'delivered' || selectedTicket.ticket_type !== 'layaway'" class="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[9px] font-black uppercase flex items-center gap-1">
                           <CheckIcon class="w-3 h-3 stroke-[3]" /> Entregado
                         </span>
-                        <span v-else-if="item.delivered_quantity > 0" class="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-black uppercase">
-                          Entregado ({{ item.delivered_quantity }}/{{ item.quantity }})
+                        <span v-else-if="getItemDeliveredQty(item, selectedTicket) > 0" class="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-black uppercase">
+                          Entregado ({{ getItemDeliveredQty(item, selectedTicket) }}/{{ item.quantity }})
                         </span>
                         <span v-else-if="selectedTicket.ticket_type === 'layaway'" class="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-[9px] font-black uppercase">
                           Resguardado en tienda
@@ -302,10 +305,43 @@
           </thead>
           <tbody>
             <tr v-for="item in ticketToPrint.items" :key="item.id">
-              <td class="qty-col">{{ item.quantity }}</td>
+              <td class="qty-col">
+                {{ item.quantity }}
+              </td>
               <td class="desc-col">
                 {{ item.product_name }}
                 <div v-if="item.size_name" class="item-meta">Talla: {{ item.size_name }}</div>
+
+                <!-- Status de Entrega y Cancelación para Apartados -->
+                <template v-if="ticketToPrint.ticket_type === 'layaway'">
+                  <!-- Caso 1: Tiene tanto entregas como eliminaciones -->
+                  <div v-if="getItemDeliveredQty(item, ticketToPrint) > 0 && getItemCancelledQty(item, ticketToPrint) > 0" class="item-meta" style="color: #b45309; font-weight: bold;">
+                    [Entregados {{ getItemDeliveredQty(item, ticketToPrint) }}/{{ item.quantity }}, Eliminados {{ getItemCancelledQty(item, ticketToPrint) }}/{{ item.quantity }}]
+                    <div v-if="item.quantity - getItemDeliveredQty(item, ticketToPrint) - getItemCancelledQty(item, ticketToPrint) > 0" style="color: #555; font-size: 7.5px; font-weight: normal;">
+                      (Pendiente: {{ item.quantity - getItemDeliveredQty(item, ticketToPrint) - getItemCancelledQty(item, ticketToPrint) }}/{{ item.quantity }})
+                    </div>
+                  </div>
+
+                  <!-- Caso 2: Solo tiene cancelaciones/eliminaciones -->
+                  <div v-else-if="getItemCancelledQty(item, ticketToPrint) > 0" class="item-meta" style="color: #c00; font-weight: bold;">
+                    [Eliminados {{ getItemCancelledQty(item, ticketToPrint) }}/{{ item.quantity }}]
+                    <div v-if="item.quantity - getItemCancelledQty(item, ticketToPrint) > 0" style="color: #555; font-size: 7.5px; font-weight: normal;">
+                      (Pendiente: {{ item.quantity - getItemCancelledQty(item, ticketToPrint) }}/{{ item.quantity }})
+                    </div>
+                  </div>
+
+                  <!-- Caso 3: Solo tiene entregas (Total o Parcial) -->
+                  <div v-else-if="getItemDeliveredQty(item, ticketToPrint) >= item.quantity" class="item-meta" style="color: #080; font-weight: bold;">
+                    [Entregados {{ getItemDeliveredQty(item, ticketToPrint) }}/{{ item.quantity }}]
+                  </div>
+                  <div v-else-if="getItemDeliveredQty(item, ticketToPrint) > 0" class="item-meta" style="color: #b45309; font-weight: bold;">
+                    [Entregados {{ getItemDeliveredQty(item, ticketToPrint) }}/{{ item.quantity }}]
+                    <div style="color: #555; font-size: 7.5px; font-weight: normal;">
+                      (Pendiente: {{ item.quantity - getItemDeliveredQty(item, ticketToPrint) }}/{{ item.quantity }})
+                    </div>
+                  </div>
+                </template>
+
                 <div v-if="item.discount_amount > 0" class="item-meta font-bold">
                   <span>Descto. (-{{ formatMoney(item.discount_amount) }})</span>
                 </div>
@@ -548,6 +584,32 @@ const getPrintPaymentMethod = (ticket) => {
     ? (ticket.liquidation_payment_method || 'cash')
     : (ticket.payment_method || 'cash')
   return formatPaymentMethod(method)
+}
+
+const getItemDeliveredQty = (item, ticket) => {
+  if (!ticket || ticket.ticket_type !== 'layaway') return item?.quantity || 0
+  const total = Number(item?.quantity || 0)
+  if (ticket.is_delivered || ticket.delivery_status === 'delivered') {
+    const cancelled = getItemCancelledQty(item, ticket)
+    return Math.max(0, total - cancelled)
+  }
+  if (item?.is_delivered) {
+    const cancelled = getItemCancelledQty(item, ticket)
+    return Math.max(0, total - cancelled)
+  }
+  return Number(item?.delivered_quantity ?? item?.delivered_qty ?? 0)
+}
+
+const getItemCancelledQty = (item, ticket) => {
+  if (!ticket || ticket.ticket_type !== 'layaway') return 0
+  if (item?.cancelled_quantity !== undefined && item?.cancelled_quantity !== null) return Number(item.cancelled_quantity)
+  if (item?.cancelled_qty !== undefined && item?.cancelled_qty !== null) return Number(item.cancelled_qty)
+  if (item?.is_cancelled) {
+    const del = Number(item?.delivered_quantity ?? item?.delivered_qty ?? 0)
+    const total = Number(item?.quantity || 0)
+    return Math.max(0, total - del)
+  }
+  return 0
 }
 
 const fetchUsers = async () => {

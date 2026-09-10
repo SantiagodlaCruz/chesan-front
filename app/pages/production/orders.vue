@@ -108,10 +108,20 @@
         </div>
       </template>
 
-      <!-- Custom actions to only show the view action -->
+      <!-- Custom actions: Imprimir, Ver Detalle, Eliminar -->
       <template #actions="{ item }">
+        <button @click="onPrint(item)" class="p-1.5 hover:bg-slate-500/10 dark:hover:bg-slate-400/10 rounded-xl transition-all group/btn" title="Imprimir Pedido">
+          <PrinterIcon class="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover/btn:scale-110 transition-transform" />
+        </button>
         <button @click="onView(item)" class="p-1.5 hover:bg-primary/10 rounded-xl transition-all group/btn" title="Ver Detalle">
           <EyeIcon class="w-4 h-4 text-primary group-hover/btn:scale-110 transition-transform" />
+        </button>
+        <button 
+          @click="onDelete(item)" 
+          class="p-1.5 hover:bg-red-500/10 rounded-xl transition-all group/btn" 
+          title="Eliminar Pedido"
+        >
+          <TrashIcon class="w-4 h-4 text-accent-red group-hover/btn:scale-110 transition-transform" />
         </button>
       </template>
 
@@ -220,6 +230,18 @@
       v-model:show="showDetailModal"
       :order="selectedOrder"
       @updated="fetchData"
+      @print="onPrint"
+    />
+
+    <!-- Confirm Delete Modal -->
+    <ConfirmModal
+      v-model:show="showDeleteConfirm"
+      title="Eliminar Pedido"
+      :message="`¿Estás seguro de que deseas eliminar permanentemente el pedido ${orderToDelete?.order_code || ''}?\n\nEsta acción no se puede deshacer.`"
+      confirm-text="Eliminar Definitivamente"
+      confirm-variant="danger"
+      :loading="deleting"
+      @confirm="onConfirmDelete"
     />
 
     <!-- Iframe oculto para impresión directa -->
@@ -229,16 +251,21 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
-import { SearchIcon, PrinterIcon, EyeIcon, RefreshCwIcon } from 'lucide-vue-next'
+import { SearchIcon, PrinterIcon, EyeIcon, TrashIcon, RefreshCwIcon } from 'lucide-vue-next'
 import Select from '~/components/Select.vue'
 import DataTable from '~/components/DataTable.vue'
+import ConfirmModal from '~/components/ConfirmModal.vue'
 import OrderListDetailModal from '~/components/production/OrderListDetailModal.vue'
 import { useOrdersStore } from '~/composables/useOrdersStore'
 import { useProductionStore } from '~/stores/production'
 import { useFormatter } from '~/composables/useFormatter'
+import { useApi } from '~/composables/useApi'
+import { useToast } from '~/stores/toast'
 import type { Order } from '~/types'
 
 const { formatMoney } = useFormatter()
+const api = useApi()
+const toast = useToast()
 
 const ordersStore = useOrdersStore()
 const productionStore = useProductionStore()
@@ -254,6 +281,10 @@ const perPage = ref(10)
 
 const showDetailModal = ref(false)
 const selectedOrder = ref<Order | null>(null)
+
+const showDeleteConfirm = ref(false)
+const orderToDelete = ref<Order | null>(null)
+const deleting = ref(false)
 
 const items = computed(() => ordersStore.items)
 const meta = computed(() => ordersStore.meta)
@@ -355,8 +386,34 @@ const onPrint = (item: Order) => {
   if (item.id) {
     const iframe = document.getElementById('print-iframe-orders') as HTMLIFrameElement
     if (iframe) {
-      iframe.src = `/production/print/${item.id}`
+      iframe.src = 'about:blank'
+      setTimeout(() => {
+        iframe.src = `/production/print/${item.id}`
+      }, 50)
     }
+  }
+}
+
+const onDelete = (item: Order) => {
+  orderToDelete.value = item
+  showDeleteConfirm.value = true
+}
+
+const onConfirmDelete = async () => {
+  if (!orderToDelete.value?.id) return
+  deleting.value = true
+  try {
+    await api.delete(`/api/orders/${orderToDelete.value.id}`)
+    toast.success('Pedido eliminado correctamente')
+    showDeleteConfirm.value = false
+    orderToDelete.value = null
+    fetchData()
+  } catch (err: any) {
+    console.error('Error al eliminar pedido:', err)
+    const msg = err.data?.message || 'Error al eliminar el pedido'
+    toast.error(msg)
+  } finally {
+    deleting.value = false
   }
 }
 

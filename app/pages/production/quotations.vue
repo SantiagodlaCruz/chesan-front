@@ -460,10 +460,15 @@ const convertToOrder = (quotation) => {
 const handleConvertConfirm = async (data) => {
   try {
     converting.value = true
-    await api.post(`/api/quotations/${quotationToConvert.value.id}/convert`, data)
+    const res = await api.post(`/api/quotations/${quotationToConvert.value.id}/convert`, data)
     toast.success('Pedido generado correctamente')
     showConvertModal.value = false
     fetchQuotations()
+
+    // Imprimir la nota del pedido generado de inmediato
+    if (res.data?.id) {
+      printOrder(res.data.id)
+    }
   } catch (err) {
     toast.error(err.data?.message || 'Error al convertir a pedido')
   } finally {
@@ -553,6 +558,24 @@ const printQuotation = (q) => {
   document.body.appendChild(iframe)
   
   // Limpiar el iframe después de un tiempo
+  setTimeout(() => {
+    if (document.body.contains(iframe)) {
+      document.body.removeChild(iframe)
+    }
+  }, 10000)
+}
+
+const printOrder = (orderId) => {
+  const iframe = document.createElement('iframe')
+  iframe.style.position = 'fixed'
+  iframe.style.right = '0'
+  iframe.style.bottom = '0'
+  iframe.style.width = '0'
+  iframe.style.height = '0'
+  iframe.style.border = '0'
+  iframe.src = `/production/print/${orderId}`
+  document.body.appendChild(iframe)
+  
   setTimeout(() => {
     if (document.body.contains(iframe)) {
       document.body.removeChild(iframe)
