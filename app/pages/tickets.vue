@@ -179,7 +179,7 @@
                         <span v-if="item.is_cancelled" class="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-[9px] font-black uppercase">
                           Cancelada
                         </span>
-                        <span v-else-if="item.is_delivered || (item.delivered_quantity >= item.quantity && item.quantity > 0)" class="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[9px] font-black uppercase flex items-center gap-1">
+                        <span v-else-if="item.is_delivered || (item.delivered_quantity >= item.quantity && item.quantity > 0) || selectedTicket.is_delivered || selectedTicket.delivery_status === 'delivered' || selectedTicket.ticket_type !== 'layaway'" class="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[9px] font-black uppercase flex items-center gap-1">
                           <CheckIcon class="w-3 h-3 stroke-[3]" /> Entregado
                         </span>
                         <span v-else-if="item.delivered_quantity > 0" class="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-black uppercase">

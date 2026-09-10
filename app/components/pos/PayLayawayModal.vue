@@ -348,8 +348,9 @@ watch(() => [props.show, props.ticket], () => {
     depositForPending.value = 0
 
     itemsState.value = props.ticket.items.map(item => {
-      const deliveredQty = item.delivered_quantity || 0
-      const isDeliveredAlready = item.is_delivered || (deliveredQty >= item.quantity)
+      const isTicketDelivered = props.ticket.is_delivered || ['completed', 'delivered'].includes(props.ticket.status) || props.ticket.delivery_status === 'delivered'
+      const deliveredQty = isTicketDelivered ? item.quantity : (item.delivered_quantity || 0)
+      const isDeliveredAlready = isTicketDelivered || item.is_delivered || (deliveredQty >= item.quantity)
       const availableToDeliver = Math.max(0, item.quantity - deliveredQty)
 
       return {
