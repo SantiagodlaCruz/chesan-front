@@ -117,7 +117,7 @@
         <div class="flex justify-between border-t-2 border-black pt-6 text-black">
           <div class="w-1/2 space-y-6">
             <div class="flex flex-col gap-1">
-              <span class="text-xs font-bold text-black uppercase tracking-widest">FECHA PROMESA DE ENTREGA:</span>
+              <span class="text-xs font-bold text-black uppercase tracking-widest">FECHA DE ENTREGA:</span>
               <div class="text-sm font-semibold border-b-2 border-black w-64 pb-1 min-h-[24px]">
                 {{ formatDate(order.delivery_date) }}
               </div>
@@ -135,7 +135,7 @@
               <span class="font-medium">${{ formatMoney(order.total_amount) }}</span>
             </div>
             <div class="flex justify-between items-center text-sm py-1" :class="Number(order.advance_payment || 0) > 0 ? 'text-emerald-700 font-bold' : 'text-slate-800'">
-              <span class="font-bold uppercase text-xs">ANTICIPO PAGADO:</span>
+              <span class="font-bold uppercase text-xs">ANTICIPO:</span>
               <span class="font-medium">{{ Number(order.advance_payment || 0) > 0 ? '-' : '' }}${{ formatMoney(order.advance_payment || 0) }}</span>
             </div>
             <div class="flex flex-col pt-3 border-t-2 border-black">
