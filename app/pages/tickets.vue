@@ -172,10 +172,31 @@
                 <tbody class="divide-y divide-border-light dark:divide-border-dark font-medium">
                   <tr v-for="item in items" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-white/[0.01]">
                     <td class="px-4 py-3">
-                      <p class="font-bold text-slate-800 dark:text-white">{{ item.product_name }}</p>
+                      <div class="flex items-center flex-wrap gap-2 mb-0.5">
+                        <p class="font-bold text-slate-800 dark:text-white">{{ item.product_name }}</p>
+                        
+                        <!-- Badges de estado de entrega individual -->
+                        <span v-if="item.is_cancelled" class="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-[9px] font-black uppercase">
+                          Cancelada
+                        </span>
+                        <span v-else-if="item.is_delivered || (item.delivered_quantity >= item.quantity && item.quantity > 0)" class="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[9px] font-black uppercase flex items-center gap-1">
+                          <CheckIcon class="w-3 h-3 stroke-[3]" /> Entregado
+                        </span>
+                        <span v-else-if="item.delivered_quantity > 0" class="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-black uppercase">
+                          Entregado ({{ item.delivered_quantity }}/{{ item.quantity }})
+                        </span>
+                        <span v-else-if="selectedTicket.ticket_type === 'layaway'" class="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-[9px] font-black uppercase">
+                          Resguardado en tienda
+                        </span>
+                      </div>
                       <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold">Talla: {{ item.size_name }}</span>
                     </td>
-                    <td class="px-4 py-3 text-center font-black dark:text-slate-200">{{ item.quantity }}</td>
+                    <td class="px-4 py-3 text-center font-black dark:text-slate-200">
+                      <div>{{ item.quantity }}</div>
+                      <div v-if="item.delivered_quantity > 0 && item.delivered_quantity < item.quantity" class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400">
+                        (Entr: {{ item.delivered_quantity }})
+                      </div>
+                    </td>
                     <td class="px-4 py-3 text-right text-slate-500 dark:text-slate-400">{{ formatMoney(item.unit_price) }}</td>
                     <td class="px-4 py-3 text-right font-black text-primary">{{ formatMoney(item.total) }}</td>
                   </tr>
@@ -199,31 +220,37 @@
           <div class="flex items-center gap-3 min-w-0">
             <div 
               class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border"
-              :class="selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered
-                ? 'bg-amber-500/10 border-amber-500/20 text-amber-500'
-                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'"
+              :class="selectedTicket.delivery_status === 'partial'
+                ? 'bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/20 dark:border-indigo-500/40 text-indigo-500 dark:text-indigo-400'
+                : (selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered
+                  ? 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/20 dark:border-amber-500/40 text-amber-500 dark:text-amber-400'
+                  : 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/20 dark:border-emerald-500/40 text-emerald-500 dark:text-emerald-400')"
             >
-              <ShirtIcon v-if="selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered" class="w-4 h-4" />
+              <ShirtIcon v-if="selectedTicket.delivery_status === 'partial' || (selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered)" class="w-4 h-4" />
               <CheckCircleIcon v-else class="w-4 h-4" />
             </div>
             <div class="min-w-0">
               <p class="text-xs font-black text-slate-800 dark:text-slate-100 truncate">
-                {{ selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered 
-                    ? 'Pendiente de Entrega Física' 
-                    : (selectedTicket.ticket_type === 'layaway' && selectedTicket.is_delivered 
-                        ? 'Apartado Liquidado y Entregado' 
-                        : (selectedTicket.ticket_type === 'layaway' 
-                            ? 'Apartado con Saldo Pendiente' 
-                            : 'Venta de Mostrador')) }}
+                {{ selectedTicket.delivery_status === 'partial'
+                    ? 'Apartado con Entrega Parcial'
+                    : (selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered 
+                        ? 'Pendiente de Entrega Física' 
+                        : (selectedTicket.ticket_type === 'layaway' && selectedTicket.is_delivered 
+                            ? 'Apartado Liquidado y Entregado' 
+                            : (selectedTicket.ticket_type === 'layaway' 
+                                ? 'Apartado con Saldo Pendiente' 
+                                : 'Venta de Mostrador'))) }}
               </p>
               <p class="text-[10px] text-slate-400 truncate">
-                {{ selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered 
-                    ? '100% pagado • Artículos resguardados en tienda' 
-                    : (selectedTicket.ticket_type === 'layaway' && selectedTicket.is_delivered 
-                        ? 'Prendas entregadas al cliente' 
-                        : (selectedTicket.ticket_type === 'layaway' 
-                            ? `Saldo por liquidar: ${formatMoney(selectedTicket.balance)}` 
-                            : 'Transacción completada')) }}
+                {{ selectedTicket.delivery_status === 'partial'
+                    ? `Prendas entregadas en proceso • Saldo restante: ${formatMoney(selectedTicket.balance)}`
+                    : (selectedTicket.ticket_type === 'layaway' && selectedTicket.balance <= 0 && !selectedTicket.is_delivered 
+                        ? '100% pagado • Artículos resguardados en tienda' 
+                        : (selectedTicket.ticket_type === 'layaway' && selectedTicket.is_delivered 
+                            ? 'Prendas entregadas al cliente' 
+                            : (selectedTicket.ticket_type === 'layaway' 
+                                ? `Saldo por liquidar: ${formatMoney(selectedTicket.balance)}` 
+                                : 'Transacción completada'))) }}
               </p>
             </div>
           </div>
@@ -352,6 +379,7 @@ import {
   GraduationCapIcon,
   ShirtIcon,
   CheckCircleIcon,
+  CheckIcon,
   ClockIcon
 } from 'lucide-vue-next'
 import QrcodeVue from 'qrcode.vue'
@@ -402,7 +430,8 @@ const userOptions = computed(() => [
 
 const statusOptions = [
   { label: 'Todos', value: '' },
-  { label: 'Pagado', value: 'paid' },
+  { label: 'Ventas Directas', value: 'paid' },
+  { label: 'Apartado (Entrega Parcial)', value: 'layaway_partial' },
   { label: 'Apartado Pendiente', value: 'layaway_pending' },
   { label: 'Apartado Liquidado', value: 'layaway_completed' },
   { label: 'Apartado Liquidado (Entregado)', value: 'layaway_completed_delivered' },
@@ -432,8 +461,10 @@ const filteredTickets = computed(() => {
     let matchStatus = true
     if (statusFilter.value === 'paid') {
       matchStatus = t.ticket_type !== 'layaway'
+    } else if (statusFilter.value === 'layaway_partial') {
+      matchStatus = t.ticket_type === 'layaway' && t.delivery_status === 'partial'
     } else if (statusFilter.value === 'layaway_pending') {
-      matchStatus = t.ticket_type === 'layaway' && t.balance > 0
+      matchStatus = t.ticket_type === 'layaway' && t.delivery_status !== 'partial' && !t.is_delivered && t.balance > 0
     } else if (statusFilter.value === 'layaway_completed') {
       matchStatus = t.ticket_type === 'layaway' && t.balance <= 0
     } else if (statusFilter.value === 'layaway_completed_delivered') {
@@ -461,18 +492,21 @@ const debouncedFetch = () => {
 }
 
 const getStatusLabel = (t) => {
-  if (t.ticket_type !== 'layaway') return 'Pagado'
-  if (t.balance > 0) return 'Apartado'
-  return t.is_delivered ? 'Liquidado / Entregado' : 'Liquidado / Por Entregar'
+  if (t.ticket_type !== 'layaway') return 'Venta Pagada'
+  if (t.delivery_status === 'partial') return 'Entrega Parcial'
+  if (t.is_delivered && t.balance <= 0) return 'Liquidado y Entregado'
+  if (t.is_delivered && t.balance > 0) return 'Entregado (Con Saldo)'
+  if (t.balance <= 0) return 'Liquidado (Por Entregar)'
+  return 'Apartado Pendiente'
 }
 
 const getStatusClasses = (t) => {
   const base = 'px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border shadow-sm whitespace-nowrap '
-  if (t.ticket_type !== 'layaway') return base + 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-  if (t.balance > 0) return base + 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-  return t.is_delivered 
-    ? base + 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
-    : base + 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+  if (t.ticket_type !== 'layaway') return base + 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/20 dark:border-emerald-500/40'
+  if (t.delivery_status === 'partial') return base + 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/20 dark:border-indigo-500/40'
+  if (t.is_delivered && t.balance <= 0) return base + 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/20 dark:border-emerald-500/40'
+  if (t.balance <= 0) return base + 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/20 dark:border-blue-500/40'
+  return base + 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/20 dark:border-amber-500/40'
 }
 
 const formatPaymentMethod = (method) => {

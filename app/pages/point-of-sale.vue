@@ -439,9 +439,10 @@
       <div v-else class="pos-ticket">
         <div class="ticket-header">
           <h2 class="company-name">CHESAN UNIFORMES</h2>
-          <p class="company-info" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0">COMPROBANTE DE APARTADO</p>
-          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0 && lastTicket.is_delivered">LIQUIDACIÓN Y ENTREGA DE APARTADO</p>
-          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0 && !lastTicket.is_delivered">LIQUIDACIÓN (PENDIENTE DE ENTREGA)</p>
+          <p class="company-info" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.delivery_status === 'partial'">ENTREGA PARCIAL DE APARTADO</p>
+          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway' && lastTicket.is_delivered">ENTREGA TOTAL DE APARTADO</p>
+          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">LIQUIDADO (PENDIENTE DE ENTREGA)</p>
+          <p class="company-info" v-else-if="lastTicket.ticket_type === 'layaway'">COMPROBANTE DE APARTADO</p>
           <p class="company-info" v-else>Venta de Mostrador</p>
 
           <p class="company-info">Fecha: {{ new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) }}</p>
@@ -462,10 +463,15 @@
           </thead>
           <tbody>
             <tr v-for="item in lastTicket.items" :key="item.id">
-              <td class="qty-col">{{ item.qty || item.quantity }}</td>
+              <td class="qty-col">
+                {{ item.qty || item.quantity }}
+                <div v-if="item.delivered_qty > 0 && item.delivered_qty < (item.qty || item.quantity)" style="font-size: 7px; color: #555;">(Entr: {{ item.delivered_qty }})</div>
+              </td>
               <td class="desc-col">
                 {{ item.name || item.product?.name }}
                 <div v-if="item.size || item.color" class="item-meta">{{ item.size }} {{ item.color }}</div>
+                <div v-if="item.is_cancelled" class="item-meta" style="color: #c00; font-weight: bold;">[CANCELADO]</div>
+                <div v-else-if="item.is_delivered" class="item-meta" style="color: #080; font-weight: bold;">[ENTREGADO]</div>
                 <div v-if="item.discount_percentage > 0 || item.discount_amount > 0" class="item-meta font-bold">
                    <span v-if="item.discount_type === 'amount'">(-${{ parseFloat(item.discount_amount).toFixed(2) }})</span>
                    <span v-else>(-{{ Math.round(item.discount_percentage) }}%)</span>
@@ -490,18 +496,25 @@
             <span>Total {{ lastTicket.ticket_type === 'layaway' ? 'Apartado' : '' }}:</span>
             <span>{{ formatMoney(lastTicket.total) }}</span>
           </div>
-          <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">
-            <span>Anticipo Original:</span>
-            <span>{{ formatMoney(lastTicket.original_deposit || lastTicket.advance_amount || 0) }}</span>
-          </div>
-          <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance === 0">
-            <span>Pago Liquidación:</span>
-            <span>{{ formatMoney(lastTicket.payment_made_today || lastTicket.liquidation_amount || 0) }}</span>
-          </div>
-          
-          <div class="total-row" v-if="lastTicket.ticket_type === 'layaway' && lastTicket.balance > 0">
-            <span>Anticipo Pagado:</span>
+          <div class="total-row" v-if="lastTicket.ticket_type === 'layaway'">
+            <span>Total Pagado Acumulado:</span>
             <span>{{ formatMoney(lastTicket.received_amount) }}</span>
+          </div>
+          <div class="total-row" v-if="lastTicket.payment_made_today > 0">
+            <span>Pago/Abono Hoy:</span>
+            <span>{{ formatMoney(lastTicket.payment_made_today) }}</span>
+          </div>
+          <div class="total-row" v-if="lastTicket.refund_made_today > 0" style="color: #080; font-weight: bold;">
+            <span>Devolución al Cliente:</span>
+            <span>-{{ formatMoney(lastTicket.refund_made_today) }}</span>
+          </div>
+          <div class="total-row" v-if="lastTicket.received_cash > 0">
+            <span>Efectivo Recibido:</span>
+            <span>{{ formatMoney(lastTicket.received_cash) }}</span>
+          </div>
+          <div class="total-row" v-if="lastTicket.change_cash > 0">
+            <span>Cambio Entregado:</span>
+            <span>{{ formatMoney(lastTicket.change_cash) }}</span>
           </div>
           
           <div class="total-row font-bold" v-if="lastTicket.ticket_type === 'layaway'" style="font-size: 12px; margin-top: 2px;">
@@ -933,37 +946,58 @@ const onCheckout = async () => {
   }
 }
 
-const handleLayawayPayment = async ({ ticket, paymentMethod, deliverNow = true }) => {
+const handleLayawayPayment = async ({ 
+    ticket, 
+    deliverItems, 
+    cancelItems, 
+    newPaymentAmount, 
+    refundAmount, 
+    paymentMethod,
+    receivedCash,
+    changeCash 
+}) => {
     loadingLayaway.value = true
     try {
-        const response = await api.post(`/api/tickets/${ticket.id}/complete-layaway`, {
-            payment_method: paymentMethod,
-            deliver_now: deliverNow
+        const response = await api.post(`/api/tickets/${ticket.id}/deliver-items`, {
+            deliver_items: deliverItems,
+            cancel_items: cancelItems,
+            new_payment_amount: newPaymentAmount,
+            refund_amount: refundAmount,
+            payment_method: paymentMethod
         })
         showPayLayawayModal.value = false
         
         const mappedItems = response.data.items.map(detail => ({
             id: detail.id,
-            name: detail.product?.name,
-            size: detail.product?.size?.name || '',
+            name: detail.product_name || detail.product?.name,
+            size: detail.size_name || detail.product?.size?.name || '',
             color: detail.product?.color?.name || '',
             sale_price: detail.unit_price,
             discount_type: detail.product?.discount_type || 'percentage',
             discount_percentage: detail.discount_percentage || 0,
             discount_amount: detail.discount_amount || 0,
             qty: detail.quantity,
+            delivered_qty: detail.delivered_quantity || 0,
+            is_delivered: detail.is_delivered,
+            is_cancelled: detail.is_cancelled,
         }))
 
         lastTicket.value = {
             ...response.data,
             items: mappedItems,
             original_deposit: ticket.received_amount,
-            payment_made_today: ticket.balance
+            payment_made_today: newPaymentAmount,
+            refund_made_today: refundAmount,
+            received_cash: receivedCash,
+            change_cash: changeCash
         }
         
-        const successMsg = deliverNow 
-          ? (ticket.balance === 0 ? 'Apartado entregado con éxito.' : 'Apartado liquidado y entregado con éxito.')
-          : 'Apartado liquidado con éxito. Prenda resguardada para entrega posterior.'
+        let successMsg = 'Apartado actualizado correctamente.'
+        if (response.data.is_delivered) {
+            successMsg = 'Apartado completado y entregado al 100%.'
+        } else if (response.data.delivery_status === 'partial') {
+            successMsg = 'Entrega parcial realizada. Prendas pendientes resguardadas.'
+        }
 
         setTimeout(() => {
             window.print()

@@ -60,7 +60,13 @@
                 <div class="flex justify-between items-center mb-1">
                   <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Apartado</span>
                   <span
-                    v-if="ticket.balance === 0"
+                    v-if="ticket.delivery_status === 'partial'"
+                    class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                  >
+                    Entrega Parcial
+                  </span>
+                  <span
+                    v-else-if="ticket.balance === 0"
                     class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
                   >
                     Por Entregar
